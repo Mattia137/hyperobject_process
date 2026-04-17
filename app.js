@@ -533,7 +533,7 @@ function onMouseMove(event) {
 function onClick() {
     if (hoveredNode) {
         if (hoveredNode.id === "ARTISTS") {
-            window.location.href = "./media_artists_map/index.html";
+            window.location.href = "./media_artists_map/artist_map.html";
         } else {
             const folderName = hoveredNode.id.toLowerCase().replace(/ /g, '_');
             window.location.href = `./${folderName}/index.html`;
@@ -567,20 +567,16 @@ window.onload = () => {
     initThree();
     buildGraph();
 
-    window.addEventListener("click", () => {
-        if (hoveredNode) {
-            const nodeId = hoveredNode.id.toUpperCase();
-            if (nodeId === "PROJECT MODEL") {
-                window.location.href = "./HYPEROBJECT_midterm/exploded_diagram.html";
-            } else if (nodeId === "MEDIA M. CONCEPT") {
-                window.location.href = "./HYPEROBJECT_midterm/blueprint.html";
-            } else if (nodeId === "PROGRAM") {
-                window.location.href = "./HYPEROBJECT_midterm/diagnostic_ui.html";
-            } else if (nodeId === "ARTISTS") {
-                window.location.href = "./media_artists_map/index.html";
-            } else {
-                window.location.href = "./" + hoveredNode.id.toLowerCase().replace(/\s+/g, '_') + "/";
-            }
+    document.getElementById("toggleBtn").addEventListener("click", () => {
+        currentMode = currentMode === "A" ? "B" : "A";
+
+        // Sync CSS theme
+        if (currentMode === "B") {
+            document.body.classList.add('mode-diagram');
+            document.getElementById("toggleBtn").innerText = "SWITCH_TO_NETWORK_3D";
+        } else {
+            document.body.classList.remove('mode-diagram');
+            document.getElementById("toggleBtn").innerText = "SWITCH_TO_DIAGRAM_2D";
         }
 
         // Re-read CSS variables dynamically as theme changes
