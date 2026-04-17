@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python -c ':*)",
+      "Bash(python fetch_artists_v4.py)",
+      "Bash(python postprocess.py)"
+    ]
+  }
+}

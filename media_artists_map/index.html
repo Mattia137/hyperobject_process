@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Media Artists Map - Earth-Mars Bridge</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.babylonjs.com/babylon.js"></script>
+    <script src="https://cdn.babylonjs.com/gui/babylon.gui.min.js"></script>
+    <script src="https://cdn.babylonjs.com/loaders/babylonjs.loaders.min.js"></script>
+</head>
+<body>
+    <canvas id="renderCanvas"></canvas>
+
+    <div id="hud">
+        <div class="hud-cluster top-left">
+            <div class="label">SYSTEM</div>
+            <div class="val">MEDIA_ARTISTS_MAP</div>
+            <div class="label">MODE</div>
+            <div class="val" id="hud-mode">WORLD_MAP</div>
+        </div>
+        <div class="hud-cluster top-center">
+            <div class="label">TARGET_NODE</div>
+            <div class="val" id="hud-target">---</div>
+            <div class="label">NETWORK_CLUSTER</div>
+            <div class="val" id="hud-cluster">---</div>
+        </div>
+        <div class="hud-cluster top-right">
+            <div class="label">ACTIVE_ARTISTS</div>
+            <div class="val" id="hud-nodes">0</div>
+            <div class="label">SUPPORT_MEDIUMS</div>
+            <div class="val" id="hud-edges">0</div>
+        </div>
+        <div class="hud-cluster bottom-center">
+            <button id="toggleBtn" class="toggle-btn">SWITCH TO NETWORK</button>
+        </div>
+    </div>
+
+    <!-- Right Panel for Stats & Selected Item Info -->
+    <div id="right-panel">
+        <div id="global-stats" class="panel-section">
+            <div class="section-title">DATABASE_STATISTICS</div>
+            <div class="stat-row">
+                <span class="label">TOTAL_ARTISTS</span>
+                <span class="val" id="stat-total-artists">0</span>
+            </div>
+            <div class="section-title" style="margin-top: 15px;">TOP_MEDIA_CATEGORIES</div>
+            <div id="stat-categories"></div>
+        </div>
+
+    </div>
+
+    <!-- Left Panel for Selected Item Info -->
+    <div id="left-panel">
+        <div id="artist-details" class="panel-section hidden">
+            <div class="section-title">ARTIST_RECORD</div>
+            <div class="artist-image-container">
+                <div class="loading-spinner" id="artist-img-loader"></div>
+                <img id="artist-image" src="" alt="Artist Image" class="hidden">
+            </div>
+            <div class="artist-info">
+                <h2 id="artist-name">---</h2>
+                <div class="label" style="margin-bottom: 5px;">BIOGRAPHY_SUMMARY</div>
+                <p id="artist-bio">Waiting for node selection...</p>
+                <div class="label" style="margin-top: 15px; margin-bottom: 5px;">NOTABLE_WORK</div>
+                <p id="artist-notable-work">---</p>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="app.js"></script>
+</body>
+</html>

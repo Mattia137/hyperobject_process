@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Earth-Mars Bridge Project</title>
+    <meta name="description" content="Interactive architectural topology for the Earth-Mars Bridge Project.">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <canvas id="c"></canvas>
+
+    <div id="hud">
+        <div class="hud-cluster top-left">
+            <div class="label">SYSTEM</div>
+            <div class="val">EARTH-MARS_BRIDGE</div>
+            <div class="label">MODE</div>
+            <div class="val" id="hud-mode">NETWORK</div>
+        </div>
+        <div class="hud-cluster top-center">
+            <div class="label">NODE_ID</div>
+            <div class="val" id="hud-target">---</div>
+        </div>
+        <div class="hud-cluster top-right">
+            <div class="label">NODES</div>
+            <div class="val">22</div>
+            <div class="label">EDGES</div>
+            <div class="val">31</div>
+        </div>
+        <div class="hud-cluster bottom-left">
+            <div class="label">CLUSTER</div>
+            <div class="val" id="hud-cluster">---</div>
+            <div class="label">COORDS</div>
+            <div class="val" id="hud-coords">0.00 / 0.00</div>
+        </div>
+        <div class="hud-cluster bottom-center">
+            <button id="toggleBtn" class="toggle-btn">DIAGRAM_MODE</button>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,230 @@
+@import url('https://fonts.googleapis.com/css2?family=Fragment+Mono&display=swap');
+
+body, html {
+    margin: 0;
+    padding: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: #000000;
+    overflow: hidden;
+    font-family: 'Fragment Mono', monospace;
+    color: #ffffff;
+}
+
+#renderCanvas {
+    width: 100%;
+    height: 100%;
+    touch-action: none;
+    outline: none;
+    display: block;
+}
+
+#hud {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 10;
+}
+
+.hud-cluster {
+    position: absolute;
+    padding: 30px;
+}
+
+.top-left { top: 0; left: 0; }
+.top-center { top: 0; left: 50%; transform: translateX(-50%); text-align: center; }
+.top-right { top: 0; right: 0; text-align: right; }
+.bottom-center { bottom: 30px; left: 50%; transform: translateX(-50%); }
+
+.label {
+    font-size: 10px;
+    color: rgba(255, 255, 255, 0.4);
+    letter-spacing: 2px;
+    margin-bottom: 6px;
+}
+
+.val {
+    font-size: 14px;
+    letter-spacing: 1px;
+    margin-bottom: 16px;
+    text-transform: uppercase;
+}
+
+.val.active {
+    color: #ffffff;
+    text-shadow: 0 0 8px rgba(255, 255, 255, 0.5);
+}
+
+.toggle-btn {
+    pointer-events: auto;
+    background: #000000;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: #ffffff;
+    font-family: 'Fragment Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 2px;
+    padding: 12px 24px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-transform: uppercase;
+}
+
+.toggle-btn:hover {
+    border-color: #ffffff;
+    background: rgba(255, 255, 255, 0.1);
+}
+
+/* Right Panel Styles */
+#right-panel {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 320px;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.85);
+    border-left: 1px solid rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(5px);
+    z-index: 20;
+    display: flex;
+    flex-direction: column;
+    padding: 30px 20px;
+    overflow-y: auto;
+    font-size: 12px;
+    box-sizing: border-box;
+    pointer-events: auto;
+}
+
+#left-panel {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 320px;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.85);
+    border-right: 1px solid rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(5px);
+    z-index: 20;
+    display: flex;
+    flex-direction: column;
+    padding: 30px 20px;
+    overflow-y: auto;
+    font-size: 12px;
+    box-sizing: border-box;
+    pointer-events: auto;
+}
+
+.panel-section {
+    margin-bottom: 30px;
+    opacity: 1;
+    transition: opacity 0.3s ease;
+}
+
+.panel-section.hidden {
+    display: none;
+}
+
+.section-title {
+    color: #ffffff;
+    font-size: 14px;
+    letter-spacing: 2px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+    padding-bottom: 8px;
+    margin-bottom: 15px;
+    text-transform: uppercase;
+}
+
+.stat-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 8px;
+}
+
+.stat-row .val {
+    margin-bottom: 0;
+    font-size: 12px;
+}
+
+.artist-image-container {
+    width: 100%;
+    height: 200px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+}
+
+.artist-image-container img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: opacity 0.3s ease;
+}
+
+.artist-image-container img.hidden {
+    opacity: 0;
+}
+
+.loading-spinner {
+    width: 24px;
+    height: 24px;
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    border-top-color: #ffffff;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    position: absolute;
+    display: none;
+}
+
+.loading-spinner.active {
+    display: block;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+#artist-name {
+    font-size: 16px;
+    margin: 0 0 10px 0;
+    text-transform: uppercase;
+    font-weight: normal;
+}
+
+#artist-bio {
+    color: rgba(255, 255, 255, 0.8);
+    line-height: 1.4;
+    max-height: 150px;
+    overflow-y: auto;
+    margin: 0;
+    padding-right: 5px;
+}
+
+#artist-notable-work {
+    color: #ffffff;
+    margin: 0;
+    line-height: 1.4;
+}
+
+/* Custom Scrollbar for panel */
+#right-panel::-webkit-scrollbar,
+#left-panel::-webkit-scrollbar,
+#artist-bio::-webkit-scrollbar {
+    width: 4px;
+}
+#right-panel::-webkit-scrollbar-track,
+#left-panel::-webkit-scrollbar-track,
+#artist-bio::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.3);
+}
+#right-panel::-webkit-scrollbar-thumb,
+#left-panel::-webkit-scrollbar-thumb,
+#artist-bio::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+}
