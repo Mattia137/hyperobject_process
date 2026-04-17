@@ -1,0 +1,7 @@
+127.0.0.1 - - [17/Apr/2026 03:16:19] "GET /media_artists_map/index.html HTTP/1.1" 200 -
+127.0.0.1 - - [17/Apr/2026 03:17:25] "GET /media_artists_map/index.html HTTP/1.1" 200 -
+127.0.0.1 - - [17/Apr/2026 03:17:26] "GET /media_artists_map/styles.css HTTP/1.1" 200 -
+127.0.0.1 - - [17/Apr/2026 03:17:26] "GET /media_artists_map/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [17/Apr/2026 03:17:28] "GET /artists_data.json HTTP/1.1" 200 -
+127.0.0.1 - - [17/Apr/2026 03:17:28] "GET /museums_data.json HTTP/1.1" 200 -
+127.0.0.1 - - [17/Apr/2026 03:17:28] "GET /media_artists_map/earth.glb HTTP/1.1" 200 -

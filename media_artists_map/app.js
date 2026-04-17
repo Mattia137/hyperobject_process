@@ -11,7 +11,8 @@ export const APP_CONFIG = {
         edgeLine: new BABYLON.Color4(1, 1, 1, 0.15),
         nodeDefault: new BABYLON.Color3(1, 1, 1),
         nodeOpacity: 0.8, // 0.0 – 1.0
-        hoverEffect: new BABYLON.Color3(1, 1, 1)
+        hoverEffect: new BABYLON.Color3(1, 1, 1),
+        museumNode: new BABYLON.Color3(1.0, 0.84, 0.0) // Gold/Yellow #FFD700
     },
     earthMaterial: {
         metallic: 0.9,
@@ -84,11 +85,22 @@ function rand3D(scale) {
 }
 
 async function loadData() {
+    // Load Artists
     const response = await fetch('../artists_data.json');
     const data = await response.json();
 
+    // Load Museums
+    let museumData = [];
+    try {
+        const musRes = await fetch('../museums_data.json');
+        museumData = await musRes.json();
+    } catch(e) {
+        console.warn("Could not load museums_data.json", e);
+    }
+
     let mediumDict = {};
     let artistIdCounter = 0;
+    let museumIdCounter = 0;
 
     data.forEach(artist => {
         if (!artist.name) return;
@@ -153,14 +165,34 @@ async function loadData() {
 
     Object.values(mediumDict).forEach(m => nodesData.push(m));
 
+    // Add Museum nodes
+    museumData.forEach(museum => {
+        if (!museum.museum_name || museum.latitude == null || museum.longitude == null) return;
+
+        let mNode = {
+            id: `museum_${museumIdCounter++}`,
+            label: museum.museum_name,
+            type: "museum",
+            hasLoc: true,
+            lat: museum.latitude,
+            lon: museum.longitude,
+            bio: museum.description || "",
+            image_url: museum.image_url || "",
+            score: 100 // High score to always show label if we want, or handle differently
+        };
+        nodesData.push(mNode);
+    });
+
     // Precalculate network 2D/3D planar physics layout
     computeNetworkLayout(Object.values(mediumDict));
 
-    document.getElementById("hud-nodes").innerText = artistIdCounter;
+    document.getElementById("hud-nodes").innerText = artistIdCounter + museumIdCounter;
     document.getElementById("hud-edges").innerText = Object.keys(mediumDict).length;
 
     // Populate Right Panel Stats
     document.getElementById("stat-total-artists").innerText = artistIdCounter;
+    let musEl = document.getElementById("stat-total-museums");
+    if (musEl) musEl.innerText = museumIdCounter;
 
     // Calculate top media categories
     let cats = Object.values(mediumDict).sort((a, b) => b.artists.length - a.artists.length);
@@ -207,6 +239,23 @@ function computeNetworkLayout(mediums) {
                 );
             }
         });
+    });
+
+    // Add museums to a general cluster or distribute them on the periphery in Network mode
+    let museums = nodesData.filter(n => n.type === "museum");
+    museums.forEach((m, idx) => {
+        if (m.hasLoc) {
+            m.mapPos = latLonToVector3(m.lat, m.lon, APP_CONFIG.globeRadius + 1);
+        }
+
+        // For Network Mode, position them in a larger outer ring
+        let angle = (idx / museums.length) * Math.PI * 2;
+        let radius = APP_CONFIG.physics.networkRadiusScale * 1.5;
+        m.networkPos = new BABYLON.Vector3(
+            Math.cos(angle) * radius,
+            Math.sin(angle) * radius,
+            (Math.random() - 0.5) * 100
+        );
     });
 }
 
@@ -282,8 +331,12 @@ async function initEngine() {
     };
 
     window.addEventListener("click", () => {
-        if (hoveredMesh && hoveredMesh.nodeData && hoveredMesh.nodeData.type === "artist") {
-            fetchArtistWikiData(hoveredMesh.nodeData);
+        if (hoveredMesh && hoveredMesh.nodeData) {
+            if (hoveredMesh.nodeData.type === "artist") {
+                fetchArtistWikiData(hoveredMesh.nodeData);
+            } else if (hoveredMesh.nodeData.type === "museum") {
+                showMuseumData(hoveredMesh.nodeData);
+            }
         }
     });
 
@@ -375,17 +428,23 @@ async function buildSceneElements() {
 
     nodesData.forEach(node => {
         let isArtist = node.type === "artist";
+        let isMuseum = node.type === "museum";
+
         // World-space diameter — stays visually constant because we compensate scaling per-frame
-        let diameter = isArtist ? (1.5 + (node.score / 100) * 10.5) : 8;
+        let diameter = isArtist ? (1.5 + (node.score / 100) * 10.5) : (isMuseum ? 5 : 8);
         node.baseDiameter = diameter; // remember for scale compensation
 
         let mesh = BABYLON.MeshBuilder.CreateSphere(node.id, {
             diameter: diameter,
-            segments: isArtist ? 6 : 12
+            segments: isArtist ? 6 : (isMuseum ? 16 : 12)
         }, scene);
 
         let mat = artistMatProto.clone("mat_" + node.id);
-        let nColor = isArtist ? (mediumColors[node.medium] || APP_CONFIG.colors.nodeDefault) : APP_CONFIG.colors.nodeDefault;
+        let nColor;
+        if (isArtist) nColor = mediumColors[node.medium] || APP_CONFIG.colors.nodeDefault;
+        else if (isMuseum) nColor = APP_CONFIG.colors.museumNode;
+        else nColor = APP_CONFIG.colors.nodeDefault;
+
         mat.emissiveColor = nColor;
         mat.alpha = APP_CONFIG.colors.nodeOpacity;
         mesh.material = mat;
@@ -395,8 +454,8 @@ async function buildSceneElements() {
         mesh.nodeData = node;
         node.mesh = mesh;
 
-        // --- Label for high-score artists only ---
-        if (isArtist && advancedTexture && node.score > APP_CONFIG.labels.scoreThreshold) {
+        // --- Label for high-score artists and museums ---
+        if ((isArtist || isMuseum) && advancedTexture && node.score > APP_CONFIG.labels.scoreThreshold) {
             let targetNode = new BABYLON.TransformNode("lbl_" + node.id, scene);
             // start offset, will be updated each frame
             targetNode.position = mesh.position.add(
@@ -426,7 +485,7 @@ async function buildSceneElements() {
             node.guiText = idText;
         }
 
-        if (!isArtist) {
+        if (!isArtist && !isMuseum) {
             mesh.visibility = currentMode === "MAP" ? 0 : 1;
         }
 
@@ -636,5 +695,28 @@ async function fetchArtistWikiData(artistData) {
     } catch (e) {
         document.getElementById("artist-bio").innerText = artistData.bio || "Error loading Wikipedia data.";
         showFallbackImage(artistData.label);
+    }
+}
+
+function showMuseumData(museumData) {
+    let panel = document.getElementById("artist-details");
+    panel.classList.remove("hidden");
+
+    document.getElementById("artist-name").innerText = museumData.label.toUpperCase();
+    document.getElementById("artist-img-loader").classList.add("active");
+    let imgEl = document.getElementById("artist-image");
+    imgEl.classList.add("hidden");
+
+    document.getElementById("artist-bio").innerText = museumData.bio || "No description available.";
+    document.getElementById("artist-notable-work").innerText = "MUSEUM / INSTITUTION";
+
+    if (museumData.image_url) {
+        imgEl.src = museumData.image_url;
+        imgEl.onload = () => {
+            document.getElementById("artist-img-loader").classList.remove("active");
+            imgEl.classList.remove("hidden");
+        };
+    } else {
+        showFallbackImage(museumData.label);
     }
 }
