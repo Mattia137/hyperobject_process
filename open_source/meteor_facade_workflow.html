@@ -1,0 +1,767 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Meteor Facade v7 — Workflow</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fragment+Mono&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:      #0a0a0a;
+    --panel:   #111;
+    --border:  #252525;
+    --text:    #d8d8d8;
+    --muted:   #555;
+    --accent:  #c8ff00;
+    --blue:    #4488ff;
+    --orange:  #ff8844;
+    --purple:  #cc88ff;
+    --teal:    #44ddbb;
+    --yellow:  #ffdd44;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Fragment Mono', 'Space Mono', 'Courier New', monospace;
+    padding: 48px 32px 80px;
+    min-height: 100vh;
+  }
+
+  .title-block {
+    text-align: center;
+    margin-bottom: 56px;
+  }
+  .title-block h1 {
+    font-size: 13px;
+    letter-spacing: 0.35em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 10px;
+  }
+  .title-block h2 {
+    font-size: 28px;
+    font-weight: normal;
+    letter-spacing: 0.08em;
+    color: var(--text);
+  }
+  .title-block h2 span { color: var(--accent); }
+
+  #diagram {
+    position: relative;
+    max-width: 1320px;
+    margin: 0 auto;
+  }
+
+  .col-layout {
+    display: grid;
+    grid-template-columns: 1fr 320px 1fr;
+    gap: 0 36px;
+    align-items: start;
+  }
+  .col-center { display: flex; flex-direction: column; align-items: center; }
+  .col-left   { display: flex; flex-direction: column; align-items: flex-end;   gap: 0; }
+  .col-right  { display: flex; flex-direction: column; align-items: flex-start; gap: 0; }
+
+  .node {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 14px 18px;
+    width: 100%;
+    margin-bottom: 10px;
+    position: relative;
+  }
+  .node-label {
+    font-size: 8px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 6px;
+  }
+  .node-title {
+    font-size: 14px;
+    font-weight: bold;
+    letter-spacing: 0.06em;
+    line-height: 1.3;
+  }
+  .node-sub {
+    font-size: 10px;
+    color: var(--muted);
+    margin-top: 5px;
+    line-height: 1.7;
+  }
+  .node-sub b { color: #888; }
+  .node-tag {
+    display: inline-block;
+    font-size: 8px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 2px 7px;
+    border-radius: 2px;
+    margin-top: 6px;
+    margin-right: 4px;
+  }
+
+  /* ── VARIANTS ─────────────────────────────── */
+  .node-mesh   { border-color: var(--teal);   background: #001511; }
+  .node-mesh   .node-title { color: var(--teal); }
+
+  .node-zone   { border-color: var(--accent); background: #111a00; }
+  .node-zone   .node-title { color: var(--accent); }
+
+  .node-img    { border-color: var(--yellow); background: #1a1500; }
+  .node-img    .node-title { color: var(--yellow); }
+
+  .node-grad   { border-color: var(--blue);   background: #001122; }
+  .node-grad   .node-title { color: var(--blue); }
+
+  .node-pipe   { border-color: var(--orange); background: #1a0800; }
+  .node-pipe   .node-title { color: var(--orange); }
+
+  .node-mat    { border-color: #88cc44;        background: #0d1500; }
+  .node-mat    .node-title { color: #88cc44; }
+
+  .node-out    { border-color: var(--purple);  background: #0e0011; }
+  .node-out    .node-title { color: var(--purple); }
+
+  .node-ctrl   { border-color: #333; background: #0d0d0d; }
+
+  /* ── PATH HEADERS ────────────────────────── */
+  .path-header {
+    font-size: 9px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    padding: 5px 14px;
+    border-radius: 2px;
+    margin-bottom: 10px;
+    text-align: center;
+    width: 100%;
+  }
+  .path-header-zone { background: var(--accent); color: #000; }
+  .path-header-pipe { background: var(--orange); color: #000; }
+
+  /* ── STEP LIST ───────────────────────────── */
+  .step-list { list-style: none; }
+  .step-list li {
+    font-size: 10px;
+    color: var(--muted);
+    line-height: 1.9;
+    padding-left: 10px;
+    position: relative;
+  }
+  .step-list li::before {
+    content: '›';
+    position: absolute;
+    left: 0;
+    color: var(--accent);
+  }
+
+  .pipe-list { list-style: none; }
+  .pipe-list li {
+    font-size: 10px;
+    color: #999;
+    line-height: 1.9;
+    padding-left: 14px;
+    position: relative;
+  }
+  .pipe-list li::before {
+    content: '→';
+    position: absolute;
+    left: 0;
+    color: var(--orange);
+    font-size: 9px;
+  }
+
+  /* ── FORMULA ─────────────────────────────── */
+  .formula {
+    font-size: 11px;
+    color: var(--accent);
+    background: #0d1200;
+    border: 1px solid #1e2a00;
+    border-radius: 3px;
+    padding: 6px 10px;
+    margin-top: 8px;
+    letter-spacing: 0.04em;
+    line-height: 1.6;
+  }
+
+  /* ── SECTION DIVIDER ─────────────────────── */
+  .section-divider {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 6px 0 14px;
+  }
+  .section-divider span {
+    font-size: 8px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--muted);
+    white-space: nowrap;
+  }
+  .section-divider::before, .section-divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  /* ── ZONE BADGE ROW ──────────────────────── */
+  .zone-badges { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
+  .zbadge {
+    font-size: 9px;
+    padding: 3px 9px;
+    border-radius: 2px;
+    letter-spacing: 0.06em;
+  }
+
+  /* ── SVG LAYER ───────────────────────────── */
+  #arrows {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    pointer-events: none;
+    overflow: visible;
+  }
+
+  /* ── LEGEND ──────────────────────────────── */
+  .legend {
+    margin-top: 52px;
+    display: flex;
+    gap: 24px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 0.06em;
+  }
+  .legend-dot { width: 10px; height: 10px; border-radius: 50%; }
+
+  /* ── LIGHT THEME ─────────────────────────── */
+  body.light {
+    --bg: #f5f5f0; --panel: #fff; --border: #d0d0cc;
+    --text: #111; --muted: #888;
+    --accent: #3a7d00; --blue: #1155cc; --orange: #cc5500;
+    --purple: #7700cc; --teal: #007755; --yellow: #996600;
+  }
+  body.light .node          { background: #fff; }
+  body.light .node-mesh     { background: #eefffa; }
+  body.light .node-zone     { background: #f5ffe5; }
+  body.light .node-img      { background: #fffbec; }
+  body.light .node-grad     { background: #eef4ff; }
+  body.light .node-pipe     { background: #fff4ee; }
+  body.light .node-mat      { background: #f0ffe0; }
+  body.light .node-out      { background: #f8eeff; }
+  body.light .node-ctrl     { background: #f8f8f8; }
+  body.light .formula       { background: #f5ffe5; border-color: #cce5a0; }
+  body.light .section-divider::before,
+  body.light .section-divider::after { background: #ccc; }
+
+  /* ── FIXED BUTTONS ───────────────────────── */
+  .fixed-btns {
+    position: fixed; bottom: 28px; right: 28px;
+    display: flex; gap: 8px; z-index: 999;
+  }
+  #print-btn, #theme-btn {
+    background: var(--accent); color: #000; border: none;
+    padding: 10px 22px;
+    font-family: 'Fragment Mono', 'Space Mono', monospace;
+    font-size: 11px; letter-spacing: 0.15em;
+    text-transform: uppercase; cursor: pointer; border-radius: 3px;
+  }
+  #theme-btn { background: transparent; color: var(--text); border: 1px solid var(--border); }
+  #print-btn:hover, #theme-btn:hover { opacity: 0.75; }
+
+  @media print {
+    @page { size: A3 portrait; margin: 8mm; }
+    .fixed-btns { display: none; }
+    body { background: #0a0a0a !important; padding: 16px;
+           -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    body.light { background: #f5f5f0 !important; }
+    .title-block { margin-bottom: 28px; }
+    #diagram { transform-origin: top left; transform: scale(0.60); width: 167%; }
+  }
+</style>
+</head>
+<body class="light">
+
+<div class="title-block">
+  <h1>Geometry Nodes Pipeline</h1>
+  <h2>Meteor Facade v7 <span>/ B&W Image → Tiling Mesh</span></h2>
+</div>
+
+<div id="diagram">
+  <svg id="arrows"></svg>
+
+  <div class="col-layout">
+
+    <!-- ════ LEFT: IMAGE ZONE SYSTEM ════ -->
+    <div class="col-left">
+
+      <div class="path-header path-header-zone">Image Zone System</div>
+
+      <div class="node node-mesh" id="n-images" style="margin-top:0">
+        <div class="node-label">Inputs</div>
+        <div class="node-title">IMG_A + IMG_B</div>
+        <div class="node-sub">
+          Two B&W images loaded in Shader Editor<br>
+          Each defines one bit of a 2-bit zone index<br>
+          <b>IMG_A</b> → bit 0 &nbsp;|&nbsp; <b>IMG_B</b> → bit 1
+        </div>
+      </div>
+
+      <div class="node node-zone" id="n-uv-read">
+        <div class="node-label">Geometry Nodes</div>
+        <div class="node-title">UV Read</div>
+        <ul class="step-list" style="margin-top:6px">
+          <li>InputNamedAttribute (FLOAT_VECTOR)</li>
+          <li>Auto-detects active UV map name</li>
+          <li>Outputs (U, V, 0) per mesh vertex</li>
+        </ul>
+      </div>
+
+      <div class="node node-zone" id="n-uv-scale">
+        <div class="node-label">UV Transform</div>
+        <div class="node-title">Scale + Offset</div>
+        <ul class="step-list" style="margin-top:6px">
+          <li>VectorMath SCALE → UV Scale A / B</li>
+          <li>VectorMath ADD  → UV Offset A / B</li>
+          <li>IMG_B gets +0.37, +0.61 decorrelation shift</li>
+        </ul>
+      </div>
+
+      <div class="node node-img" id="n-img-sample">
+        <div class="node-label">GeometryNodeImageTexture × 2</div>
+        <div class="node-title">Image Sampling</div>
+        <div class="node-sub">
+          Sampled at transformed UV per vertex<br>
+          Extension: <b>REPEAT</b> &nbsp;·&nbsp; Interpolation: <b>Linear</b>
+        </div>
+        <div class="formula">
+          bit0 = Color_A &gt; Threshold<br>
+          bit1 = Color_B &gt; Threshold
+        </div>
+      </div>
+
+      <div class="node node-zone" id="n-bit-encode">
+        <div class="node-label">Bit Encoding</div>
+        <div class="node-title">Zone Index 0 – 3</div>
+        <div class="formula">
+          img_zone = bit0 + bit1 × 2<br>
+          → 0 / 1 / 2 / 3  (each ≈ 25 % surface)
+        </div>
+      </div>
+
+      <div class="node node-grad" id="n-gradient">
+        <div class="node-label">Height Gradient</div>
+        <div class="node-title">Gradient Mask</div>
+        <ul class="step-list" style="margin-top:6px">
+          <li>World position projected along rotatable axis</li>
+          <li>Normalised by Height Min / Max</li>
+          <li>MapRange SMOOTHSTEP → gradient value</li>
+          <li>TexNoise blur (Scale 12, Detail 2)</li>
+          <li>use_img = gr_n &gt; 0.5</li>
+        </ul>
+      </div>
+
+      <div class="node node-zone" id="n-eff-zone">
+        <div class="node-label">Zone Multiplier</div>
+        <div class="node-title">Effective Zone</div>
+        <div class="formula">
+          eff_zone = img_zone × use_img<br>
+          (zone 0 fills base when use_img = 0)
+        </div>
+        <div class="node-sub" style="margin-top:8px">
+          Per-face zone selection: <b>|eff_zone − zi| &lt; 0.5</b>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ════ CENTER: MAIN PIPELINE ════ -->
+    <div class="col-center">
+
+      <div class="section-divider"><span>Inputs</span></div>
+
+      <div class="node node-mesh" id="n-input-mesh" style="width:320px">
+        <div class="node-label">Active Object</div>
+        <div class="node-title">Input Mesh</div>
+        <div class="node-sub">
+          Must have UV unwrap (any UV map name)<br>
+          Script auto-detects active UV layer<br>
+          Any closed or open surface geometry
+        </div>
+      </div>
+
+      <div class="section-divider"><span>Geometry Nodes Modifier</span></div>
+
+      <div class="node node-ctrl" id="n-boundary-sub" style="width:320px">
+        <div class="node-label">Preprocessing</div>
+        <div class="node-title">Boundary SubdivideMesh</div>
+        <div class="node-sub">
+          Level = <b>Boundary Detail</b> (0–5)<br>
+          Increases vertex density at zone edges<br>
+          Gives cleaner image-zone boundaries
+        </div>
+      </div>
+
+      <!-- center spacer to vertically align with zone branch arrows -->
+      <div style="height: 520px; display:flex; align-items:center; justify-content:center; width:320px">
+        <div class="node node-ctrl" id="n-branch-center" style="width:320px; text-align:center">
+          <div class="node-label" style="text-align:center">Per-Zone × 4</div>
+          <div style="display:flex; gap:10px; justify-content:center; margin-top:8px; flex-wrap:wrap">
+            <span class="node-tag" style="background:#001a00;color:var(--accent);border:1px solid var(--accent)">Zone 0</span>
+            <span class="node-tag" style="background:#001a00;color:var(--accent);border:1px solid var(--accent)">Zone 1</span>
+            <span class="node-tag" style="background:#001a00;color:var(--accent);border:1px solid var(--accent)">Zone 2</span>
+            <span class="node-tag" style="background:#001a00;color:var(--accent);border:1px solid var(--accent)">Zone 3</span>
+          </div>
+          <div class="node-sub" style="margin-top:10px">
+            Each zone runs the full pipeline<br>
+            in parallel → 4 geometry streams
+          </div>
+        </div>
+      </div>
+
+      <div class="node node-mesh" id="n-join" style="width:320px">
+        <div class="node-label">Merge Streams</div>
+        <div class="node-title">Join Geometry</div>
+        <div class="node-sub">All 4 zone meshes joined into one geometry</div>
+      </div>
+
+      <div class="section-divider"><span>Output Control</span></div>
+
+      <div class="node node-ctrl" id="n-switch" style="width:320px; text-align:center">
+        <div class="node-label">Switch Node</div>
+        <div class="node-title">Debug Maps Toggle</div>
+        <div style="display:flex;gap:10px;justify-content:center;margin-top:8px">
+          <span class="node-tag" style="background:#1a0800;color:var(--orange);border:1px solid var(--orange)">OFF → Full Panels</span>
+          <span class="node-tag" style="background:#001122;color:var(--blue);border:1px solid var(--blue)">ON → Zone Preview</span>
+        </div>
+        <div class="node-sub" style="margin-top:8px">
+          Debug: mesh colored R/G/B/Y per zone<br>using emission materials (no panels)
+        </div>
+      </div>
+
+      <div class="section-divider"><span>Output</span></div>
+
+      <div class="node node-out" id="n-output-mesh" style="width:320px">
+        <div class="node-label">Modifier Output</div>
+        <div class="node-title">Tiling Facade Mesh</div>
+        <div class="node-sub">
+          4 material zones, noise-extruded panels<br>
+          Gap joints between each panel<br>
+          Density controlled per zone via Grid Zi
+        </div>
+        <div class="zone-badges">
+          <span class="zbadge" style="background:#1a0505;color:#ff6666;border:1px solid #662222">Z0 SmoothStone</span>
+          <span class="zbadge" style="background:#0a1a0a;color:#66ff66;border:1px solid #226622">Z1 RoughStone</span>
+          <span class="zbadge" style="background:#05051a;color:#6699ff;border:1px solid #222266">Z2 BlackGlass</span>
+          <span class="zbadge" style="background:#1a1a05;color:#ffff44;border:1px solid #666622">Z3 MetalPanel</span>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ════ RIGHT: PER-ZONE PIPELINE ════ -->
+    <div class="col-right">
+
+      <div class="path-header path-header-pipe">Per-Zone Pipeline  ×4</div>
+
+      <div class="node node-zone" id="n-zone-sel" style="margin-top:0">
+        <div class="node-label">Zone Selection</div>
+        <div class="node-title">Face Mask</div>
+        <div class="node-sub">
+          Derived from <b>eff_zone</b> (left column)<br>
+          Math: ABS(eff_zone − zi) &lt; 0.5<br>
+          Gives 0.0 / 1.0 per face
+        </div>
+      </div>
+
+      <div class="node node-pipe" id="n-separate">
+        <div class="node-label">GeometryNodeSeparateGeometry</div>
+        <div class="node-title">Separate Zone Faces</div>
+        <ul class="pipe-list" style="margin-top:6px">
+          <li>Domain: FACE</li>
+          <li>Input: boundary-subdivided mesh</li>
+          <li>Output: only this zone's faces</li>
+        </ul>
+      </div>
+
+      <div class="node node-pipe" id="n-grid-sub">
+        <div class="node-label">GeometryNodeSubdivideMesh</div>
+        <div class="node-title">Panel Grid Subdivision</div>
+        <ul class="pipe-list" style="margin-top:6px">
+          <li>Level = <b>Grid Zi</b> (0–5)</li>
+          <li>4^N panels per original face</li>
+          <li>Independent per zone</li>
+        </ul>
+        <div class="node-sub" style="margin-top:6px">
+          Z0: 2 &nbsp;·&nbsp; Z1: 3 &nbsp;·&nbsp; Z2: 4 &nbsp;·&nbsp; Z3: 2 (defaults)
+        </div>
+      </div>
+
+      <div class="node node-pipe" id="n-scale-gap">
+        <div class="node-label">GeometryNodeScaleElements</div>
+        <div class="node-title">Gap Between Panels</div>
+        <ul class="pipe-list" style="margin-top:6px">
+          <li>Domain: FACE</li>
+          <li>Scale = 1 − Gap Size</li>
+          <li>Shrinks each face → visible joint</li>
+        </ul>
+      </div>
+
+      <div class="node node-grad" id="n-noise-depth">
+        <div class="node-label">ShaderNodeTexNoise + Math</div>
+        <div class="node-title">Per-Panel Extrude Depth</div>
+        <ul class="pipe-list" style="margin-top:6px">
+          <li>TexNoise 3D (Detail 4, Roughness 0.7)</li>
+          <li>Scale = <b>Height Noise</b></li>
+          <li>Fac × Depth Zi → per-face offset</li>
+        </ul>
+        <div class="formula">depth = noise.Fac × Depth Zi</div>
+      </div>
+
+      <div class="node node-pipe" id="n-extrude">
+        <div class="node-label">GeometryNodeExtrudeMesh</div>
+        <div class="node-title">Extrude Panels</div>
+        <ul class="pipe-list" style="margin-top:6px">
+          <li>Mode: FACES</li>
+          <li>Individual: True</li>
+          <li>Offset Scale: depth (noise-driven)</li>
+          <li>Each face extruded independently</li>
+        </ul>
+      </div>
+
+      <div class="node node-mat" id="n-set-material">
+        <div class="node-label">GeometryNodeSetMaterial</div>
+        <div class="node-title">Assign Material</div>
+        <div class="node-sub">
+          One Principled BSDF material per zone<br>
+          Applied to entire zone geometry stream
+        </div>
+        <div class="zone-badges">
+          <span class="zbadge" style="background:#1a0505;color:#ff9999;border:1px solid #442222">Rough 0.95</span>
+          <span class="zbadge" style="background:#0a1a0a;color:#99ff99;border:1px solid #224422">Rough 0.88</span>
+          <span class="zbadge" style="background:#05051a;color:#9999ff;border:1px solid #222244">Metal 0.04</span>
+          <span class="zbadge" style="background:#1a1a05;color:#ffff88;border:1px solid #444422">Metal 0.92</span>
+        </div>
+      </div>
+
+    </div>
+  </div><!-- end col-layout -->
+
+  <!-- PARAMETERS REFERENCE -->
+  <div style="max-width:1320px;margin:48px auto 0;display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px">
+
+    <div class="node node-ctrl">
+      <div class="node-label">Zone Control</div>
+      <div class="node-title" style="font-size:12px;margin-bottom:8px">Image Parameters</div>
+      <div class="node-sub" style="line-height:2">
+        <b style="color:#888">UV Scale A / B</b> — image tiling frequency<br>
+        <b style="color:#888">UV Offset A / B</b> — shift image on surface<br>
+        <b style="color:#888">Threshold</b> — zone balance (0.5 = equal)<br>
+        <b style="color:#888">Boundary Detail</b> — zone edge smoothness (0–5)
+      </div>
+    </div>
+
+    <div class="node node-ctrl">
+      <div class="node-label">Gradient Control</div>
+      <div class="node-title" style="font-size:12px;margin-bottom:8px">Height Parameters</div>
+      <div class="node-sub" style="line-height:2">
+        <b style="color:#888">Height Min / Max</b> — world Z range of building<br>
+        <b style="color:#888">Gradient Start / End</b> — transition zone-0 to image<br>
+        <b style="color:#888">Gradient Rotation</b> — tilt gradient direction
+      </div>
+    </div>
+
+    <div class="node node-ctrl">
+      <div class="node-label">Panel Control</div>
+      <div class="node-title" style="font-size:12px;margin-bottom:8px">Tile Parameters</div>
+      <div class="node-sub" style="line-height:2">
+        <b style="color:#888">Grid Z0–Z3</b> — panel density per zone (4^N)<br>
+        <b style="color:#888">Gap Size</b> — joint between panels (0–0.4)<br>
+        <b style="color:#888">Depth Z0–Z3</b> — max extrusion per zone<br>
+        <b style="color:#888">Height Noise</b> — noise frequency for depth
+      </div>
+    </div>
+
+  </div>
+
+  <!-- LEGEND -->
+  <div class="legend">
+    <div class="legend-item"><div class="legend-dot" style="background:var(--teal)"></div>Mesh I/O</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--accent)"></div>Zone System</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--yellow)"></div>Image Textures</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--blue)"></div>Gradient / Noise</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--orange)"></div>Per-Zone Pipeline</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#88cc44"></div>Materials</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--purple)"></div>Output</div>
+  </div>
+
+</div><!-- end diagram -->
+
+<div class="fixed-btns">
+  <button id="theme-btn" onclick="toggleTheme()">☽ Dark</button>
+  <button id="print-btn" onclick="window.print()">Print / Save PDF</button>
+</div>
+
+<script>
+function toggleTheme() {
+  const light = document.body.classList.toggle('light');
+  document.getElementById('theme-btn').textContent = light ? '☽ Dark' : '☀ Light';
+  drawArrows();
+}
+
+window.addEventListener('load', drawArrows);
+window.addEventListener('resize', drawArrows);
+
+function drawArrows() {
+  const svg    = document.getElementById('arrows');
+  const diagEl = document.getElementById('diagram');
+  const diagR  = diagEl.getBoundingClientRect();
+
+  svg.setAttribute('width',  diagEl.offsetWidth);
+  svg.setAttribute('height', diagEl.offsetHeight);
+  svg.innerHTML = '';
+
+  const defs = svgEl('defs');
+  const isLight = document.body.classList.contains('light');
+  const mkMarker = (id, fill) => `
+    <marker id="${id}" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="${fill}"/>
+    </marker>`;
+  defs.innerHTML =
+    mkMarker('ah-main',  '#444')   +
+    mkMarker('ah-teal',  '#44ddbb') +
+    mkMarker('ah-zone',  '#7dcc00') +
+    mkMarker('ah-pipe',  '#cc6622') +
+    mkMarker('ah-blue',  '#3377ee') +
+    mkMarker('ah-mat',   '#66aa22');
+  svg.appendChild(defs);
+
+  function r(id) {
+    const e = document.getElementById(id);
+    if (!e) return null;
+    const b = e.getBoundingClientRect();
+    return {
+      top:    b.top    - diagR.top,
+      bottom: b.bottom - diagR.top,
+      left:   b.left   - diagR.left,
+      right:  b.right  - diagR.left,
+      cx:     b.left   - diagR.left + b.width  / 2,
+      cy:     b.top    - diagR.top  + b.height / 2,
+    };
+  }
+
+  function svgEl(tag, attrs = {}) {
+    const e = document.createElementNS('http://www.w3.org/2000/svg', tag);
+    for (const [k, v] of Object.entries(attrs)) e.setAttribute(k, v);
+    return e;
+  }
+
+  function line(x1, y1, x2, y2, color, marker, dash='') {
+    const e = svgEl('line', { x1, y1, x2, y2, stroke: color,
+      'stroke-width': 1.5, 'marker-end': `url(#${marker})` });
+    if (dash) e.setAttribute('stroke-dasharray', dash);
+    svg.appendChild(e);
+  }
+
+  function curve(x1, y1, cpx, cpy, x2, y2, color, marker, dash='') {
+    const e = svgEl('path', {
+      d: `M ${x1} ${y1} Q ${cpx} ${cpy} ${x2} ${y2}`,
+      fill: 'none', stroke: color, 'stroke-width': 1.5,
+      'marker-end': `url(#${marker})`,
+    });
+    if (dash) e.setAttribute('stroke-dasharray', dash);
+    svg.appendChild(e);
+  }
+
+  function label(x, y, text, color = '#555') {
+    const t = svgEl('text', { x, y, fill: color, 'font-size': '9',
+      'font-family': 'Fragment Mono, Space Mono, Courier New',
+      'letter-spacing': '0.08em', 'text-anchor': 'middle' });
+    t.textContent = text;
+    svg.appendChild(t);
+  }
+
+  // ── CENTER: main vertical flow ─────────────────────────────────────
+  const cFlow = ['n-input-mesh', 'n-boundary-sub', 'n-branch-center', 'n-join', 'n-switch', 'n-output-mesh'];
+  for (let i = 0; i < cFlow.length - 1; i++) {
+    const a = r(cFlow[i]), b = r(cFlow[i+1]);
+    if (!a || !b) continue;
+    line(a.cx, a.bottom + 2, b.cx, b.top - 6, '#444', 'ah-main');
+  }
+
+  // ── LEFT: zone system vertical flow ────────────────────────────────
+  const lFlow = ['n-images', 'n-uv-read', 'n-uv-scale', 'n-img-sample', 'n-bit-encode', 'n-gradient', 'n-eff-zone'];
+  for (let i = 0; i < lFlow.length - 1; i++) {
+    const a = r(lFlow[i]), b = r(lFlow[i+1]);
+    if (!a || !b) continue;
+    const col = i < 4 ? '#7dcc00' : '#3377ee';
+    const mk  = i < 4 ? 'ah-zone' : 'ah-blue';
+    line(a.cx, a.bottom + 2, b.cx, b.top - 6, col, mk);
+  }
+
+  // ── RIGHT: per-zone pipeline vertical flow ─────────────────────────
+  const rFlow = ['n-zone-sel', 'n-separate', 'n-grid-sub', 'n-scale-gap', 'n-noise-depth', 'n-extrude', 'n-set-material'];
+  for (let i = 0; i < rFlow.length - 1; i++) {
+    const a = r(rFlow[i]), b = r(rFlow[i+1]);
+    if (!a || !b) continue;
+    line(a.cx, a.bottom + 2, b.cx, b.top - 6, '#cc6622', 'ah-pipe');
+  }
+
+  // ── CROSS: boundary-sub → zone system (feeds UV context) ──────────
+  const bsub  = r('n-boundary-sub');
+  const uvRead = r('n-uv-read');
+  if (bsub && uvRead) {
+    const sx = bsub.left, sy = bsub.cy;
+    const ex = uvRead.right + 6, ey = uvRead.cy;
+    curve(sx, sy, (sx + ex) / 2, (sy + ey) / 2 - 40, ex, ey, '#7dcc00', 'ah-zone', '4 3');
+    label((sx + ex) / 2, (sy + ey) / 2 - 52, 'UV CONTEXT', '#7dcc00');
+  }
+
+  // ── CROSS: eff-zone → zone-sel (zone selection fed to right) ───────
+  const effZone = r('n-eff-zone');
+  const zoneSel = r('n-zone-sel');
+  if (effZone && zoneSel) {
+    const sx = effZone.right + 2, sy = effZone.cy;
+    const ex = zoneSel.left  - 6, ey = zoneSel.cy;
+    // route through center column
+    const mx = (sx + ex) / 2, my = Math.min(sy, ey) - 20;
+    curve(sx, sy, mx, my, ex, ey, '#7dcc00', 'ah-zone');
+    label(mx, my - 10, 'ZONE MASK', '#7dcc00');
+  }
+
+  // ── CROSS: boundary-sub → separate (mesh to per-zone) ──────────────
+  const branchC  = r('n-branch-center');
+  const separate = r('n-separate');
+  if (branchC && separate) {
+    const sx = branchC.right + 2, sy = branchC.cy;
+    const ex = separate.left  - 6, ey = separate.cy;
+    curve(sx, sy, (sx + ex) / 2 + 20, (sy + ey) / 2, ex, ey, '#cc6622', 'ah-pipe');
+    label((sx + ex) / 2 + 30, (sy + ey) / 2 - 12, 'MESH STREAM', '#cc6622');
+  }
+
+  // ── CROSS: set-material → join ─────────────────────────────────────
+  const setMat = r('n-set-material');
+  const join   = r('n-join');
+  if (setMat && join) {
+    const sx = setMat.left - 2, sy = setMat.cy;
+    const ex = join.right  + 6, ey = join.cy;
+    curve(sx, sy, (sx + ex) / 2 - 20, (sy + ey) / 2, ex, ey, '#88cc44', 'ah-mat');
+    label((sx + ex) / 2 - 30, (sy + ey) / 2 - 12, '×4 ZONES', '#88cc44');
+  }
+}
+</script>
+</body>
+</html>

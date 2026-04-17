@@ -1,0 +1,868 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>HYPEROBJECT</title>
+
+  <!-- Fragment Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fragment+Mono&display=swap" rel="stylesheet">
+
+  <style>
+    html, body { margin:0; height:100%; background:#000; overflow:hidden; }
+    canvas { display:block; width:100%; height:100%; }
+
+    .hud{
+      position:fixed;
+      top:-16px;
+      left:16px;
+      z-index:10;
+      text-align:left;
+      font: 12px/1.35 "Fragment Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      color: rgba(255,255,255,.88);
+      user-select:none;
+      white-space:pre;
+      pointer-events:none;
+    }
+    .hud .t{
+      font-size: 50px;
+      letter-spacing: 0.6px;
+      color:#fff;
+    }
+    /* closer to title */
+    .hud .m{
+      color: rgba(255,255,255,.85);
+      margin-top: -35px;
+      line-height: 1.25;
+    }
+
+    .reset{
+      position:fixed;
+      right: 16px;
+      bottom: 16px;
+      z-index:10;
+      font: 12px/1 "Fragment Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      color: rgba(255,255,255,.82);
+      background: rgba(255,255,255,.08);
+      padding: 6px 10px;
+      border-radius: 6px;
+      border: none;
+      outline: none;
+      cursor:pointer;
+      pointer-events:auto;
+    }
+    .reset:hover{ background: rgba(255,255,255,.12); color: rgba(255,255,255,.95); }
+
+    .diag{
+      position:fixed;
+      left:16px;
+      bottom:16px;
+      z-index:10;
+      font: 12px/1.35 "Fragment Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      color: rgba(255,255,255,.68);
+      user-select:none;
+      white-space:pre;
+      pointer-events:none;
+    }
+  </style>
+</head>
+<body>
+  <div class="hud">
+    <div class="t">HYPEROBJECT</div>
+    <div class="m">JAROSLAV HERRERA + MATTIA GALBUSERA
+2GBX - SS26 - CONCEPT DIAGRAM</div>
+  </div>
+
+  <button class="reset" id="resetBtn">RESET</button>
+  <div class="diag">DIAGNOSTIC STATE // SIMULATION LIVE // DATA TRANSFER READY</div>
+
+  <canvas id="c"></canvas>
+
+  <script>
+    // =========================
+    // PROGRAM
+    // =========================
+    const NODES = [
+      { id: "Public Entry", desc: "Threshold into the field." },                    // index 0 always first
+      { id: "Digital Twin Earth (Ground Truth)", desc: "Immersive present-condition model." },
+      { id: "Operational Data Center", desc: "Working data center on display; the museum’s heart." },
+      { id: "Simulation Cache", desc: "Real-time processing + scenario generation." },
+      { id: "Stream Filter Corridors (Media Conditions)", desc: "Physical media thresholds that modulate perception." },
+      { id: "Immersive World 01", desc: "World output 01 (speculative condition)." },
+      { id: "Immersive World 02", desc: "World output 02 (speculative condition)." },
+      { id: "Immersive World 03", desc: "World output 03 (speculative condition)." },
+      { id: "Terrace / Exit", desc: "Decompression + release back to the city." }, // last always
+    ];
+
+    // sequence + links rebuilt on reset (always start Entry, end Exit)
+    let SEQUENCE = [];
+    let LINKS = [];
+
+    function shuffleInPlace(arr){
+      for (let i = arr.length - 1; i > 0; i--){
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+      return arr;
+    }
+
+    function buildSequence(){
+      const first = 0;
+      const last = NODES.length - 1;
+
+      const middle = [];
+      for (let i = 1; i < last; i++) middle.push(i);
+      shuffleInPlace(middle);
+
+      SEQUENCE = [first, ...middle, last];
+
+      LINKS = [];
+      for (let s = 0; s < SEQUENCE.length - 1; s++){
+        LINKS.push([SEQUENCE[s], SEQUENCE[s+1]]);
+      }
+    }
+
+    buildSequence();
+
+    // =========================
+    // CANVAS
+    // =========================
+    const canvas = document.getElementById("c");
+    const ctx = canvas.getContext("2d", { alpha: false });
+    let W=0, H=0, DPR=1;
+
+    function resize(){
+      DPR = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
+      W = Math.floor(window.innerWidth);
+      H = Math.floor(window.innerHeight);
+      canvas.width = Math.floor(W * DPR);
+      canvas.height = Math.floor(H * DPR);
+      canvas.style.width = W + "px";
+      canvas.style.height = H + "px";
+      ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    }
+    window.addEventListener("resize", resize);
+    resize();
+
+    // =========================
+    // UTILS
+    // =========================
+    function clamp(v,a,b){ return Math.max(a, Math.min(b, v)); }
+    function rand(min,max){ return min + Math.random()*(max-min); }
+    function proximityToSegment(px,py, ax,ay, bx,by){
+      const vx = bx-ax, vy = by-ay;
+      const wx = px-ax, wy = py-ay;
+      const c1 = wx*vx + wy*vy;
+      if (c1 <= 0) return Math.hypot(px-ax, py-ay);
+      const c2 = vx*vx + vy*vy;
+      if (c2 <= c1) return Math.hypot(px-bx, py-by);
+      const t = c1 / c2;
+      const cx = ax + t*vx, cy = ay + t*vy;
+      return Math.hypot(px-cx, py-cy);
+    }
+    function fract(x){ return x - Math.floor(x); }
+    function hash1(n){ return fract(Math.sin(n)*43758.5453123); }
+    function hash2(n){ return fract(Math.sin(n*1.37 + 10.1)*15731.743); }
+    function smoothstep(t){ return t*t*(3-2*t); }
+    function noise1(x){
+      const i = Math.floor(x);
+      const f = x - i;
+      const a = hash1(i);
+      const b = hash1(i+1);
+      return a + (b-a)*smoothstep(f);
+    }
+
+    // =========================
+    // CAMERA (ORBIT + ZOOM + FOCUS)
+    // NOTE: more NEGATIVE zoom = closer (zoom IN)
+    // =========================
+    const mouse = { x: W/2, y: H/2, down:false, px:0, py:0 };
+    let orbit = { yaw: -0.22, pitch: 0.12 };
+    let zoom = 0, zoomTarget = 0;
+
+    let focus = { x: 0, y: 0, z: 0 };
+    let focusTarget = { x: 0, y: 0, z: 0 };
+
+    function project(p){
+      let x = p.x + focus.x;
+      let y = p.y + focus.y;
+      let z = p.z + focus.z;
+
+      const cy=Math.cos(orbit.yaw), sy=Math.sin(orbit.yaw);
+      let x1 = x*cy + z*sy;
+      let z1 = -x*sy + z*cy;
+
+      const cx=Math.cos(orbit.pitch), sx=Math.sin(orbit.pitch);
+      let y2 = y*cx - z1*sx;
+      let z2 = y*sx + z1*cx;
+
+      const camZ = 980 + zoom;
+      const s = camZ / (camZ + z2);
+      return { x: W/2 + x1*s, y: H/2 + y2*s, s, z:z2 };
+    }
+
+    function screenDeltaToWorld(dx, dy, atZ){
+      const camZ = 980 + zoom;
+      const s = camZ / (camZ + atZ);
+      return { wx: dx / s, wy: dy / s };
+    }
+
+    const WORLD_CLAMP_RADIUS = 860;
+    function clampToWorld(p){
+      const d = Math.hypot(p.x, p.y, p.z) + 1e-9;
+      if (d > WORLD_CLAMP_RADIUS){
+        const k = WORLD_CLAMP_RADIUS / d;
+        p.x *= k; p.y *= k; p.z *= k;
+      }
+    }
+
+    function setFocusOnNode(idx){
+      const n = nodes[idx];
+      focusTarget.x = -n.x;
+      focusTarget.y = -n.y;
+      focusTarget.z = -n.z;
+      zoomTarget = clamp(-2600, -4000, 1200);
+    }
+
+    // =========================
+    // VIEW-RELATIVE DRAG + PAN (NEW)
+    // =========================
+    function camToWorld(vx, vy, vz){
+      // inverse of (yaw then pitch) applied in project => apply (-pitch then -yaw)
+      const cy = Math.cos(orbit.yaw),  sy = Math.sin(orbit.yaw);
+      const cx = Math.cos(orbit.pitch), sx = Math.sin(orbit.pitch);
+
+      // inverse pitch (-pitch)
+      let y1 = vy*cx + vz*sx;
+      let z1 = -vy*sx + vz*cx;
+      let x1 = vx;
+
+      // inverse yaw (-yaw)
+      let x2 = x1*cy - z1*sy;
+      let z2 = x1*sy + z1*cy;
+
+      return { x: x2, y: y1, z: z2 };
+    }
+
+    function getCameraBasis(){
+      const right = camToWorld(1,0,0);
+      const up    = camToWorld(0,1,0);
+      return { right, up };
+    }
+
+    function applyScreenDragToPoint(p, dx, dy, atZ){
+      // screen delta -> camera-plane delta, then to world via camera right/up
+      const { wx, wy } = screenDeltaToWorld(dx, dy, atZ);
+      const { right, up } = getCameraBasis();
+
+      p.x += right.x*wx + up.x*wy;
+      p.y += right.y*wx + up.y*wy;
+      p.z += right.z*wx + up.z*wy;
+
+      clampToWorld(p);
+    }
+
+    // =========================
+    // BACKGROUND CLOUD
+    // =========================
+    let cloud = [];
+    function seedCloud(){
+      cloud.length = 0;
+      const count = 3600;
+      const R = 980;
+      const Z = 1150;
+      for (let i=0; i<count; i++){
+        const t = Math.pow(Math.random(), 0.62);
+        const r = t * R;
+        const a = Math.random()*Math.PI*2;
+        const y = (Math.random()*2 - 1) * (R*0.64);
+        cloud.push({
+          x: Math.cos(a)*r + rand(-10,10),
+          y: y + rand(-10,10),
+          z: rand(-Z, Z),
+          w: 0.65 + Math.random()*1.35,
+          a: 0.05 + Math.random()*0.16
+        });
+      }
+    }
+    seedCloud();
+
+    // =========================
+    // STATE: REVEAL / ACTIVE (by SEQUENCE slot)
+    // =========================
+    let revealIndex = 0;
+    let activeRevealSlot = 0;
+
+    function revealedSet(){
+      const set = new Set();
+      for (let s=0; s<=revealIndex; s++) set.add(SEQUENCE[s]);
+      return set;
+    }
+    function activeNodeIndex(){
+      return SEQUENCE[activeRevealSlot];
+    }
+
+    // =========================
+    // NODES: 3D FIELD
+    // =========================
+    const nodes = NODES.map((n, i)=>({
+      idx: i,
+      x: rand(-60,60),
+      y: rand(-60,60),
+      z: rand(-90,90),
+      vx: 0, vy: 0, vz: 0,
+      fixed: false
+    }));
+
+    function placeEntryNode(){
+      const entryIdx = SEQUENCE[0];
+      nodes[entryIdx].x = rand(-90,90);
+      nodes[entryIdx].y = rand(-70,70);
+      nodes[entryIdx].z = rand(-120,120);
+    }
+    placeEntryNode();
+
+    function placeNewNodeBySlot(slot){
+      if (slot <= 0) return;
+
+      const nodeIdx = SEQUENCE[slot];
+      const prevIdx = SEQUENCE[slot - 1];
+
+      const prev = nodes[prevIdx];
+      const depth = slot / (SEQUENCE.length - 1);
+      const step = 320 + depth*120;
+
+      nodes[nodeIdx].x = prev.x + rand(-step, step);
+      nodes[nodeIdx].y = prev.y + rand(-step*0.70, step*0.70);
+      nodes[nodeIdx].z = prev.z + rand(-step, step);
+      clampToWorld(nodes[nodeIdx]);
+    }
+
+    function stepForces(dt){
+      const revealed = revealedSet();
+      const list = nodes.filter(n => revealed.has(n.idx));
+
+      const repelK = 1800;
+      const linkK  = 0.020;
+      const linkLen = 340;
+      const damp = 0.88;
+
+      for (let i=0; i<list.length; i++){
+        const a = list[i];
+        for (let j=i+1; j<list.length; j++){
+          const b = list[j];
+          const dx = b.x-a.x, dy=b.y-a.y, dz=b.z-a.z;
+          const d2 = dx*dx+dy*dy+dz*dz + 180;
+          const f = repelK / d2;
+          const invD = 1 / Math.sqrt(d2);
+          if (!a.fixed){ a.vx -= dx*invD*f*dt; a.vy -= dy*invD*f*dt; a.vz -= dz*invD*f*dt; }
+          if (!b.fixed){ b.vx += dx*invD*f*dt; b.vy += dy*invD*f*dt; b.vz += dz*invD*f*dt; }
+        }
+      }
+
+      for (let li=0; li<LINKS.length; li++){
+        const [ia, ib] = LINKS[li];
+        if (!revealed.has(ia) || !revealed.has(ib)) continue;
+        const a = nodes[ia], b = nodes[ib];
+        const dx = b.x-a.x, dy=b.y-a.y, dz=b.z-a.z;
+        const d = Math.hypot(dx,dy,dz) + 1e-9;
+        const diff = d - linkLen;
+        const fx = (dx/d) * diff * linkK;
+        const fy = (dy/d) * diff * linkK;
+        const fz = (dz/d) * diff * linkK;
+        if (!a.fixed){ a.vx += fx*dt; a.vy += fy*dt; a.vz += fz*dt; }
+        if (!b.fixed){ b.vx -= fx*dt; b.vy -= fy*dt; b.vz -= fz*dt; }
+      }
+
+      for (const p of list){
+        if (p.fixed) continue;
+        p.vx *= damp; p.vy *= damp; p.vz *= damp;
+        p.x += p.vx; p.y += p.vy; p.z += p.vz;
+        clampToWorld(p);
+      }
+    }
+
+    // =========================
+    // MONOCHROME TRANSFER DOTS
+    // =========================
+    let carriers = [];
+    function seedCarriers(){
+      carriers.length = 0;
+      const revealed = revealedSet();
+      for (let li=0; li<LINKS.length; li++){
+        const [a,b] = LINKS[li];
+        if (!revealed.has(a) || !revealed.has(b)) continue;
+
+        const n = 42;
+        for (let k=0; k<n; k++){
+          carriers.push({
+            li,
+            t: Math.random(),
+            speed: 0.18 + Math.random()*0.42,
+            lane: rand(-1.2, 1.2)
+          });
+        }
+      }
+    }
+    seedCarriers();
+
+    // =========================
+    // ELECTRIC LINES + HAZE
+    // =========================
+    function drawElectricBundle(ap, bp, intensity, seed){
+      const t = performance.now() * 0.001;
+      const strands = Math.floor(2 + intensity * 12);
+      const steps = 28;
+
+      const dx = bp.x - ap.x, dy = bp.y - ap.y;
+      const len = Math.hypot(dx,dy) + 1e-9;
+      const nx = -dy / len, ny = dx / len;
+
+      const baseAmp = (3 + 3*intensity) * (0.3 + Math.min(1.0, len/300));
+
+      ctx.save();
+      ctx.globalCompositeOperation = "lighter";
+      ctx.lineCap = "round";
+      ctx.lineJoin = "round";
+
+      for (let s=0; s<strands; s++){
+        const phase = seed*2.31 + s*1.37;
+
+        const flick = 0.6 + 0.8*noise1(t*6.5 + phase);
+        const amp = baseAmp * (0.55 + 0.55*hash2(phase)) * flick;
+
+        const alpha = 0.03 + 0.14 * intensity * (0.5 + 0.5*hash1(phase));
+        const width = 0.8 + 0.9 * intensity;
+
+        ctx.strokeStyle = `rgba(255,255,255,${alpha})`;
+        ctx.lineWidth = width;
+
+        ctx.beginPath();
+        for (let i=0; i<=steps; i++){
+          const u = i/steps;
+
+          let x = ap.x + dx*u;
+          let y = ap.y + dy*u;
+
+          const hi  = Math.sin((u*18.0 + t*10.0 + phase)) * 0.55;
+          const hi2 = Math.sin((u*33.0 + t*14.0 + phase*0.73)) * 0.35;
+          const mid = Math.sin((u*7.5  + t*4.5  + phase*1.1)) * 1.0;
+
+          const spark = (hash1((seed+1)*1000 + s*97 + i*13 + Math.floor(t*20)*7) - 0.5) * 1.4;
+
+          const w = (mid + hi + hi2 + spark) * amp;
+
+          x += nx * w;
+          y += ny * w;
+
+          x += (dx/len) * Math.sin(t*9.0 + u*12.0 + phase) * (0.6 + intensity*1.2);
+          y += (dy/len) * Math.cos(t*8.0 + u*11.0 + phase) * (0.6 + intensity*1.2);
+
+          if (i===0) ctx.moveTo(x,y);
+          else ctx.lineTo(x,y);
+        }
+        ctx.stroke();
+      }
+
+      if (intensity > 0.25){
+        ctx.strokeStyle = `rgba(255,255,255,${0.06 + 0.18*intensity})`;
+        ctx.lineWidth = 1.3;
+        ctx.beginPath();
+        ctx.moveTo(ap.x, ap.y);
+        const mx = (ap.x + bp.x) * 0.5 + nx * Math.sin(t*12 + seed) * (8*intensity);
+        const my = (ap.y + bp.y) * 0.5 + ny * Math.cos(t*11 + seed) * (8*intensity);
+        ctx.quadraticCurveTo(mx, my, bp.x, bp.y);
+        ctx.stroke();
+      }
+
+      ctx.restore();
+    }
+
+    function drawHaze(x, y, r, a){
+      ctx.save();
+      ctx.globalCompositeOperation = "lighter";
+      ctx.fillStyle = `rgba(255,255,255,${a})`;
+      ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI*2); ctx.fill();
+      ctx.fillStyle = `rgba(255,255,255,${a*0.45})`;
+      ctx.beginPath(); ctx.arc(x, y, r*2.2, 0, Math.PI*2); ctx.fill();
+      ctx.fillStyle = `rgba(255,255,255,${a*0.18})`;
+      ctx.beginPath(); ctx.arc(x, y, r*3.8, 0, Math.PI*2); ctx.fill();
+      ctx.restore();
+    }
+
+    // =========================
+    // INTERACTION
+    // =========================
+    function getPointerPos(e){
+      const r = canvas.getBoundingClientRect();
+      return { x: e.clientX - r.left, y: e.clientY - r.top };
+    }
+
+    function hitNode(mx,my){
+      const revealed = revealedSet();
+      let best=null, bestD=Infinity;
+      for (const p of nodes){
+        if (!revealed.has(p.idx)) continue;
+        const pr = project(p);
+        const rr = 13 * pr.s;
+        const d = Math.hypot(mx-pr.x, my-pr.y);
+        if (d < rr && d < bestD){ bestD=d; best=p; }
+      }
+      return best;
+    }
+
+    let wheelBoost = 0;
+    let draggingNode = null;
+    let orbiting = false;
+    let panning = false;
+    let drag = { active:false, sx:0, sy:0 };
+
+    canvas.addEventListener("pointerdown", (e)=>{
+      const pos = getPointerPos(e);
+      mouse.down=true;
+      mouse.x=pos.x; mouse.y=pos.y;
+      mouse.px=pos.x; mouse.py=pos.y;
+      drag.active=true; drag.sx=pos.x; drag.sy=pos.y;
+
+      if (e.button === 1){
+        panning = true;
+        orbiting = false;
+        draggingNode = null;
+        canvas.setPointerCapture(e.pointerId);
+        e.preventDefault();
+        return;
+      }
+
+      const hit = hitNode(pos.x, pos.y);
+      if (hit){
+        draggingNode = hit;
+        draggingNode.fixed = true;
+        orbiting = false;
+      } else {
+        draggingNode = null;
+        orbiting = true;
+      }
+      canvas.setPointerCapture(e.pointerId);
+    });
+
+    canvas.addEventListener("pointermove", (e)=>{
+      const pos = getPointerPos(e);
+      mouse.x=pos.x; mouse.y=pos.y;
+
+      if (!drag.active || !mouse.down) return;
+
+      const dx = pos.x - mouse.px;
+      const dy = pos.y - mouse.py;
+      mouse.px=pos.x; mouse.py=pos.y;
+
+      // VIEW-RELATIVE PAN (middle mouse)
+      if (panning){
+        const temp = { x: focusTarget.x, y: focusTarget.y, z: focusTarget.z };
+        applyScreenDragToPoint(temp, -dx, -dy, 0);
+        focusTarget.x = temp.x; focusTarget.y = temp.y; focusTarget.z = temp.z;
+        return;
+      }
+
+      // VIEW-RELATIVE NODE DRAG (left mouse on node)
+      if (draggingNode){
+        const pr = project(draggingNode);
+        applyScreenDragToPoint(draggingNode, dx, dy, pr.z);
+      } else if (orbiting){
+        orbit.yaw   += dx * 0.0030;
+        orbit.pitch += dy * 0.0030;
+        orbit.pitch = clamp(orbit.pitch, -1.2, 1.2);
+      }
+    });
+
+    canvas.addEventListener("pointerup", (e)=>{
+      const pos = getPointerPos(e);
+      mouse.down=false;
+
+      const moved = Math.hypot(pos.x - drag.sx, pos.y - drag.sy);
+      drag.active=false;
+
+      const hit = hitNode(pos.x, pos.y);
+
+      if (draggingNode){
+        draggingNode.fixed = false;
+        draggingNode = null;
+      }
+      orbiting = false;
+      panning = false;
+
+      if (moved < 6 && hit){
+        setFocusOnNode(hit.idx);
+        wheelBoost = 1;
+
+        const activeIdx = activeNodeIndex();
+        if (hit.idx === activeIdx){
+          if (revealIndex < SEQUENCE.length - 1){
+            revealIndex += 1;
+            activeRevealSlot = revealIndex;
+
+            placeNewNodeBySlot(revealIndex);
+
+            seedCarriers();
+            zoomTarget = clamp(zoomTarget - 600, -4000, 1200);
+          }
+        } else {
+          const slot = SEQUENCE.indexOf(hit.idx);
+          if (slot !== -1 && slot <= revealIndex) activeRevealSlot = slot;
+        }
+      }
+
+      canvas.releasePointerCapture(e.pointerId);
+    });
+
+    window.addEventListener("wheel", (e)=>{
+      zoomTarget = clamp(zoomTarget + e.deltaY*0.30, -4000, 1200);
+      wheelBoost = 1;
+    }, { passive:true });
+
+    document.getElementById("resetBtn").addEventListener("click", ()=>{
+      buildSequence();
+
+      revealIndex = 0;
+      activeRevealSlot = 0;
+
+      orbit.yaw = -0.22; orbit.pitch = 0.12;
+      zoom = 0; zoomTarget = 0;
+      focus.x=focus.y=focus.z=0;
+      focusTarget.x=focusTarget.y=focusTarget.z=0;
+
+      seedCloud();
+
+      for (const p of nodes){
+        p.vx=p.vy=p.vz=0;
+        p.fixed=false;
+        p.x = rand(-60,60);
+        p.y = rand(-60,60);
+        p.z = rand(-90,90);
+      }
+      placeEntryNode();
+
+      seedCarriers();
+    });
+
+    // =========================
+    // LABEL OVERLAP REDUCTION (SCREEN SPACE)
+    // =========================
+    function computeLabelAnchors(revealed){
+      const anchors = [];
+      for (const p of nodes){
+        if (!revealed.has(p.idx)) continue;
+        const pr = project(p);
+        anchors.push({ idx: p.idx, x: pr.x + 14, y: pr.y, ox: pr.x + 14, oy: pr.y });
+      }
+      const iters = 12;
+      const minDist = 28;
+      for (let k=0; k<iters; k++){
+        for (let i=0; i<anchors.length; i++){
+          for (let j=i+1; j<anchors.length; j++){
+            const a = anchors[i], b = anchors[j];
+            const dx = b.x-a.x, dy=b.y-a.y;
+            const d = Math.hypot(dx,dy) + 1e-9;
+            if (d < minDist){
+              const push = (minDist - d) * 0.5;
+              const ux = dx/d, uy = dy/d;
+              a.x -= ux*push; a.y -= uy*push;
+              b.x += ux*push; b.y += uy*push;
+            }
+          }
+        }
+        for (const a of anchors){
+          a.x += (a.ox - a.x) * 0.18;
+          a.y += (a.oy - a.y) * 0.18;
+        }
+      }
+      return anchors;
+    }
+
+    // =========================
+    // DRAW
+    // =========================
+    function drawCloud(){
+      ctx.save();
+      ctx.globalCompositeOperation = "lighter";
+      for (const p of cloud){
+        const pr = project({ x:p.x, y:p.y, z:p.z });
+        if (pr.s < 0.10) continue;
+        const a = p.a * clamp(pr.s, 0.12, 1.2);
+        ctx.fillStyle = `rgba(255,255,255,${a})`;
+        const r = p.w * pr.s;
+        ctx.beginPath();
+        ctx.arc(pr.x, pr.y, r, 0, Math.PI*2);
+        ctx.fill();
+      }
+      ctx.restore();
+    }
+
+    function drawGraph(){
+      const revealed = revealedSet();
+      const activeIdx = activeNodeIndex();
+
+      const labelAnchors = computeLabelAnchors(revealed);
+      const anchorMap = new Map(labelAnchors.map(a => [a.idx, a]));
+
+      const nodeHover = hitNode(mouse.x, mouse.y);
+
+      const linkEmit = new Array(LINKS.length).fill(0);
+      for (let li=0; li<LINKS.length; li++){
+        const [ia, ib] = LINKS[li];
+        if (!revealed.has(ia) || !revealed.has(ib)) continue;
+
+        const ap = project(nodes[ia]);
+        const bp = project(nodes[ib]);
+
+        const d = proximityToSegment(mouse.x, mouse.y, ap.x, ap.y, bp.x, bp.y);
+        const hoverLink = clamp((260 - d)/260, 0, 1);
+
+        let hoverNodeAdj = 0;
+        if (nodeHover && (nodeHover.idx === ia || nodeHover.idx === ib)) hoverNodeAdj = 1;
+
+        linkEmit[li] = clamp(Math.max(hoverLink*hoverLink, wheelBoost, hoverNodeAdj*1.0), 0, 1);
+      }
+
+      for (let li=0; li<LINKS.length; li++){
+        const [ia, ib] = LINKS[li];
+        if (!revealed.has(ia) || !revealed.has(ib)) continue;
+
+        const ap = project(nodes[ia]);
+        const bp = project(nodes[ib]);
+
+        ctx.save();
+        ctx.globalCompositeOperation = "lighter";
+        ctx.strokeStyle = "rgba(255,255,255,0.14)";
+        ctx.lineWidth = 1.05;
+        ctx.lineCap = "round";
+        ctx.beginPath();
+        ctx.moveTo(ap.x, ap.y);
+        ctx.lineTo(bp.x, bp.y);
+        ctx.stroke();
+        ctx.restore();
+
+        const intensity = linkEmit[li];
+        if (intensity > 0.01){
+          drawHaze(ap.x, ap.y, 2.0, 0.10 + 0.22*intensity);
+          drawHaze(bp.x, bp.y, 2.0, 0.10 + 0.22*intensity);
+          drawElectricBundle(ap, bp, intensity, li);
+        }
+      }
+
+      ctx.save();
+      ctx.globalCompositeOperation = "lighter";
+      const tNow = performance.now()*0.001;
+
+      for (const c of carriers){
+        const [ia, ib] = LINKS[c.li];
+        if (!revealed.has(ia) || !revealed.has(ib)) continue;
+
+        const emit = linkEmit[c.li];
+        if (emit <= 0.01) continue;
+
+        c.t = (c.t + c.speed * 0.016) % 1;
+
+        const ap = project(nodes[ia]);
+        const bp = project(nodes[ib]);
+
+        const dx = bp.x - ap.x, dy = bp.y - ap.y;
+        const len = Math.hypot(dx,dy) + 1e-9;
+        const nx = -dy/len, ny = dx/len;
+
+        const u = c.t;
+        const jitter = (c.lane * 0.8) + Math.sin((u*14 + tNow*6.0 + c.li*0.9)) * (0.8 + emit*3.0);
+        const x = ap.x + dx*u + nx * jitter;
+        const y = ap.y + dy*u + ny * jitter;
+
+        const r = 1.00 + emit*0.55;
+        ctx.fillStyle = `rgba(255,255,255,${0.55 + 0.25*emit})`;
+        ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI*2); ctx.fill();
+      }
+      ctx.restore();
+
+      for (const p of nodes){
+        if (!revealed.has(p.idx)) continue;
+        const pr = project(p);
+        const isActive = (p.idx === activeIdx);
+
+        const baseR = (isActive ? 2.6 : 2.25) * clamp(pr.s, 0.85, 1.35);
+
+        ctx.save();
+        ctx.globalCompositeOperation = "lighter";
+
+        ctx.fillStyle = isActive ? "rgba(255,255,255,0.92)" : "rgba(255,255,255,0.70)";
+        ctx.beginPath(); ctx.arc(pr.x, pr.y, baseR, 0, Math.PI*2); ctx.fill();
+
+        ctx.strokeStyle = "rgba(255,255,255,0.45)";
+        ctx.lineWidth = 1.0;
+        ctx.beginPath(); ctx.arc(pr.x, pr.y, baseR+2.2, 0, Math.PI*2); ctx.stroke();
+
+        ctx.restore();
+
+        const a = (anchorMap.get(p.idx) || { x: pr.x+14, y: pr.y });
+
+        ctx.save();
+        const nameSize = (isActive ? 16 : 13) * clamp(pr.s, 0.85, 1.10);
+        const descSize = (isActive ? 12 : 11) * clamp(pr.s, 0.85, 1.03);
+        ctx.textBaseline = "middle";
+
+        ctx.font = `400 ${nameSize}px "Fragment Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace`;
+        ctx.fillStyle = isActive ? "rgba(255,255,255,.92)" : "rgba(255,255,255,.76)";
+        ctx.fillText(NODES[p.idx].id, a.x, a.y);
+
+        const dy = Math.max(18, nameSize*1.05);
+        const miniX = a.x;
+        const miniY = a.y + dy;
+
+        ctx.fillStyle = "rgba(255,255,255,0.62)";
+        ctx.beginPath(); ctx.arc(miniX, miniY, 1.2, 0, Math.PI*2); ctx.fill();
+
+        ctx.font = `400 ${descSize}px "Fragment Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace`;
+        ctx.fillStyle = "rgba(255,255,255,.58)";
+        ctx.fillText(NODES[p.idx].desc, miniX + 10, miniY);
+
+        if (isActive){
+          ctx.globalAlpha = 0.55;
+          ctx.fillStyle = "rgba(255,255,255,1)";
+          ctx.fillText("↳", pr.x - 14, pr.y);
+        }
+        ctx.restore();
+      }
+    }
+
+    // =========================
+    // LOOP
+    // =========================
+    let last = performance.now();
+    function loop(now){
+      const dt = clamp((now - last) / 16.666, 0.5, 2.0);
+      last = now;
+
+      zoom += (zoomTarget - zoom) * 0.10;
+
+      focus.x += (focusTarget.x - focus.x) * 0.10;
+      focus.y += (focusTarget.y - focus.y) * 0.10;
+      focus.z += (focusTarget.z - focus.z) * 0.10;
+
+      wheelBoost *= 0.88;
+
+      stepForces(dt);
+
+      if (!draggingNode && !orbiting && !panning){
+        orbit.yaw += 0.00008;
+      }
+
+      ctx.fillStyle = "#000";
+      ctx.fillRect(0,0,W,H);
+
+      drawCloud();
+      drawGraph();
+
+      requestAnimationFrame(loop);
+    }
+    requestAnimationFrame(loop);
+  </script>
+</body>
+</html>
