@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Open Source Desktop Core</title>
+    <link rel="stylesheet" href="../styles.css">
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: #FFFFFF;
+            color: #000000;
+            font-family: 'Fragment Mono', monospace;
+            user-select: none;
+        }
+
+        /* Persistent HUD Panel */
+        #hud-overlay {
+            position: absolute;
+            top: 40px;
+            left: 40px;
+            width: 320px;
+            height: calc(100% - 80px);
+            background: transparent;
+            color: #000000;
+            z-index: 20;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        #hud-overlay h1 {
+            font-size: 14px;
+            font-weight: normal;
+            margin: 0 0 15px 0;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            border-bottom: 1px solid #000;
+            padding-bottom: 8px;
+        }
+
+        #hud-overlay p.manifesto {
+            font-size: 8px;
+            line-height: 1.6;
+            margin-bottom: 25px;
+            text-align: justify;
+        }
+
+        /* Dynamic File Information Panel */
+        #file-inspector {
+            display: none; /* hidden until clicked */
+            margin-top: 10px;
+            padding: 15px;
+            border: 1px solid rgba(0,0,0,0.2);
+            background: rgba(255,255,255,0.9);
+            flex-grow: 0;
+        }
+
+        .meta-row {
+            display: flex;
+            justify-content: space-between;
+            border-bottom: 1px solid rgba(0,0,0,0.1);
+            padding: 4px 0;
+            margin-bottom: 4px;
+        }
+
+        .meta-label {
+            font-size: 7px;
+            text-transform: uppercase;
+            opacity: 0.5;
+        }
+
+        .meta-value {
+            font-size: 9px;
+            font-weight: bold;
+        }
+
+        .file-description {
+            font-size: 8px;
+            line-height: 1.4;
+            text-align: justify;
+            margin: 15px 0;
+        }
+
+        #download-btn {
+            display: block;
+            text-align: center;
+            text-decoration: none;
+            color: #000;
+            border: 1px solid #000;
+            padding: 10px 0;
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            transition: all 0.2s ease;
+            background: transparent;
+        }
+
+        #download-btn:hover {
+            background: #000;
+            color: #FFF;
+        }
+
+        /* OS Desktop Grid Simulation */
+        #desktop-grid {
+            position: absolute;
+            left: 400px;
+            top: 40px;
+            right: 40px;
+            bottom: 40px;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+            grid-auto-rows: min-content;
+            gap: 20px;
+            align-content: start;
+            padding-top: 20px;
+            z-index: 10;
+        }
+
+        .desktop-icon {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 15px 10px;
+            border: 1px solid transparent;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            text-decoration: none;
+        }
+
+        .desktop-icon:hover, .desktop-icon.selected {
+            outline: 1px solid rgba(0, 0, 0, 0.1);
+            background: rgba(0,0,0,0.02);
+        }
+
+        .desktop-icon img {
+            height: 50px;
+            width: auto;
+            object-fit: contain;
+            margin-bottom: 12px;
+            mix-blend-mode: multiply;
+            pointer-events: none;
+        }
+
+        .icon-label {
+            font-size: 9px;
+            text-align: center;
+            line-height: 1.2;
+            word-wrap: break-word;
+            max-width: 100%;
+            pointer-events: none;
+            color: #000;
+        }
+        
+    </style>
+</head>
+<body>
+
+    <!-- OS Main HUD -->
+    <div id="hud-overlay">
+        <h1>OPEN SOURCE REPOSITORY</h1>
+        <p class="manifesto">Project architecture repository housing all executable procedural methodologies, graph layouts, and foundational geometric algorithms. Files are raw programmatic sequences designed to construct the theoretical "Hyperobject" configurations outlined in the primary map UI.</p>
+        
+        <!-- Actionable File Inspector -->
+        <div id="file-inspector">
+            <div class="meta-row"><span class="meta-label">FILENAME</span><span class="meta-value" id="f-name">--</span></div>
+            <div class="meta-row"><span class="meta-label">TYPE</span><span class="meta-value" id="f-type">--</span></div>
+            <div class="meta-row"><span class="meta-label">SIZE</span><span class="meta-value" id="f-size">--</span></div>
+            
+            <p class="file-description" id="f-desc">--</p>
+            
+            <a id="download-btn" href="#" download>Download File</a>
+        </div>
+    </div>
+
+    <!-- OS Desktop Environment -->
+    <div id="desktop-grid">
+        
+        <!-- File 1: Python -->
+        <a href="#" class="desktop-icon" onclick="selectFile('Meteor_facade_v7.py', 'Python Execution Script', '32 KB', 'Core algorithmic Python automation script responsible for interpreting cross-pollinated skin data blocks and bridging them locally into 3D voxel generation sets in the engine viewport.', '../icons/Python_Windows_source_code_icon_2016.svg.png', '../open_source/Meteor_facade_v7.py', this); return false;">
+            <img src="../icons/Python_Windows_source_code_icon_2016.svg.png" alt="PY">
+            <span class="icon-label">Meteor_facade_v7.py</span>
+        </a>
+
+        <!-- File 2: Grasshopper -->
+        <a href="#" class="desktop-icon" onclick="selectFile('srf_analysis.gh', 'Grasshopper 3D Definition', '68 KB', 'Complex architectural workflow visual definition mapping mathematical surface curvature limits onto raw geometric meshes to force topological extraction properties.', '../icons/GH_Binary.ico', '../open_source/srf_analysis.gh', this); return false;">
+            <img src="../icons/GH_Binary.ico" alt="GH">
+            <span class="icon-label">srf_analysis.gh</span>
+        </a>
+
+        <!-- File 3: HTML Visualization -->
+        <a href="#" class="desktop-icon" onclick="selectFile('meteor_facade_workflow.html', 'Web Browser Document', '29 KB', 'Procedural structural visualization tree plotting the exact parametric routing configurations that drive the specific python extraction logic mapped against local textures.', '../icons/180891.png', '../open_source/meteor_facade_workflow.html', this); return false;">
+            <img src="../icons/180891.png" alt="HTML">
+            <span class="icon-label">meteor_facade_workflow.html</span>
+        </a>
+
+        <!-- File 4: HTML Base -->
+        <a href="#" class="desktop-icon" onclick="selectFile('workflow.html', 'Web Browser Document', '28 KB', 'Top-level dependency documentation mapping the entire raw network traversal and pipeline dataflow execution orders.', '../icons/180891.png', '../open_source/workflow.html', this); return false;">
+            <img src="../icons/180891.png" alt="HTML">
+            <span class="icon-label">workflow.html</span>
+        </a>
+
+    </div>
+
+    <script>
+        function selectFile(name, type, size, desc, iconSrc, fileDest, element) {
+            // Unselect all others
+            document.querySelectorAll('.desktop-icon').forEach(el => el.classList.remove('selected'));
+            // Highlight current
+            element.classList.add('selected');
+            
+            // Populate File Inspector variables
+            document.getElementById('file-inspector').style.display = 'block';
+            document.getElementById('f-name').innerText = name;
+            document.getElementById('f-type').innerText = type;
+            document.getElementById('f-size').innerText = size;
+            document.getElementById('f-desc').innerText = desc;
+            
+            // Map the physical raw download link directly to absolute database URI
+            document.getElementById('download-btn').href = fileDest;
+            document.getElementById('download-btn').setAttribute('download', name);
+        }
+    </script>
+</body>
+</html>
