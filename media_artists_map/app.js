@@ -39,7 +39,7 @@ export const APP_CONFIG = {
         specular: "https://playground.babylonjs.com/textures/earthspecular.jpg",
         bump: "https://playground.babylonjs.com/textures/earthnormal.jpg"
     },
-    lightIntensity: 1.2,
+    lightIntensity: 0.6,
     physics: {
         networkRadiusScale: 400,
         clusterSpacing: 200,
@@ -55,17 +55,6 @@ export const APP_CONFIG = {
     },
     animationSpeed: 0.06
 };
-
-const palette = [
-    new BABYLON.Color3(0.0, 1.0, 0.8), // Cyan
-    new BABYLON.Color3(1.0, 0.0, 0.5), // Magenta
-    new BABYLON.Color3(0.8, 1.0, 0.0), // Electric Yellow
-    new BABYLON.Color3(1.0, 0.4, 0.0), // Neon Orange
-    new BABYLON.Color3(0.6, 0.0, 1.0), // Deep Purple
-    new BABYLON.Color3(0.0, 0.6, 1.0), // Neon Blue
-    new BABYLON.Color3(0.3, 1.0, 0.3), // Acid Green
-    new BABYLON.Color3(1.0, 0.1, 0.2)  // Crimson
-];
 
 // Context State
 let engine, scene, camera, globeMesh;
@@ -108,7 +97,22 @@ async function loadData() {
             && artist.locations[0].lat !== null && artist.locations[0].lat !== undefined;
         if (!hasLocation) return; // Skip if no confirmed coordinates
 
+
         let primaryMedium = artist.mediums && artist.mediums.length > 0 ? artist.mediums[0] : "digital art";
+
+        // Categorize by parsing description / notable
+        let desc = (artist.description || "").toLowerCase() + " " + ((artist.notable_artworks || []).join(" ")).toLowerCase();
+
+        if (desc.includes("sculpture")) primaryMedium = "Sculpture";
+        else if (desc.includes("installation")) primaryMedium = "Installation";
+        else if (desc.includes("video")) primaryMedium = "Video Art";
+        else if (desc.includes("digital") || desc.includes("computer")) primaryMedium = "Digital Art";
+        else if (desc.includes("photography") || desc.includes("photograph")) primaryMedium = "Photography";
+        else if (desc.includes("sound")) primaryMedium = "Sound Art";
+        else if (desc.includes("light")) primaryMedium = "Light Art";
+        else if (desc.includes("performance")) primaryMedium = "Performance";
+        else if (desc.includes("kinetic")) primaryMedium = "Kinetic Art";
+        else primaryMedium = "Media Art";
 
         if (!mediumDict[primaryMedium]) {
             mediumDict[primaryMedium] = {
@@ -117,7 +121,9 @@ async function loadData() {
                 type: "medium",
                 artists: []
             };
-            mediumColors[primaryMedium] = palette[Object.keys(mediumColors).length % palette.length];
+            let catIndex = (Object.keys(mediumColors).length % 8) + 1;
+            let cssColor = getComputedStyle(document.documentElement).getPropertyValue(`--cat-${catIndex}`).trim() || "#ffffff";
+            mediumColors[primaryMedium] = BABYLON.Color3.FromHexString(cssColor);
         }
 
         let lat = artist.locations[0].lat;
@@ -157,7 +163,7 @@ async function loadData() {
     document.getElementById("stat-total-artists").innerText = artistIdCounter;
 
     // Calculate top media categories
-    let cats = Object.values(mediumDict).sort((a, b) => b.artists.length - a.artists.length).slice(0, 5);
+    let cats = Object.values(mediumDict).sort((a, b) => b.artists.length - a.artists.length);
     let catsHtml = "";
     cats.forEach(c => {
         catsHtml += `<div class="stat-row"><span class="label">${c.label}</span><span class="val" style="color: ${mediumColors[c.label].toHexString()}">${c.artists.length}</span></div>`;
@@ -303,7 +309,7 @@ async function buildSceneElements() {
         if (maxDim > 0) {
             let targetSize = APP_CONFIG.globeRadius * 2 * 0.98; // Fit slightly inside points
             let scale = targetSize / maxDim;
-            globeMesh.scaling = new BABYLON.Vector3(scale, scale, scale);
+            globeMesh.scaling = new BABYLON.Vector3(-scale, scale, scale);
 
             if (APP_CONFIG.earthMaterial.rotationOffset) {
                 globeMesh.rotationQuaternion = null;
@@ -313,6 +319,17 @@ async function buildSceneElements() {
                     APP_CONFIG.earthMaterial.rotationZ
                 );
             }
+
+
+            let overlaySphere = BABYLON.MeshBuilder.CreateSphere("overlay", { diameter: APP_CONFIG.globeRadius * 2.02, segments: 64 }, scene);
+            overlaySphere.parent = globeMesh;
+            let overlayMat = new BABYLON.PBRMaterial("overlayMat", scene);
+            overlayMat.albedoColor = new BABYLON.Color3(0, 0, 0);
+            overlayMat.alpha = 0.6;
+            overlayMat.transparencyMode = BABYLON.PBRMaterial.PBRMATERIAL_ALPHABLEND;
+            overlayMat.unlit = true;
+            overlaySphere.material = overlayMat;
+            overlaySphere.isPickable = false;
 
             // Apply EarthMaterial params mapping
             globeMesh.getChildMeshes().forEach(m => {
@@ -398,8 +415,7 @@ async function buildSceneElements() {
             idText.color = APP_CONFIG.labels.textColor;
             idText.fontSize = APP_CONFIG.labels.fontSize;
             idText.fontFamily = "Fragment Mono, monospace";
-            idText.outlineWidth = 2;
-            idText.outlineColor = "rgba(0,0,0,0.6)";
+
             advancedTexture.addControl(idText);
             idText.linkWithMesh(targetNode);
 
@@ -459,7 +475,7 @@ function updateTransitions() {
 
     globeMesh.scaling = BABYLON.Vector3.Lerp(
         globeMesh.scaling,
-        currentMode === "MAP" ? new BABYLON.Vector3(1, 1, 1) : new BABYLON.Vector3(0.01, 0.01, 0.01),
+        currentMode === "MAP" ? new BABYLON.Vector3(-1, 1, 1) : new BABYLON.Vector3(-0.01, 0.01, 0.01),
         APP_CONFIG.animationSpeed
     );
 

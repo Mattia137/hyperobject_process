@@ -1,5 +1,19 @@
 @import url('https://fonts.googleapis.com/css2?family=Fragment+Mono&display=swap');
 
+
+:root {
+    --cat-1: #00ffcc;
+    --cat-2: #ff007f;
+    --cat-3: #ccff00;
+    --cat-4: #ff6600;
+    --cat-5: #9900ff;
+    --cat-6: #0099ff;
+    --cat-7: #4dff4d;
+    --cat-8: #ff1a33;
+    --cat-9: #aaaaaa;
+}
+
+
 body, html {
     margin: 0;
     padding: 0;
@@ -84,9 +98,8 @@ body, html {
     right: 0;
     width: 320px;
     height: 100%;
-    background: rgba(0, 0, 0, 0.85);
-    border-left: 1px solid rgba(255, 255, 255, 0.15);
-    backdrop-filter: blur(5px);
+    background: transparent;
+
     z-index: 20;
     display: flex;
     flex-direction: column;
@@ -103,9 +116,8 @@ body, html {
     left: 0;
     width: 320px;
     height: 100%;
-    background: rgba(0, 0, 0, 0.85);
-    border-right: 1px solid rgba(255, 255, 255, 0.15);
-    backdrop-filter: blur(5px);
+    background: transparent;
+
     z-index: 20;
     display: flex;
     flex-direction: column;
