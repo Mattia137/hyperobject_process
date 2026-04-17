@@ -1,722 +1,453 @@
 // ==========================================
-// EARTH-MARS BRIDGE PROJECT - PARAMETERS
+// MEDIA ARTISTS MAP — MAP ONLY
 // ==========================================
-export const APP_CONFIG = {
-    fontFamily: "Fragment Mono, monospace",
-    defaultMode: "MAP", // "MAP" or "NETWORK"
-    colors: {
-        background: new BABYLON.Color4(0, 0, 0, 1),
-        globe: new BABYLON.Color3(0.04, 0.04, 0.04),
-        globeWireframe: new BABYLON.Color3(0.1, 0.1, 0.1),
-        edgeLine: new BABYLON.Color4(1, 1, 1, 0.15),
-        nodeDefault: new BABYLON.Color3(1, 1, 1),
-        nodeOpacity: 0.8, // 0.0 – 1.0
-        hoverEffect: new BABYLON.Color3(1, 1, 1),
-        museumNode: new BABYLON.Color3(1.0, 0.84, 0.0) // Gold/Yellow #FFD700
-    },
-    earthMaterial: {
-        metallic: 0.9,
-        roughness: 0.7,
-        alpha: 1.0,
-        environmentIntensity: 0.3,
-        // Fine-tune these to align texture to lat/lon:
-        rotationX: 0,           // radians — tilt north/south
-        rotationY: Math.PI,     // radians — spin east/west
-        rotationZ: 0,           // radians — roll
-        wireframeEnabled: false,
-        wireframeThickness: 0.1,
-        wireframeColor: new BABYLON.Color4(1, 1, 1, 0.15)
-    },
-    labels: {
-        enabled: true,
-        scoreThreshold: 65,     // Only artists above this score get a label
-        offsetFactor: 22,       // World-units the label floats above the dot
-        fontSize: 10,
-        lineColor: "rgba(255,255,255,0.4)",
-        textColor: "rgba(255,255,255,0.85)"
-    },
-    globeTextures: {
-        diffuse: "https://playground.babylonjs.com/textures/earth.jpg",
-        specular: "https://playground.babylonjs.com/textures/earthspecular.jpg",
-        bump: "https://playground.babylonjs.com/textures/earthnormal.jpg"
-    },
-    lightIntensity: 0.6,
-    physics: {
-        networkRadiusScale: 400,
-        clusterSpacing: 200,
-        iterations: 150
-    },
+const CFG = {
+    font:       "Fragment Mono, monospace",
     globeRadius: 120,
     camera: {
-        radiusMap: 320,
-        radiusNet: 600,
-        zoomSpeed: 30,          // Higher = faster scroll zoom
-        minRadius: 130,
-        maxRadius: 900
+        radius:    320,
+        minRadius: 140,
+        maxRadius: 800
     },
-    animationSpeed: 0.06
+    earth: {
+        rotationX: 0,
+        rotationY: 1.675*Math.PI,   // spin east/west to align prime meridian
+        rotationZ: 0
+    },
+    labels: {
+        scoreThreshold: 60,
+        offsetPx: -14,
+        fontSize: 15,
+        color:    "rgba(255,255,255,0.85)"
+    },
+    dot: {
+        baseMin:   0.6,
+        baseMax:   2.0,
+        museumR:   1.8,
+        hoverMult: 1.7,
+        jitter:    2.2,       // max world-unit tangential spread to prevent overlap
+        screenComp: true
+    },
+    light: { hemi: 0.55, cam: 0.8 }
 };
 
-// Context State
 let engine, scene, camera, globeMesh;
-let nodesData = []; // Combined array of artists and mediums
-let edgesData = [];
-let nodeMeshes = [];
-let edgeLines = [];
-let currentMode = APP_CONFIG.defaultMode;
-let hoveredMesh = null;
+let nodesData    = [];
+let hoveredMesh  = null;
 let mediumColors = {};
+let guiTexture   = null;
+let globeBaseScale = 1;
 
-function latLonToVector3(lat, lon, radius) {
-    const phi = (90 - lat) * (Math.PI / 180);
-    const theta = (lon + 180) * (Math.PI / 180); // +180 to align with standard mapping
-    const x = -(radius * Math.sin(phi) * Math.cos(theta));
-    const z = (radius * Math.sin(phi) * Math.sin(theta));
-    const y = (radius * Math.cos(phi));
-    return new BABYLON.Vector3(x, y, z);
+// ==========================================
+// UTIL
+// ==========================================
+
+// Deterministic jitter in [-1,1] based on a string key
+function strHash(s) {
+    let h = 0;
+    for (let i = 0; i < s.length; i++) h = Math.imul(31, h) + s.charCodeAt(i) | 0;
+    return ((h >>> 0) / 0xffffffff) * 2 - 1;
 }
 
-function rand3D(scale) {
+// Add a small tangential offset on the sphere surface to prevent dot overlap
+function jitteredVec3(lat, lon, r, label) {
+    const pos    = latLonToVec3(lat, lon, r);
+    const normal = pos.clone().normalize();
+    const ref    = Math.abs(normal.y) < 0.9
+        ? new BABYLON.Vector3(0, 1, 0)
+        : new BABYLON.Vector3(1, 0, 0);
+    const tan1 = BABYLON.Vector3.Cross(normal, ref).normalize();
+    const tan2 = BABYLON.Vector3.Cross(normal, tan1).normalize();
+    const jx = strHash(label + '_x') * CFG.dot.jitter;
+    const jy = strHash(label + '_y') * CFG.dot.jitter;
+    return pos.add(tan1.scale(jx)).add(tan2.scale(jy));
+}
+
+function latLonToVec3(lat, lon, r) {
+    const phi   = (90 - lat)  * (Math.PI / 180);
+    const theta = (lon + 180) * (Math.PI / 180);
     return new BABYLON.Vector3(
-        (Math.random() - 0.5) * scale,
-        (Math.random() - 0.5) * scale,
-        (Math.random() - 0.5) * scale
+          r * Math.sin(phi) * Math.cos(theta),   // X un-negated to match globe X-flip
+          r * Math.cos(phi),
+          r * Math.sin(phi) * Math.sin(theta)
     );
 }
 
+// ==========================================
+// LOAD DATA
+// ==========================================
 async function loadData() {
-    // Load Artists
-    const response = await fetch('../artists_data.json');
-    const data = await response.json();
+    const artistRes = await fetch('../artists_data.json');
+    const artists   = await artistRes.json();
 
-    // Load Museums
     let museumData = [];
     try {
-        const musRes = await fetch('../museums_data.json');
-        museumData = await musRes.json();
-    } catch(e) {
-        console.warn("Could not load museums_data.json", e);
-    }
+        const mRes = await fetch('../museums_data.json');
+        museumData = await mRes.json();
+    } catch (_) {}
 
-    let mediumDict = {};
-    let artistIdCounter = 0;
-    let museumIdCounter = 0;
+    let catIndex = 0;
+    const root = getComputedStyle(document.documentElement);
 
-    data.forEach(artist => {
-        if (!artist.name) return;
+    artists.forEach(a => {
+        if (!a.name) return;
+        const loc = a.locations && a.locations[0];
+        if (!loc || loc.lat == null) return;
 
-        let hasLocation = artist.locations && artist.locations.length > 0
-            && artist.locations[0].lat !== null && artist.locations[0].lat !== undefined;
-        if (!hasLocation) return; // Skip if no confirmed coordinates
+        // Derive medium
+        const desc = ((a.description || '') + ' ' + (a.notable_artworks || []).join(' ')).toLowerCase();
+        let medium = 'Media Art';
+        if      (desc.includes('sculpture'))    medium = 'Sculpture';
+        else if (desc.includes('installation')) medium = 'Installation';
+        else if (desc.includes('video'))        medium = 'Video Art';
+        else if (desc.includes('digital') || desc.includes('computer')) medium = 'Digital Art';
+        else if (desc.includes('photography'))  medium = 'Photography';
+        else if (desc.includes('sound'))        medium = 'Sound Art';
+        else if (desc.includes('light'))        medium = 'Light Art';
+        else if (desc.includes('performance'))  medium = 'Performance';
+        else if (desc.includes('kinetic'))      medium = 'Kinetic Art';
 
-
-        let primaryMedium = artist.mediums && artist.mediums.length > 0 ? artist.mediums[0] : "digital art";
-
-        // Categorize by parsing description / notable
-        let desc = (artist.description || "").toLowerCase() + " " + ((artist.notable_artworks || []).join(" ")).toLowerCase();
-
-        if (desc.includes("sculpture")) primaryMedium = "Sculpture";
-        else if (desc.includes("installation")) primaryMedium = "Installation";
-        else if (desc.includes("video")) primaryMedium = "Video Art";
-        else if (desc.includes("digital") || desc.includes("computer")) primaryMedium = "Digital Art";
-        else if (desc.includes("photography") || desc.includes("photograph")) primaryMedium = "Photography";
-        else if (desc.includes("sound")) primaryMedium = "Sound Art";
-        else if (desc.includes("light")) primaryMedium = "Light Art";
-        else if (desc.includes("performance")) primaryMedium = "Performance";
-        else if (desc.includes("kinetic")) primaryMedium = "Kinetic Art";
-        else primaryMedium = "Media Art";
-
-        if (!mediumDict[primaryMedium]) {
-            mediumDict[primaryMedium] = {
-                id: `medium_${Object.keys(mediumDict).length}`,
-                label: primaryMedium,
-                type: "medium",
-                artists: []
-            };
-            let catIndex = (Object.keys(mediumColors).length % 8) + 1;
-            let cssColor = getComputedStyle(document.documentElement).getPropertyValue(`--cat-${catIndex}`).trim() || "#ffffff";
-            mediumColors[primaryMedium] = BABYLON.Color3.FromHexString(cssColor);
+        if (!mediumColors[medium]) {
+            const idx = (catIndex++ % 8) + 1;
+            const hex = root.getPropertyValue(`--cat-${idx}`).trim() || '#ffffff';
+            mediumColors[medium] = BABYLON.Color3.FromHexString(hex);
         }
 
-        let lat = artist.locations[0].lat;
-        let lon = artist.locations[0].lon;
-
-        let aNode = {
-            id: `artist_${artistIdCounter++}`,
-            label: artist.name,
-            type: "artist",
-            medium: primaryMedium,
-            hasLoc: true,
-            lat: lat,
-            lon: lon,
-            bio: artist.description || "",
-            notable: (artist.notable_artworks && artist.notable_artworks.length > 0) ? artist.notable_artworks.join(", ") : "",
-            score: artist.score || 1
-        };
-
-        nodesData.push(aNode);
-        mediumDict[primaryMedium].artists.push(aNode.id);
-
-        edgesData.push({
-            source: aNode.id,
-            target: mediumDict[primaryMedium].id
+        nodesData.push({
+            type: 'artist', label: a.name,
+            medium, lat: loc.lat, lon: loc.lon,
+            score: a.score || 1,
+            bio: a.description || '',
+            notable: (a.notable_artworks || []).join(', ')
         });
     });
 
-    Object.values(mediumDict).forEach(m => nodesData.push(m));
-
-    // Add Museum nodes
-    museumData.forEach(museum => {
-        if (!museum.museum_name || museum.latitude == null || museum.longitude == null) return;
-
-        let mNode = {
-            id: `museum_${museumIdCounter++}`,
-            label: museum.museum_name,
-            type: "museum",
-            hasLoc: true,
-            lat: museum.latitude,
-            lon: museum.longitude,
-            bio: museum.description || "",
-            image_url: museum.image_url || "",
-            score: 100 // High score to always show label if we want, or handle differently
-        };
-        nodesData.push(mNode);
+    museumData.forEach(m => {
+        if (!m.museum_name || m.latitude == null) return;
+        nodesData.push({
+            type: 'museum', label: m.museum_name,
+            lat: m.latitude, lon: m.longitude,
+            score: 100,
+            bio: m.description || '',
+            image_url: m.image_url || ''
+        });
     });
 
-    // Precalculate network 2D/3D planar physics layout
-    computeNetworkLayout(Object.values(mediumDict));
+    // Populate stats panel
+    const artistCount = nodesData.filter(n => n.type === 'artist').length;
+    const museumCount = nodesData.filter(n => n.type === 'museum').length;
+    document.getElementById('hud-nodes').innerText = artistCount + museumCount;
 
-    document.getElementById("hud-nodes").innerText = artistIdCounter + museumIdCounter;
-    document.getElementById("hud-edges").innerText = Object.keys(mediumDict).length;
-
-    // Populate Right Panel Stats
-    document.getElementById("stat-total-artists").innerText = artistIdCounter;
-    let musEl = document.getElementById("stat-total-museums");
-    if (musEl) musEl.innerText = museumIdCounter;
-
-    // Calculate top media categories
-    let cats = Object.values(mediumDict).sort((a, b) => b.artists.length - a.artists.length);
-    let catsHtml = "";
-    cats.forEach(c => {
-        catsHtml += `<div class="stat-row"><span class="label">${c.label}</span><span class="val" style="color: ${mediumColors[c.label].toHexString()}">${c.artists.length}</span></div>`;
-    });
-    document.getElementById("stat-categories").innerHTML = catsHtml;
+    const catHtml = Object.entries(mediumColors)
+        .map(([k]) => {
+            const n = nodesData.filter(a => a.medium === k).length;
+            return `<div class="stat-row"><span class="label">${k}</span><span class="val" style="color:${mediumColors[k].toHexString()}">${n}</span></div>`;
+        }).join('');
+    document.getElementById('stat-categories').innerHTML = catHtml;
+    document.getElementById('stat-total-artists').innerText = artistCount;
+    const musEl = document.getElementById('stat-total-museums');
+    if (musEl) musEl.innerText = museumCount;
 }
 
-function computeNetworkLayout(mediums) {
-    // Simple grouped cluster layout to avoid massive physics freezing
-    let totalMediums = mediums.length;
-    let angleStep = (Math.PI * 2) / totalMediums;
+// ==========================================
+// BUILD GLOBE
+// ==========================================
+async function buildGlobe() {
+    try {
+        const result = await BABYLON.SceneLoader.ImportMeshAsync('', './', 'earth.glb', scene);
+        globeMesh = result.meshes[0];
 
-    mediums.forEach((m, i) => {
-        // Medium node position in Network Mode
-        let angle = i * angleStep;
-        let radius = APP_CONFIG.physics.networkRadiusScale;
-        m.networkPos = new BABYLON.Vector3(Math.cos(angle) * radius, Math.sin(angle) * radius, 0);
-        m.mapPos = new BABYLON.Vector3(0, 0, 0); // hidden or centered in Map Mode
+        const bbox   = globeMesh.getHierarchyBoundingVectors();
+        const size   = bbox.max.subtract(bbox.min);
+        const maxDim = Math.max(size.x, size.y, size.z);
 
-        // Distribute its artists around it
-        let artistsForMedium = nodesData.filter(n => n.type === "artist" && n.medium === m.label);
-        artistsForMedium.forEach((a, j) => {
-            let offsetAngle = (j / artistsForMedium.length) * Math.PI * 2;
-            let offsetRadius = 40 + Math.random() * 80;
+        if (maxDim > 0) {
+            const scale = (CFG.globeRadius * 2) / maxDim;
+            globeBaseScale = scale;
+            // Flip X for correct lat/lon texture orientation
+            globeMesh.scaling = new BABYLON.Vector3(-scale, scale, scale);
+        }
 
-            a.networkPos = new BABYLON.Vector3(
-                m.networkPos.x + Math.cos(offsetAngle) * offsetRadius,
-                m.networkPos.y + Math.sin(offsetAngle) * offsetRadius,
-                (Math.random() - 0.5) * 50 // Slight Z variation for depth
-            );
+        // Apply configurable rotation to align texture with lat/lon coordinates
+        globeMesh.rotationQuaternion = null;
+        globeMesh.rotation = new BABYLON.Vector3(
+            CFG.earth.rotationX,
+            CFG.earth.rotationY,
+            CFG.earth.rotationZ
+        );
 
-            if (a.hasLoc) {
-                a.mapPos = latLonToVector3(a.lat, a.lon, APP_CONFIG.globeRadius + 1);
-            } else {
-                // If no location, float them slightly off globe by medium cluster
-                let mapOffsetAngle = (j / artistsForMedium.length) * Math.PI * 2;
-                a.mapPos = new BABYLON.Vector3(
-                    Math.cos(mapOffsetAngle) * (APP_CONFIG.globeRadius + 40),
-                    (i - totalMediums / 2) * 10,
-                    Math.sin(mapOffsetAngle) * (APP_CONFIG.globeRadius + 40)
-                );
+        // Leave GLB materials intact; just tune PBR params if present
+        globeMesh.getChildMeshes().forEach(m => {
+            if (!m.material) return;
+            m.isPickable = false;
+            if (m.material.getClassName && m.material.getClassName() === 'PBRMaterial') {
+                m.material.metallic    = 0.8;
+                m.material.roughness   = 0.9;
+                m.material.environmentIntensity = 0.6;
+                // Don't override albedoColor or albedoTexture — let the GLB texture show
             }
         });
-    });
+    } catch (e) {
+        console.warn('earth.glb failed, using procedural sphere', e);
+        globeMesh = BABYLON.MeshBuilder.CreateSphere('globe', {
+            diameter: CFG.globeRadius * 2, segments: 64
+        }, scene);
+        const mat = new BABYLON.StandardMaterial('globeMat', scene);
+        mat.diffuseTexture = new BABYLON.Texture(
+            'https://playground.babylonjs.com/textures/earth.jpg', scene);
+        mat.specularTexture = new BABYLON.Texture(
+            'https://playground.babylonjs.com/textures/earthspecular.jpg', scene);
+        mat.bumpTexture = new BABYLON.Texture(
+            'https://playground.babylonjs.com/textures/earthnormal.jpg', scene);
+        mat.specularColor = new BABYLON.Color3(0.3, 0.3, 0.3);
+        globeMesh.material = mat;
+        globeMesh.isPickable = false;
+    }
+}
 
-    // Add museums to a general cluster or distribute them on the periphery in Network mode
-    let museums = nodesData.filter(n => n.type === "museum");
-    museums.forEach((m, idx) => {
-        if (m.hasLoc) {
-            m.mapPos = latLonToVector3(m.lat, m.lon, APP_CONFIG.globeRadius + 1);
+// ==========================================
+// BUILD NODE DOTS + LABELS
+// ==========================================
+function buildNodes() {
+    guiTexture = BABYLON.GUI.AdvancedDynamicTexture.CreateFullscreenUI('UI');
+    const protoMat = new BABYLON.StandardMaterial('dotProto', scene);
+    protoMat.disableLighting = true;
+
+    nodesData.forEach(node => {
+        const isArtist = node.type === 'artist';
+        const isMuseum = node.type === 'museum';
+
+        // Radius: score-based for artists, fixed for museums
+        const r = isArtist
+            ? CFG.dot.baseMin + (node.score / 100) * (CFG.dot.baseMax - CFG.dot.baseMin)
+            : CFG.dot.museumR;
+        node.baseRadius = r;
+
+        const mesh = BABYLON.MeshBuilder.CreateSphere(node.label, {
+            diameter: r * 2,
+            segments: isArtist ? 6 : 10
+        }, scene);
+
+        const mat = protoMat.clone('mat_' + node.label);
+        const col = isMuseum
+            ? new BABYLON.Color3(1, 0.84, 0)          // gold for museums
+            : (mediumColors[node.medium] || new BABYLON.Color3(1, 1, 1));
+        mat.emissiveColor = col;
+        mat.alpha = 0.88;
+        mesh.material = mat;
+        mesh.baseColor = col;
+        mesh.position  = jitteredVec3(node.lat, node.lon, CFG.globeRadius + 1.5, node.label);
+        mesh.nodeData  = node;
+        node.mesh      = mesh;
+
+        // GUI label — flat horizontal, fixed pixel offset above dot
+        if (node.score >= CFG.labels.scoreThreshold) {
+            const lbl = new BABYLON.GUI.TextBlock();
+            lbl.text       = node.label.toUpperCase();
+            lbl.color      = CFG.labels.color;
+            lbl.fontSize   = CFG.labels.fontSize;
+            lbl.fontFamily = CFG.font;
+            lbl.rotation   = 0; // always horizontal
+            lbl.isVisible  = false;
+            guiTexture.addControl(lbl);
+            lbl.linkWithMesh(mesh);
+            lbl.linkOffsetY = CFG.labels.offsetPx;
+            node.guiText = lbl;
         }
-
-        // For Network Mode, position them in a larger outer ring
-        let angle = (idx / museums.length) * Math.PI * 2;
-        let radius = APP_CONFIG.physics.networkRadiusScale * 1.5;
-        m.networkPos = new BABYLON.Vector3(
-            Math.cos(angle) * radius,
-            Math.sin(angle) * radius,
-            (Math.random() - 0.5) * 100
-        );
     });
 }
 
-async function initEngine() {
-    const canvas = document.getElementById("renderCanvas");
+// ==========================================
+// PER-FRAME UPDATE
+// ==========================================
+function updateFrame() {
+    const camFwd = camera.getForwardRay().direction.normalize();
+    // Screen-size compensation factor
+    const scaleComp = CFG.dot.screenComp
+        ? camera.radius / CFG.camera.radius
+        : 1.0;
 
-    // Try WebGPU first, fallback to WebGL
+    nodesData.forEach(node => {
+        const isHov = hoveredMesh === node.mesh;
+        node.mesh.scaling.setAll(scaleComp * (isHov ? CFG.dot.hoverMult : 1.0));
+
+        // Front-face culling for labels
+        if (node.guiText) {
+            const toMesh = node.mesh.getAbsolutePosition().normalize();
+            const facing = BABYLON.Vector3.Dot(toMesh, camFwd);
+            node.guiText.isVisible = facing < 0.12;
+        }
+    });
+}
+
+// ==========================================
+// ENGINE + SCENE INIT
+// ==========================================
+async function initEngine() {
+    const canvas = document.getElementById('renderCanvas');
+
     try {
         engine = new BABYLON.WebGPUEngine(canvas);
         await engine.initAsync();
-    } catch (e) {
-        console.warn("WebGPU not available, falling back to WebGL2");
-        engine = new BABYLON.Engine(canvas, true, { preserveDrawingBuffer: true, stencil: true });
-    }
-
-    scene = new BABYLON.Scene(engine);
-    scene.clearColor = APP_CONFIG.colors.background;
-
-    scene.createDefaultEnvironment({
-        createSkybox: false,
-        createGround: false
-    });
-
-    camera = new BABYLON.ArcRotateCamera("camera", Math.PI / 2, Math.PI / 2.5, APP_CONFIG.camera.radiusMap, BABYLON.Vector3.Zero(), scene);
-    camera.attachControl(canvas, true);
-    camera.lowerRadiusLimit = APP_CONFIG.camera.minRadius;
-    camera.upperRadiusLimit = APP_CONFIG.camera.maxRadius;
-    // Faster, smoother scroll zoom
-    camera.wheelPrecision = 1;
-    camera.wheelDeltaPercentage = 0.02;
-    camera.minZ = 0.1;
-    camera.maxZ = 10000;
-    camera.panningSensibility = 0; // disable panning, only orbit+zoom
-
-    let light = new BABYLON.HemisphericLight("light", new BABYLON.Vector3(0, 1, 0), scene);
-    light.intensity = APP_CONFIG.lightIntensity;
-
-    await buildSceneElements();
-
-    scene.onBeforeRenderObservable.add(() => {
-        updateTransitions();
-        updateEdges();
-        updateLabels();
-    });
-
-    scene.onPointerMove = function () {
-        let hit = scene.pick(scene.pointerX, scene.pointerY);
-
-        if (hit.pickedMesh && hit.pickedMesh.nodeData) {
-            hoveredMesh = hit.pickedMesh;
-            document.body.style.cursor = "pointer";
-            document.getElementById("hud-target").innerText = hoveredMesh.nodeData.label.toUpperCase();
-            document.getElementById("hud-target").classList.add("active");
-            document.getElementById("hud-cluster").innerText = (hoveredMesh.nodeData.medium || "SUPPORT").toUpperCase();
-
-            // Highlight color
-            if (hoveredMesh.material) {
-                hoveredMesh.material.emissiveColor = APP_CONFIG.colors.hoverEffect;
-            }
-        } else {
-            if (hoveredMesh) {
-                // restore color
-                if (hoveredMesh.material) {
-                    hoveredMesh.material.emissiveColor = hoveredMesh.baseColor;
-                }
-                hoveredMesh = null;
-            }
-            document.body.style.cursor = "default";
-            document.getElementById("hud-target").innerText = "---";
-            document.getElementById("hud-target").classList.remove("active");
-            document.getElementById("hud-cluster").innerText = "---";
-        }
-    };
-
-    window.addEventListener("click", () => {
-        if (hoveredMesh && hoveredMesh.nodeData) {
-            if (hoveredMesh.nodeData.type === "artist") {
-                fetchArtistWikiData(hoveredMesh.nodeData);
-            } else if (hoveredMesh.nodeData.type === "museum") {
-                showMuseumData(hoveredMesh.nodeData);
-            }
-        }
-    });
-
-    engine.runRenderLoop(() => {
-        scene.render();
-    });
-
-    window.addEventListener("resize", () => {
-        engine.resize();
-        _labelViewport = null; // invalidate viewport cache
-    });
-}
-
-async function buildSceneElements() {
-    // Build Globe via GLB async load
-    try {
-        let result = await BABYLON.SceneLoader.ImportMeshAsync("", "./", "earth.glb", scene);
-        globeMesh = result.meshes[0];
-
-        let bbox = globeMesh.getHierarchyBoundingVectors();
-        let size = bbox.max.subtract(bbox.min);
-        let maxDim = Math.max(size.x, size.y, size.z);
-        if (maxDim > 0) {
-            let targetSize = APP_CONFIG.globeRadius * 2 * 0.98; // Fit slightly inside points
-            let scale = targetSize / maxDim;
-            globeMesh.scaling = new BABYLON.Vector3(-scale, scale, scale);
-
-            if (APP_CONFIG.earthMaterial.rotationOffset) {
-                globeMesh.rotationQuaternion = null;
-                globeMesh.rotation = new BABYLON.Vector3(
-                    APP_CONFIG.earthMaterial.rotationX,
-                    APP_CONFIG.earthMaterial.rotationY,
-                    APP_CONFIG.earthMaterial.rotationZ
-                );
-            }
-
-
-            let overlaySphere = BABYLON.MeshBuilder.CreateSphere("overlay", { diameter: APP_CONFIG.globeRadius * 2.02, segments: 64 }, scene);
-            overlaySphere.parent = globeMesh;
-            let overlayMat = new BABYLON.PBRMaterial("overlayMat", scene);
-            overlayMat.albedoColor = new BABYLON.Color3(0, 0, 0);
-            overlayMat.alpha = 0.6;
-            overlayMat.transparencyMode = BABYLON.PBRMaterial.PBRMATERIAL_ALPHABLEND;
-            overlayMat.unlit = true;
-            overlaySphere.material = overlayMat;
-            overlaySphere.isPickable = false;
-
-            // Apply EarthMaterial params mapping
-            globeMesh.getChildMeshes().forEach(m => {
-                if (m.material && m.material.getClassName() === "PBRMaterial") {
-                    m.material.metallic = APP_CONFIG.earthMaterial.metallic;
-                    m.material.roughness = APP_CONFIG.earthMaterial.roughness;
-                    m.material.environmentIntensity = APP_CONFIG.earthMaterial.environmentIntensity;
-                    m.material.alpha = APP_CONFIG.earthMaterial.alpha;
-                    if (APP_CONFIG.earthMaterial.alpha < 1.0) {
-                        m.material.transparencyMode = BABYLON.PBRMaterial.PBRMATERIAL_ALPHABLEND;
-                    }
-                }
-                if (APP_CONFIG.earthMaterial.wireframeEnabled) {
-                    let wfClone = m.clone(m.name + "_wf");
-                    let wfMat = new BABYLON.StandardMaterial("wfMat", scene);
-                    wfMat.wireframe = true;
-                    wfMat.emissiveColor = new BABYLON.Color3(APP_CONFIG.earthMaterial.wireframeColor.r, APP_CONFIG.earthMaterial.wireframeColor.g, APP_CONFIG.earthMaterial.wireframeColor.b);
-                    wfMat.disableLighting = true;
-                    wfMat.alpha = APP_CONFIG.earthMaterial.wireframeColor.a;
-                    wfClone.material = wfMat;
-                }
-            });
-        }
-    } catch (e) {
-        console.warn("Could not load earth.glb, falling back to sphere", e);
-        globeMesh = BABYLON.MeshBuilder.CreateSphere("globe", { diameter: APP_CONFIG.globeRadius * 2, segments: 64 }, scene);
-        let globeMat = new BABYLON.PBRMaterial("globeMat", scene);
-        globeMat.albedoColor = new BABYLON.Color3(0.04, 0.04, 0.04);
-        globeMat.roughness = 0.5;
-        globeMat.metallic = 0.1;
-        globeMesh.material = globeMat;
-    }
-
-    // We use basic meshes for nodes
-    let artistMatProto = new BABYLON.StandardMaterial("artistMat", scene);
-    artistMatProto.disableLighting = true;
-
-    // Build fullscreen GUI for labels
-    let advancedTexture = null;
-    if (APP_CONFIG.labels.enabled) {
-        advancedTexture = BABYLON.GUI.AdvancedDynamicTexture.CreateFullscreenUI("UI");
-    }
-
-    nodesData.forEach(node => {
-        let isArtist = node.type === "artist";
-        let isMuseum = node.type === "museum";
-
-        // World-space diameter — stays visually constant because we compensate scaling per-frame
-        let diameter = isArtist ? (1.5 + (node.score / 100) * 10.5) : (isMuseum ? 5 : 8);
-        node.baseDiameter = diameter; // remember for scale compensation
-
-        let mesh = BABYLON.MeshBuilder.CreateSphere(node.id, {
-            diameter: diameter,
-            segments: isArtist ? 6 : (isMuseum ? 16 : 12)
-        }, scene);
-
-        let mat = artistMatProto.clone("mat_" + node.id);
-        let nColor;
-        if (isArtist) nColor = mediumColors[node.medium] || APP_CONFIG.colors.nodeDefault;
-        else if (isMuseum) nColor = APP_CONFIG.colors.museumNode;
-        else nColor = APP_CONFIG.colors.nodeDefault;
-
-        mat.emissiveColor = nColor;
-        mat.alpha = APP_CONFIG.colors.nodeOpacity;
-        mesh.material = mat;
-        mesh.baseColor = nColor;
-
-        mesh.position = currentMode === "MAP" ? node.mapPos : node.networkPos;
-        mesh.nodeData = node;
-        node.mesh = mesh;
-
-        // --- Label for high-score artists and museums ---
-        if ((isArtist || isMuseum) && advancedTexture && node.score > APP_CONFIG.labels.scoreThreshold) {
-            let targetNode = new BABYLON.TransformNode("lbl_" + node.id, scene);
-            // start offset, will be updated each frame
-            targetNode.position = mesh.position.add(
-                mesh.position.normalizeToNew().scale(APP_CONFIG.labels.offsetFactor)
-            );
-
-            let line = new BABYLON.GUI.Line();
-            line.lineWidth = 1;
-            line.dash = [3, 3];
-            line.color = APP_CONFIG.labels.lineColor;
-            advancedTexture.addControl(line);
-            line.linkWithMesh(mesh);
-
-            let idText = new BABYLON.GUI.TextBlock();
-            idText.text = node.label.toUpperCase();
-            idText.color = APP_CONFIG.labels.textColor;
-            idText.fontSize = APP_CONFIG.labels.fontSize;
-            idText.fontFamily = "Fragment Mono, monospace";
-
-            advancedTexture.addControl(idText);
-            idText.linkWithMesh(targetNode);
-
-            line.connectedControl = idText;
-
-            node.labelTarget = targetNode;
-            node.guiLine = line;
-            node.guiText = idText;
-        }
-
-        if (!isArtist && !isMuseum) {
-            mesh.visibility = currentMode === "MAP" ? 0 : 1;
-        }
-
-        nodeMeshes.push(mesh);
-    });
-
-    // Build Edges as LineSystem for heavy performance improvement
-    updateEdges(true); // initial build
-}
-
-function updateEdges(initial = false) {
-    let linesArray = [];
-    let colorsArray = [];
-
-    edgesData.forEach(edge => {
-        let sNode = nodesData.find(n => n.id === edge.source);
-        let tNode = nodesData.find(n => n.id === edge.target);
-        if (sNode && tNode) {
-            linesArray.push([sNode.mesh.position, tNode.mesh.position]);
-            colorsArray.push([APP_CONFIG.colors.edgeLine, APP_CONFIG.colors.edgeLine]);
-        }
-    });
-
-    if (linesArray.length === 0) return;
-
-    if (edgeLines.length === 0 || initial) {
-        edgeLines = BABYLON.MeshBuilder.CreateLineSystem("edges", {
-            lines: linesArray,
-            colors: colorsArray,
-            updatable: true
-        }, scene);
-    } else {
-        BABYLON.MeshBuilder.CreateLineSystem("edges", {
-            lines: linesArray,
-            colors: colorsArray,
-            instance: edgeLines
+    } catch (_) {
+        engine = new BABYLON.Engine(canvas, true, {
+            preserveDrawingBuffer: true, stencil: true
         });
     }
 
-    // Completely hide edges in map mode, only draw in Network mode
-    edgeLines.alpha = currentMode === "MAP" ? 0.0 : 0.5;
-    edgeLines.isVisible = currentMode !== "MAP";
-}
+    // Render at full device pixel ratio (retina / HiDPI)
+    engine.setHardwareScalingLevel(1 / (window.devicePixelRatio || 1));
 
-function updateTransitions() {
+    scene = new BABYLON.Scene(engine);
+    scene.clearColor = new BABYLON.Color4(0, 0, 0, 1);
 
-    globeMesh.scaling = BABYLON.Vector3.Lerp(
-        globeMesh.scaling,
-        currentMode === "MAP" ? new BABYLON.Vector3(-1, 1, 1) : new BABYLON.Vector3(-0.01, 0.01, 0.01),
-        APP_CONFIG.animationSpeed
-    );
+    // Environment (needed for PBR materials on earth.glb)
+    scene.createDefaultEnvironment({ createSkybox: false, createGround: false });
 
-    nodesData.forEach(node => {
-        let targetPos = currentMode === "MAP" ? node.mapPos : node.networkPos;
-        if (targetPos) {
-            node.mesh.position = BABYLON.Vector3.Lerp(node.mesh.position, targetPos, APP_CONFIG.animationSpeed);
+    camera = new BABYLON.ArcRotateCamera('cam', Math.PI / 2, Math.PI / 2.5,
+        CFG.camera.radius, BABYLON.Vector3.Zero(), scene);
+    camera.attachControl(canvas, true);
+    camera.lowerRadiusLimit  = CFG.camera.minRadius;
+    camera.upperRadiusLimit  = CFG.camera.maxRadius;
+    camera.wheelDeltaPercentage = 0.02;
+    camera.minZ = 0.1; camera.maxZ = 10000;
+    camera.panningSensibility = 0;
+
+    // Hemisphere fills shadows; cam-attached point ensures facing side is always lit
+    const hemi = new BABYLON.HemisphericLight('hemi', new BABYLON.Vector3(0, 1, 0), scene);
+    hemi.intensity = CFG.light.hemi;
+    hemi.groundColor = new BABYLON.Color3(0.15, 0.15, 0.15);
+
+    const camLight = new BABYLON.PointLight('camLight', BABYLON.Vector3.Zero(), scene);
+    camLight.parent    = camera;
+    camLight.intensity = CFG.light.cam;
+
+    await buildGlobe();
+    buildNodes();
+
+    // Per-frame loop
+    scene.onBeforeRenderObservable.add(updateFrame);
+
+    // Hover
+    scene.onPointerMove = () => {
+        const hit = scene.pick(scene.pointerX, scene.pointerY);
+        if (hit.pickedMesh && hit.pickedMesh.nodeData) {
+            if (hoveredMesh !== hit.pickedMesh) {
+                if (hoveredMesh) hoveredMesh.material.emissiveColor = hoveredMesh.baseColor;
+            }
+            hoveredMesh = hit.pickedMesh;
+            hoveredMesh.material.emissiveColor = new BABYLON.Color3(1, 1, 1);
+            document.body.style.cursor = 'pointer';
+            document.getElementById('hud-target').innerText = hoveredMesh.nodeData.label.toUpperCase();
+            document.getElementById('hud-target').classList.add('active');
+            document.getElementById('hud-cluster').innerText =
+                (hoveredMesh.nodeData.medium || 'MUSEUM').toUpperCase();
+        } else {
+            if (hoveredMesh) {
+                hoveredMesh.material.emissiveColor = hoveredMesh.baseColor;
+                hoveredMesh = null;
+            }
+            document.body.style.cursor = 'crosshair';
+            document.getElementById('hud-target').innerText = '---';
+            document.getElementById('hud-target').classList.remove('active');
+            document.getElementById('hud-cluster').innerText = '---';
         }
+    };
 
-        if (node.type === "medium") {
-            let targetVis = currentMode === "MAP" ? 0 : 1;
-            node.mesh.visibility += (targetVis - node.mesh.visibility) * APP_CONFIG.animationSpeed;
-        }
+    window.addEventListener('click', () => {
+        if (!hoveredMesh || !hoveredMesh.nodeData) return;
+        const nd = hoveredMesh.nodeData;
+        if (nd.type === 'artist')  fetchArtistWikiData(nd);
+        if (nd.type === 'museum')  showMuseumData(nd);
+    });
 
-        // Constant screen-size: scale UP as camera zooms OUT and DOWN when zoomed IN
-        // ratio = 1 at default radius, > 1 when zoomed out, < 1 when zoomed in
-        let sizeScale = camera.radius / APP_CONFIG.camera.radiusMap;
-        let hoverBoost = (hoveredMesh === node.mesh) ? 1.6 : 1.0;
-        let finalScale = sizeScale * hoverBoost;
-        node.mesh.scaling.setAll(finalScale);
+    engine.runRenderLoop(() => scene.render());
+    window.addEventListener('resize', () => {
+        engine.setHardwareScalingLevel(1 / (window.devicePixelRatio || 1));
+        engine.resize();
     });
 }
 
-// --- Label update: atan2 rotation + front-face culling ---
-let _labelViewport = null;
-function updateLabels() {
-    if (!APP_CONFIG.labels.enabled) return;
-
-    _labelViewport = _labelViewport || camera.viewport.toGlobal(engine.getRenderWidth(), engine.getRenderHeight());
-    const projMatrix = scene.getTransformMatrix();
-    const identMatrix = BABYLON.Matrix.Identity();
-    const camFwd = camera.getForwardRay().direction;
-
-    nodesData.forEach(node => {
-        if (!node.guiText || !node.labelTarget) return;
-
-        const meshPos = node.mesh.getAbsolutePosition();
-
-        // Front-face culling: hide label if dot is on the far side of the globe
-        const toMesh = meshPos.normalizeToNew();
-        const facing = BABYLON.Vector3.Dot(toMesh, camFwd.normalizeToNew());
-        if (facing > 0.1) {
-            node.guiText.isVisible = false;
-            node.guiLine.isVisible = false;
-            return;
-        }
-        node.guiText.isVisible = true;
-        node.guiLine.isVisible = true;
-
-        // Update label anchor position along the normal, compensated for current zoom
-        const normal = meshPos.normalizeToNew();
-        const labelDist = APP_CONFIG.labels.offsetFactor * (camera.radius / APP_CONFIG.camera.radiusMap);
-        node.labelTarget.position = meshPos.add(normal.scale(labelDist));
-
-        // 2D screen-space angle for parallel text
-        const p1 = BABYLON.Vector3.Project(meshPos, identMatrix, projMatrix, _labelViewport);
-        const p2 = BABYLON.Vector3.Project(node.labelTarget.position, identMatrix, projMatrix, _labelViewport);
-        let angle = Math.atan2(p2.y - p1.y, p2.x - p1.x);
-        // Keep text right-side-up
-        if (angle > Math.PI / 2 || angle < -Math.PI / 2) angle += Math.PI;
-        node.guiText.rotation = angle;
-    });
-}
-
-// Map UI interactions
-document.addEventListener("DOMContentLoaded", async () => {
-    document.getElementById("toggleBtn").addEventListener("click", () => {
-        currentMode = currentMode === "MAP" ? "NETWORK" : "MAP";
-        document.getElementById("hud-mode").innerText = currentMode === "MAP" ? "WORLD_MAP" : "NETWORK_FLOW";
-        document.getElementById("toggleBtn").innerText = currentMode === "MAP" ? "SWITCH TO NETWORK" : "SWITCH TO MAP";
-
-        // Single automatic transition for the camera
-        let targetRadius = currentMode === "MAP" ? APP_CONFIG.camera.radiusMap : APP_CONFIG.camera.radiusNet;
-        let ease = new BABYLON.CubicEase();
-        ease.setEasingMode(BABYLON.EasingFunction.EASINGMODE_EASEINOUT);
-        BABYLON.Animation.CreateAndStartAnimation("camZoomAnim", camera, "radius", 60, 45, camera.radius, targetRadius, 0, ease);
-    });
-
-    await loadData();
-    await initEngine();
-});
-
+// ==========================================
+// WIKI / PANEL
+// ==========================================
 function showFallbackImage(name) {
-    let imgEl = document.getElementById("artist-image");
-    imgEl.src = `https://picsum.photos/seed/${encodeURIComponent(name)}/400/300`;
-    imgEl.onload = () => {
-        document.getElementById("artist-img-loader").classList.remove("active");
-        imgEl.classList.remove("hidden");
+    const img = document.getElementById('artist-image');
+    img.src = `https://picsum.photos/seed/${encodeURIComponent(name)}/400/300`;
+    img.onload = () => {
+        document.getElementById('artist-img-loader').classList.remove('active');
+        img.classList.remove('hidden');
     };
 }
 
 async function fetchImageFromWiki(title) {
-    let url = `https://en.wikipedia.org/w/api.php?action=query&titles=${encodeURIComponent(title)}&prop=pageimages&pithumbsize=400&format=json&origin=*`;
-    let response = await fetch(url);
-    let data = await response.json();
-    let pages = data.query.pages;
-    let pageId = Object.keys(pages)[0];
-    if (pageId !== "-1" && pages[pageId].thumbnail) {
-        return pages[pageId].thumbnail.source;
-    }
-    return null;
+    try {
+        const url = `https://en.wikipedia.org/w/api.php?action=query&titles=${encodeURIComponent(title)}&prop=pageimages&pithumbsize=400&format=json&origin=*`;
+        const data = await (await fetch(url)).json();
+        const pages = data.query.pages;
+        const pid = Object.keys(pages)[0];
+        return (pid !== '-1' && pages[pid].thumbnail) ? pages[pid].thumbnail.source : null;
+    } catch (_) { return null; }
 }
 
-async function fetchArtistWikiData(artistData) {
-    let panel = document.getElementById("artist-details");
-    panel.classList.remove("hidden");
-
-    document.getElementById("artist-name").innerText = artistData.label;
-    document.getElementById("artist-img-loader").classList.add("active");
-    let imgEl = document.getElementById("artist-image");
-    imgEl.classList.add("hidden");
-
-    document.getElementById("artist-bio").innerText = "Loading data...";
-    document.getElementById("artist-notable-work").innerText = artistData.notable ? artistData.notable : "UNKNOWN";
+async function fetchArtistWikiData(nd) {
+    const panel = document.getElementById('artist-details');
+    panel.classList.remove('hidden');
+    document.getElementById('artist-name').innerText = nd.label;
+    document.getElementById('artist-img-loader').classList.add('active');
+    const img = document.getElementById('artist-image');
+    img.classList.add('hidden');
+    document.getElementById('artist-bio').innerText = 'Loading...';
+    document.getElementById('artist-notable-work').innerText = nd.notable || '---';
 
     try {
-        let name = encodeURIComponent(artistData.label);
-        let url = `https://en.wikipedia.org/w/api.php?action=query&titles=${name}&prop=extracts&exintro=1&format=json&origin=*`;
-        let response = await fetch(url);
-        let data = await response.json();
-
-        let pages = data.query.pages;
-        let pageId = Object.keys(pages)[0];
-        let page = pages[pageId];
-
-        if (pageId !== "-1") {
-            if (page.extract) {
-                let tmp = document.createElement("DIV");
-                tmp.innerHTML = page.extract;
-                document.getElementById("artist-bio").innerText = tmp.textContent || tmp.innerText || "";
-            } else {
-                document.getElementById("artist-bio").innerText = artistData.bio || "No biography available.";
-            }
+        const url = `https://en.wikipedia.org/w/api.php?action=query&titles=${encodeURIComponent(nd.label)}&prop=extracts&exintro=1&format=json&origin=*`;
+        const data  = await (await fetch(url)).json();
+        const pages = data.query.pages;
+        const pid   = Object.keys(pages)[0];
+        if (pid !== '-1' && pages[pid].extract) {
+            const tmp = document.createElement('div');
+            tmp.innerHTML = pages[pid].extract;
+            document.getElementById('artist-bio').innerText = tmp.textContent || '';
         } else {
-            document.getElementById("artist-bio").innerText = artistData.bio || "Artist not found on Wikipedia. " + artistData.bio;
+            document.getElementById('artist-bio').innerText = nd.bio || 'No biography available.';
         }
 
-        // Image Prioritization Logic
-        let imageUrl = null;
-        if (artistData.notable) {
-            let firstWork = artistData.notable.split(", ")[0];
-            imageUrl = await fetchImageFromWiki(firstWork);
-        }
-
-        if (!imageUrl) {
-            imageUrl = await fetchImageFromWiki(artistData.label);
-        }
-
-        if (imageUrl) {
-            imgEl.src = imageUrl;
-            imgEl.onload = () => {
-                document.getElementById("artist-img-loader").classList.remove("active");
-                imgEl.classList.remove("hidden");
-            };
+        let imgUrl = nd.notable ? await fetchImageFromWiki(nd.notable.split(', ')[0]) : null;
+        if (!imgUrl) imgUrl = await fetchImageFromWiki(nd.label);
+        if (imgUrl) {
+            img.src = imgUrl;
+            img.onload = () => { document.getElementById('artist-img-loader').classList.remove('active'); img.classList.remove('hidden'); };
         } else {
-            showFallbackImage(artistData.label);
+            showFallbackImage(nd.label);
         }
-    } catch (e) {
-        document.getElementById("artist-bio").innerText = artistData.bio || "Error loading Wikipedia data.";
-        showFallbackImage(artistData.label);
+    } catch (_) {
+        document.getElementById('artist-bio').innerText = nd.bio || 'Error loading data.';
+        showFallbackImage(nd.label);
     }
 }
 
-function showMuseumData(museumData) {
-    let panel = document.getElementById("artist-details");
-    panel.classList.remove("hidden");
-
-    document.getElementById("artist-name").innerText = museumData.label.toUpperCase();
-    document.getElementById("artist-img-loader").classList.add("active");
-    let imgEl = document.getElementById("artist-image");
-    imgEl.classList.add("hidden");
-
-    document.getElementById("artist-bio").innerText = museumData.bio || "No description available.";
-    document.getElementById("artist-notable-work").innerText = "MUSEUM / INSTITUTION";
-
-    if (museumData.image_url) {
-        imgEl.src = museumData.image_url;
-        imgEl.onload = () => {
-            document.getElementById("artist-img-loader").classList.remove("active");
-            imgEl.classList.remove("hidden");
-        };
+function showMuseumData(nd) {
+    const panel = document.getElementById('artist-details');
+    panel.classList.remove('hidden');
+    document.getElementById('artist-name').innerText = nd.label.toUpperCase();
+    document.getElementById('artist-img-loader').classList.add('active');
+    const img = document.getElementById('artist-image');
+    img.classList.add('hidden');
+    document.getElementById('artist-bio').innerText = nd.bio || 'No description available.';
+    document.getElementById('artist-notable-work').innerText = 'MUSEUM / INSTITUTION';
+    if (nd.image_url) {
+        img.src = nd.image_url;
+        img.onload = () => { document.getElementById('artist-img-loader').classList.remove('active'); img.classList.remove('hidden'); };
     } else {
-        showFallbackImage(museumData.label);
+        showFallbackImage(nd.label);
     }
 }
+
+// ==========================================
+// BOOT
+// ==========================================
+document.addEventListener('DOMContentLoaded', async () => {
+    await loadData();
+    await initEngine();
+});

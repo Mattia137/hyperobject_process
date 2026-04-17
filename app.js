@@ -1,597 +1,715 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
-import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
-import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
 
 // ==========================================
-// EARTH-MARS BRIDGE PROJECT - PARAMETERS
+// CONFIG
 // ==========================================
-export const APP_CONFIG = {
-    fontFamily: "Fragment Mono, monospace",
-    defaultMode: "A", // A: 3D Network (Color), B: 2D Diagram (B&W)
-    colors: {
-        clusters: {
-            "research": "#ff3366", // Red/Pink
-            "analysis": "#33ccff", // Cyan
-            "design":   "#9933ff", // Purple
-            "output":   "#ff9933"  // Orange
-        },
-        mode2DNode: "#000000",
-        mode2DEdge: "rgba(0, 0, 0, 0.4)",
-        mode3DEdge: "rgba(255, 255, 255, 0.2)",
-        mode2DText: "#000000",
-        mode3DText: "#ffffff",
-        hoverAccent: "var(--accent)" // To be computed dynamically or using CSS custom prop via JS
+const CFG = {
+    font: "Fragment Mono, monospace",
+    mode: "A", // A = 3D network, B = 2D diagram
+    cluster: {
+        research: "#e05a6a",
+        analysis: "#4fc0d6",
+        output:   "#e8943a"
     },
-    physics: {
-        springLength: 100,
-        springFactor: 0.1,
-        repulsion: 1500,
-        damping: 0.85
+    file: {
+        png:  "#9a9a9a",
+        glb:  "#4ec9d6",
+        html: "#d4a44e",
+        py:   "#5ec97a",
+        pdf:  "#c94e9a",
+        json: "#9ac94e",
+        ttf:  "#c9c94e",
+        md:   "#7a7a7a",
+        js:   "#c9844e",
+        gh:   "#7ac9c9",
+        log:  "#666666",
+        other:"#666666"
     },
-    camera: {
-        zoom: 1,
-        x: 0,
-        y: 0
-    },
-    material: {
-        nodeRadius3D: 4,
-        nodeRadius2D: 8,
-        edgeWidth3D: 1,
-        edgeWidth2D: 1
-    },
-    postProcess: {
-        bloomStrength: 1.5,
-        bloomRadius: 0.4,
-        bloomThreshold: 0
-    }
+    edge3D:    0.42,
+    edge2D:    0.7,
+    nodeR3D:   9,
+    fileR3D:   2.2,
+    satRange:  [38, 72],
+    spring:    { len: 110, k: 0.022, rep: 1900, damp: 0.87 },
 };
 
-// --- DATA STRUCTURES ---
-const rawNodes = [
-    { id: "BRIEF", cluster: "research" },
-    { id: "SITE", cluster: "research" },
-    { id: "MEDIA", cluster: "research" },
-    { id: "TECHNOLOGIES", cluster: "research" },
-    { id: "STONES RESEARCH", cluster: "research" },
-    { id: "PATTERNS", cluster: "research" },
-    { id: "ARTISTS", cluster: "research" },
+// ==========================================
+// WORKFLOW NODES
+// ==========================================
+const RAW_NODES = [
+    { id: "BRIEF",                 cl: "research" },
+    { id: "SITE",                  cl: "research" },
+    { id: "MEDIA",                 cl: "research" },
+    { id: "TECHNOLOGIES",          cl: "research" },
+    { id: "STONES RESEARCH",       cl: "research" },
+    { id: "PATTERNS",              cl: "research" },
+    { id: "ARTISTS",               cl: "research" },
 
-    { id: "SITE ANALYSIS", cluster: "analysis" },
-    { id: "MEDIA M. CONCEPT", cluster: "analysis" },
-    { id: "PROGRAM", cluster: "analysis" },
-    { id: "MASSING", cluster: "analysis" },
-    { id: "STRUCTURE", cluster: "analysis" },
-    { id: "SKIN", cluster: "analysis" },
-    { id: "PY SKIN GENERATOR", cluster: "analysis" },
+    { id: "SITE ANALYSIS",         cl: "analysis" },
+    { id: "MEDIA M. CONCEPT",      cl: "analysis" },
+    { id: "PROGRAM",               cl: "analysis" },
+    { id: "MASSING",               cl: "analysis" },
+    { id: "STRUCTURE",             cl: "analysis" },
+    { id: "SKIN",                  cl: "analysis" },
+    { id: "PY SKIN GENERATOR",     cl: "analysis" },
 
-    { id: "SITE MODEL", cluster: "output" },
-    { id: "MEDIA PROJECT", cluster: "output" },
-    { id: "PROJECT MODEL", cluster: "output" },
-    { id: "DRAWINGS + DETAILS", cluster: "output" },
-    { id: "PROJECT DATA", cluster: "output" },
-    { id: "OPEN SOURCE", cluster: "output" },
-    { id: "WEB INTERACTIVE MODEL", cluster: "output" },
-    { id: "UE ENVIRONMENT", cluster: "output" },
-    { id: "UE ANIMATION", cluster: "output" }
+    { id: "SITE MODEL",            cl: "output" },
+    { id: "MEDIA PROJECT",         cl: "output" },
+    { id: "PROJECT MODEL",         cl: "output" },
+    { id: "DRAWINGS + DETAILS",    cl: "output" },
+    { id: "PROJECT DATA",          cl: "output" },
+    { id: "OPEN SOURCE",           cl: "output" },
+    { id: "WEB INTERACTIVE MODEL", cl: "output" },
+    { id: "UE ENVIRONMENT",        cl: "output" },
+    { id: "UE ANIMATION",          cl: "output" }
 ];
 
-const edges = [
-    { source: "BRIEF", target: "SITE" },
-    { source: "BRIEF", target: "MEDIA" },
-    { source: "BRIEF", target: "PROGRAM" },
-    { source: "BRIEF", target: "MEDIA M. CONCEPT" },
-
-    { source: "MEDIA", target: "TECHNOLOGIES" },
-    { source: "MEDIA", target: "ARTISTS" },
-    { source: "MEDIA", target: "PROGRAM" },
-
-    { source: "TECHNOLOGIES", target: "MEDIA M. CONCEPT" },
-
-    { source: "MEDIA M. CONCEPT", target: "MEDIA PROJECT" },
-    { source: "MEDIA M. CONCEPT", target: "PROGRAM" },
-
-    { source: "SITE", target: "SITE ANALYSIS" },
-    { source: "SITE", target: "SITE MODEL" },
-
-    { source: "SITE ANALYSIS", target: "MASSING" },
-
-    { source: "SITE MODEL", target: "SITE ANALYSIS" },
-    { source: "SITE MODEL", target: "WEB INTERACTIVE MODEL" },
-    { source: "SITE MODEL", target: "UE ENVIRONMENT" },
-
-    { source: "PROGRAM", target: "MASSING" },
-    { source: "PROGRAM", target: "STRUCTURE" },
-    { source: "PROGRAM", target: "PROJECT MODEL" },
-    { source: "PROGRAM", target: "MEDIA PROJECT" },
-
-    { source: "MASSING", target: "SKIN" },
-    { source: "MASSING", target: "STRUCTURE" },
-
-    { source: "SKIN", target: "PROJECT MODEL" },
-
-    { source: "STRUCTURE", target: "PROJECT MODEL" },
-
-    { source: "MEDIA PROJECT", target: "PROJECT MODEL" },
-
-    { source: "PROJECT MODEL", target: "DRAWINGS + DETAILS" },
-    { source: "PROJECT MODEL", target: "PROJECT DATA" },
-    { source: "PROJECT MODEL", target: "UE ANIMATION" },
-
-    { source: "DRAWINGS + DETAILS", target: "PROJECT DATA" },
-
-    { source: "PROJECT DATA", target: "OPEN SOURCE" },
-
-    { source: "UE ENVIRONMENT", target: "UE ANIMATION" },
-
-    { source: "STONES RESEARCH", target: "PATTERNS" },
-
-    { source: "PATTERNS", target: "PY SKIN GENERATOR" },
-
-    { source: "PY SKIN GENERATOR", target: "SKIN" }
+const EDGES = [
+    ["BRIEF","SITE"], ["BRIEF","MEDIA"], ["BRIEF","PROGRAM"], ["BRIEF","MEDIA M. CONCEPT"],
+    ["MEDIA","TECHNOLOGIES"], ["MEDIA","ARTISTS"], ["MEDIA","PROGRAM"],
+    ["TECHNOLOGIES","MEDIA M. CONCEPT"],
+    ["MEDIA M. CONCEPT","MEDIA PROJECT"], ["MEDIA M. CONCEPT","PROGRAM"],
+    ["SITE","SITE ANALYSIS"], ["SITE","SITE MODEL"],
+    ["SITE ANALYSIS","MASSING"],
+    ["SITE MODEL","SITE ANALYSIS"], ["SITE MODEL","WEB INTERACTIVE MODEL"], ["SITE MODEL","UE ENVIRONMENT"],
+    ["PROGRAM","MASSING"], ["PROGRAM","STRUCTURE"], ["PROGRAM","PROJECT MODEL"], ["PROGRAM","MEDIA PROJECT"],
+    ["MASSING","SKIN"], ["MASSING","STRUCTURE"],
+    ["SKIN","PROJECT MODEL"],
+    ["STRUCTURE","PROJECT MODEL"],
+    ["MEDIA PROJECT","PROJECT MODEL"],
+    ["PROJECT MODEL","DRAWINGS + DETAILS"], ["PROJECT MODEL","PROJECT DATA"], ["PROJECT MODEL","UE ANIMATION"],
+    ["DRAWINGS + DETAILS","PROJECT DATA"],
+    ["PROJECT DATA","OPEN SOURCE"],
+    ["UE ENVIRONMENT","UE ANIMATION"],
+    ["STONES RESEARCH","PATTERNS"],
+    ["PATTERNS","PY SKIN GENERATOR"],
+    ["PY SKIN GENERATOR","SKIN"]
 ];
 
+// ==========================================
+// FILE CATALOG — every project file
+// ==========================================
+const F = (n, ext, p) => ({ n, ext, p });
 
-// --- THREE.JS SETUP ---
-let scene, camera, renderer, composer, controls;
-let nodesData = [];
-let edgesData = [];
-let transitionProgress = 0; // 0 = 3D Network, 1 = 2D Diagram
-let currentMode = APP_CONFIG.defaultMode;
+const FILES = [
+    // ── BRIEF ────────────────────────────────
+    F('README.md',                'md',   'BRIEF'),
+    F('agents.md',                'md',   'BRIEF'),
+    F('Meteor Facade v7 Workflow', 'pdf', 'BRIEF'),
+    F('workflow_bw',              'pdf',  'BRIEF'),
 
+    // ── TECHNOLOGIES ─────────────────────────
+    F('test_click',               'py',   'TECHNOLOGIES'),
+
+    // ── ARTISTS ──────────────────────────────
+    F('artists_data',             'json', 'ARTISTS'),
+    F('museums_data',             'json', 'ARTISTS'),
+    F('fetch_artists',            'py',   'ARTISTS'),
+    F('fetch_artists_enriched',   'py',   'ARTISTS'),
+    F('fetch_artists_v3',         'py',   'ARTISTS'),
+    F('fetch_artists_v4',         'py',   'ARTISTS'),
+    F('fetch_artists_v5',         'py',   'ARTISTS'),
+    F('fetch_museums',            'py',   'ARTISTS'),
+    F('media_artists_map/app',    'js',   'ARTISTS'),
+    F('media_artists_map/index',  'html', 'ARTISTS'),
+    F('media_artists_map/styles', 'css',  'ARTISTS'),
+    F('media_artists_map/earth',  'glb',  'ARTISTS'),
+
+    // ── STONES RESEARCH ──────────────────────
+    F('MM_antimony',              'png', 'STONES RESEARCH'),
+    F('MM_antimony-pattern',      'png', 'STONES RESEARCH'),
+    F('MM_bournonite',            'png', 'STONES RESEARCH'),
+    F('MM_bournonite-pattern',    'png', 'STONES RESEARCH'),
+    F('MM_carrollite',            'png', 'STONES RESEARCH'),
+    F('MM_carrollite-pattern',    'png', 'STONES RESEARCH'),
+    F('MM_galena',                'png', 'STONES RESEARCH'),
+    F('MM_galena-pattern',        'png', 'STONES RESEARCH'),
+    F('MM_hausmannite',           'png', 'STONES RESEARCH'),
+    F('MM_hausmannite-pattern',   'png', 'STONES RESEARCH'),
+    F('MM_vivianite',             'png', 'STONES RESEARCH'),
+    F('MM_vivianite-pattern',     'png', 'STONES RESEARCH'),
+    F('MR_brotyoidal_hematite',   'png', 'STONES RESEARCH'),
+    F('MR_brotyoidal_hematite-p', 'png', 'STONES RESEARCH'),
+    F('MR_lava_stone',            'png', 'STONES RESEARCH'),
+    F('MR_lava_stone-texture',    'png', 'STONES RESEARCH'),
+    F('MR_obsidian',              'png', 'STONES RESEARCH'),
+    F('MR_obsidian-pattern',      'png', 'STONES RESEARCH'),
+    F('MR_orbicular_granite',     'png', 'STONES RESEARCH'),
+    F('MR_orbicular_granite-p',   'png', 'STONES RESEARCH'),
+    F('MR_pahoehoe_lava',         'png', 'STONES RESEARCH'),
+    F('MR_pahoehoe_lava-pattern', 'png', 'STONES RESEARCH'),
+    F('MR_variolite',             'png', 'STONES RESEARCH'),
+    F('MR_variolite-pattern',     'png', 'STONES RESEARCH'),
+    F('M_Sikhote-Alin',           'png', 'STONES RESEARCH'),
+    F('M_Sikhote-Alin-pattern',   'png', 'STONES RESEARCH'),
+    F('M_gibeon_iron',            'png', 'STONES RESEARCH'),
+    F('M_gibeon_iron-pattern',    'png', 'STONES RESEARCH'),
+    F('M_pallasite',              'png', 'STONES RESEARCH'),
+    F('M_pallasite-pattern',      'png', 'STONES RESEARCH'),
+    F('stone_research/app',       'js',  'STONES RESEARCH'),
+    F('stone_research/index',     'html','STONES RESEARCH'),
+
+    // ── PATTERNS ─────────────────────────────
+    F('botryoidal_hematite_cryst',  'png', 'PATTERNS'),
+    F('galena_crystalline_01',      'png', 'PATTERNS'),
+    F('galena_crystalline_02',      'png', 'PATTERNS'),
+    F('galena_crystalline_03',      'png', 'PATTERNS'),
+    F('hematite_iron_rose_cryst',   'png', 'PATTERNS'),
+    F('hematite_specularite_01',    'png', 'PATTERNS'),
+    F('hematite_specularite_02',    'png', 'PATTERNS'),
+    F('hematite_crystalline_01',    'png', 'PATTERNS'),
+    F('hematite_crystalline_02',    'png', 'PATTERNS'),
+    F('hematite_crystalline_03',    'png', 'PATTERNS'),
+    F('iron_met_octahedrite',       'png', 'PATTERNS'),
+    F('iron_met_widmanstatten',     'png', 'PATTERNS'),
+    F('magnetite_crystalline_01',   'png', 'PATTERNS'),
+    F('magnetite_crystalline_02',   'png', 'PATTERNS'),
+    F('obsidian_layered_01',        'png', 'PATTERNS'),
+    F('obsidian_layered_02',        'png', 'PATTERNS'),
+    F('orbicular_granite_01',       'png', 'PATTERNS'),
+    F('orbicular_granite_02',       'png', 'PATTERNS'),
+    F('pahoehoe_lava_layered',      'png', 'PATTERNS'),
+    F('pallasite_crystalline',      'png', 'PATTERNS'),
+    F('scoria_crystalline',         'png', 'PATTERNS'),
+    F('specular_hematite_cryst',    'png', 'PATTERNS'),
+    F('stibnite_crystalline',       'png', 'PATTERNS'),
+
+    // ── MASSING ──────────────────────────────
+    ...['8d2954b4','39d31a2f','1f32a0eb','2c44d88d',
+        'e4a6f740_3','e4a6f740_2','54c3993d_2','54c3993d_3','54c3993d_0',
+        '572abb2f','14a73319_1','14a73319_3','7c9118b7_2','7c9118b7_1','7c9118b7_0',
+        'aa527ed3','808b82a3','0ffa09ac','7ff14975_0','7ff14975_3',
+        '0a85f838_1','0a85f838_0','dc044840_0','dc044840_3','2dcb6457',
+        '756ad7c6','7c7ffca8','4764f528','e4a39a39','6f104ec0',
+        'a4840761','3711fc3d_2','3711fc3d_3','b6abea8f','ab473aae',
+        'dc6f3a96_2','dc6f3a96_1','7ca46ddb','d1bed81e','015d8959',
+        'ab3d3e20','0d2e662d'
+    ].map(id => F(`mj_${id}`, 'png', 'MASSING')),
+    F('HYPEROBJECT_midterm/mass',     'glb', 'MASSING'),
+
+    // ── SKIN ─────────────────────────────────
+    F('galena-carrollite_v7-mat',    'png', 'SKIN'),
+    F('galena-pallasite_fail_v7-mat','png', 'SKIN'),
+    F('galena-pallasite_fail_v7',    'png', 'SKIN'),
+    F('galena-pallasite_v7-mat',     'png', 'SKIN'),
+    F('galena-pallasite_v7',         'png', 'SKIN'),
+    F('hematite-granite_v8-mat',     'png', 'SKIN'),
+    F('hematite-granite_v8',         'png', 'SKIN'),
+    F('hematite-obsidian_v8-mat',    'png', 'SKIN'),
+    F('hematite-obsidian_v8',        'png', 'SKIN'),
+    F('obsidian-antimony_v7-mat',    'png', 'SKIN'),
+    F('obsidian-antimony_v7',        'png', 'SKIN'),
+    F('sk_4z_00_mat_side',           'png', 'SKIN'),
+    F('sk_4z_00_side',               'png', 'SKIN'),
+    F('sk_4z_01_mat-side',           'png', 'SKIN'),
+    F('sk_4z_01_side',               'png', 'SKIN'),
+    F('sk_rnd_01_mat-side',          'png', 'SKIN'),
+    F('sk_rnd_01_side',              'png', 'SKIN'),
+    F('test-test_v8-mat',            'png', 'SKIN'),
+    F('test-test_v8',                'png', 'SKIN'),
+    F('260303_exploded-skin',        'glb', 'SKIN'),
+
+    // ── PY SKIN GENERATOR ────────────────────
+    F('postprocess',                  'py',  'PY SKIN GENERATOR'),
+    F('open_source/Meteor_facade_v7', 'py',  'PY SKIN GENERATOR'),
+    F('open_source/srf_analysis',     'gh',  'PY SKIN GENERATOR'),
+
+    // ── SITE MODEL ───────────────────────────
+    F('G11_hyperobject',             'glb', 'SITE MODEL'),
+    F('buildings',                   'glb', 'SITE MODEL'),
+    F('cold_storage',                'glb', 'SITE MODEL'),
+    F('dsr',                         'glb', 'SITE MODEL'),
+    F('highline',                    'glb', 'SITE MODEL'),
+    F('hy_new_dev',                  'glb', 'SITE MODEL'),
+    F('mn04_building',               'glb', 'SITE MODEL'),
+    F('railroads',                   'glb', 'SITE MODEL'),
+    F('site_building',               'glb', 'SITE MODEL'),
+    F('street',                      'glb', 'SITE MODEL'),
+    F('street_props',                'glb', 'SITE MODEL'),
+    F('subway_system',               'glb', 'SITE MODEL'),
+    F('terrain',                     'glb', 'SITE MODEL'),
+    F('HYPEROBJECT_midterm/site',    'glb', 'SITE MODEL'),
+    F('HYPEROBJECT_midterm/streets', 'glb', 'SITE MODEL'),
+
+    // ── STRUCTURE ────────────────────────────
+    F('260303_exploded-structure',   'glb', 'STRUCTURE'),
+
+    // ── MEDIA M. CONCEPT ─────────────────────
+    F('HYPEROBJECT_midterm/blueprint','html','MEDIA M. CONCEPT'),
+
+    // ── PROGRAM ──────────────────────────────
+    F('HYPEROBJECT_midterm/diagnostic_ui','html','PROGRAM'),
+    F('HYPEROBJECT_midterm/contorller',   'html','PROGRAM'),
+    F('HYPEROBJECT_midterm/index-contorller','html','PROGRAM'),
+    F('HYPEROBJECT_midterm/program',      'glb', 'PROGRAM'),
+
+    // ── MEDIA PROJECT ────────────────────────
+    F('260303_exploded-media',       'glb', 'MEDIA PROJECT'),
+
+    // ── PROJECT MODEL ────────────────────────
+    F('HYPEROBJECT_midterm/exploded_diagram','html','PROJECT MODEL'),
+    F('HYPEROBJECT_midterm/index',   'html','PROJECT MODEL'),
+    F('HYPEROBJECT_midterm/space',   'glb', 'PROJECT MODEL'),
+    F('260303_exploded-circulation', 'glb', 'PROJECT MODEL'),
+    F('260303_exploded-interiors',   'glb', 'PROJECT MODEL'),
+    F('260303_exploded-machinary',   'glb', 'PROJECT MODEL'),
+
+    // ── OPEN SOURCE ──────────────────────────
+    F('open_source/meteor_facade_workflow','html','OPEN SOURCE'),
+    F('open_source/workflow',        'html','OPEN SOURCE'),
+    F('Fragment_Mono/OFL',           'txt', 'OPEN SOURCE'),
+
+    // ── WEB INTERACTIVE MODEL ────────────────
+    F('index',                       'html','WEB INTERACTIVE MODEL'),
+    F('app',                         'js',  'WEB INTERACTIVE MODEL'),
+    F('styles',                      'css', 'WEB INTERACTIVE MODEL'),
+    F('Fragment_Mono/FragmentMono-Regular', 'ttf','WEB INTERACTIVE MODEL'),
+    F('Fragment_Mono/FragmentMono-Italic',  'ttf','WEB INTERACTIVE MODEL'),
+    F('HYPEROBJECT_midterm/index.controller','other','WEB INTERACTIVE MODEL'),
+    F('server',                      'log', 'WEB INTERACTIVE MODEL'),
+    ...Array.from({length:17}, (_,i) =>
+        F(i===0 ? 'fix_app' : `fix_app_${i+1}`, 'js', 'WEB INTERACTIVE MODEL')
+    ),
+];
+
+// ==========================================
+// DEPTH / DEGREE PRECOMPUTE
+// ==========================================
+function computeDepths() {
+    const inDeg = {}, adj = {}, d = {};
+    RAW_NODES.forEach(n => { inDeg[n.id]=0; adj[n.id]=[]; d[n.id]=0; });
+    EDGES.forEach(([s,t]) => { adj[s].push(t); inDeg[t]++; });
+    let q = RAW_NODES.filter(n => inDeg[n.id]===0).map(n => n.id);
+    while (q.length) {
+        const u = q.shift();
+        adj[u].forEach(v => {
+            d[v] = Math.max(d[v], d[u]+1);
+            if (--inDeg[v]===0) q.push(v);
+        });
+    }
+    return d;
+}
+const DEPTHS = computeDepths();
+
+const DEGREE = {};
+RAW_NODES.forEach(n => DEGREE[n.id]=0);
+EDGES.forEach(([s,t]) => { DEGREE[s]=(DEGREE[s]||0)+1; DEGREE[t]=(DEGREE[t]||0)+1; });
+
+// ==========================================
+// 2D LAYOUT — cluster columns
+// ==========================================
+function compute2DPos() {
+    const cols = { research: -290, analysis: 0, output: 290 };
+    const byCluster = { research:[], analysis:[], output:[] };
+    RAW_NODES.forEach(n => byCluster[n.cl].push(n.id));
+    const pos = {};
+    Object.entries(byCluster).forEach(([cl, ids]) => {
+        const x = cols[cl];
+        const span = 500;
+        ids.forEach((id, i) => {
+            const y = ids.length > 1 ? -span/2 + (i/(ids.length-1))*span : 0;
+            pos[id] = new THREE.Vector3(x, -y, 0);
+        });
+    });
+    return pos;
+}
+const POS2D = compute2DPos();
+
+// ==========================================
+// RUNTIME
+// ==========================================
+let scene, camera, renderer, controls, grid2D;
+let nodesData = [], fileNodesData = [], edgesData = [];
+let tProgress = 0, currentMode = CFG.mode;
 let hoveredNode = null;
-let raycaster = new THREE.Raycaster();
-let mouse = new THREE.Vector2();
-
+const raycaster = new THREE.Raycaster();
+const mouse = new THREE.Vector2();
 let labelsContainer;
+const clock = new THREE.Clock();
 
+// ==========================================
+// INIT THREE
+// ==========================================
 function initThree() {
     const canvas = document.getElementById('c');
     labelsContainer = document.getElementById('labels-container');
 
     scene = new THREE.Scene();
+    camera = new THREE.PerspectiveCamera(60, window.innerWidth/window.innerHeight, 0.1, 8000);
+    camera.position.set(0, 0, 650);
 
-    camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 5000);
-    camera.position.z = 1000;
-
-    renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
+    renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
     renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.setPixelRatio(window.devicePixelRatio);
+    renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+    renderer.setClearColor(0x000000, 1);
 
     controls = new OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
-    controls.dampingFactor = 0.05;
+    controls.dampingFactor = 0.07;
+    controls.minDistance = 60;
+    controls.maxDistance = 2500;
 
-    // Post-processing
-    const renderScene = new RenderPass(scene, camera);
-    const bloomPass = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 1.5, 0.4, 0.85);
-    bloomPass.threshold = APP_CONFIG.postProcess.bloomThreshold;
-    bloomPass.strength = APP_CONFIG.postProcess.bloomStrength;
-    bloomPass.radius = APP_CONFIG.postProcess.bloomRadius;
+    // 2D grid (XY plane, shows only in diagram mode)
+    grid2D = new THREE.GridHelper(5000, 100, 0x000000, 0x000000);
+    grid2D.material.opacity = 0.07;
+    grid2D.material.transparent = true;
+    grid2D.rotation.x = Math.PI / 2;
+    grid2D.visible = false;
+    scene.add(grid2D);
 
-    composer = new EffectComposer(renderer);
-    composer.addPass(renderScene);
-    composer.addPass(bloomPass);
-
-    window.addEventListener('resize', onWindowResize);
+    window.addEventListener('resize', onResize);
     window.addEventListener('mousemove', onMouseMove);
     window.addEventListener('click', onClick);
 }
 
-function onWindowResize() {
-    camera.aspect = window.innerWidth / window.innerHeight;
+function onResize() {
+    camera.aspect = window.innerWidth/window.innerHeight;
     camera.updateProjectionMatrix();
     renderer.setSize(window.innerWidth, window.innerHeight);
-    composer.setSize(window.innerWidth, window.innerHeight);
 }
 
-// --- LAYOUT ENGINE ---
-function computeDepths() {
-    let inDegree = {}; let adj = {}; let depths = {};
-    rawNodes.forEach(n => { inDegree[n.id] = 0; adj[n.id] = []; depths[n.id] = 0; });
-    edges.forEach(e => { adj[e.source].push(e.target); inDegree[e.target]++; });
-    
-    let q = rawNodes.filter(n => inDegree[n.id] === 0).map(n => n.id);
-    while (q.length) {
-        let u = q.shift();
-        adj[u].forEach(v => {
-            depths[v] = Math.max(depths[v], depths[u] + 1);
-            if (--inDegree[v] === 0) q.push(v);
-        });
-    }
-    return depths;
-}
-
-const nodeDepths = computeDepths();
-
-// --- DEGREE COMPUTATION ---
-const nodeDegree = {};
-rawNodes.forEach(n => nodeDegree[n.id] = 0);
-edges.forEach(e => {
-    nodeDegree[e.source] = (nodeDegree[e.source] || 0) + 1;
-    nodeDegree[e.target] = (nodeDegree[e.target] || 0) + 1;
-});
-
-
+// ==========================================
+// BUILD GRAPH
+// ==========================================
 function buildGraph() {
-    let maxDepth = Math.max(...Object.values(nodeDepths));
-    const clusterAngles = { "research": 0, "analysis": Math.PI * 0.66, "output": Math.PI * 1.33 };
+    const clAng = { research: 0, analysis: Math.PI*0.72, output: Math.PI*1.44 };
+    const nodeGeo = new THREE.SphereGeometry(1, 16, 16);
+    const fileGeo = new THREE.SphereGeometry(1,  8,  8);
 
-    // Material definitions
-    const sphereGeo = new THREE.SphereGeometry(1, 32, 32);
+    // ── Workflow nodes ──────────────────────
+    RAW_NODES.forEach(n => {
+        const ang = clAng[n.cl] + (Math.random()-0.5)*1.1;
+        const r   = 145 + Math.random()*180;
+        const x3d = Math.cos(ang)*r;
+        const y3d = Math.sin(ang)*r;
+        const z3d = (Math.random()-0.5)*340;
 
-    rawNodes.forEach(n => {
-        // 2D pos
-        let d = nodeDepths[n.id];
-        let nodesInDepth = rawNodes.filter(rn => nodeDepths[rn.id] === d);
-        let rowIdx = nodesInDepth.findIndex(rn => rn.id === n.id);
-
-        let x2d = (d - maxDepth/2) * 160;
-        let y2d = (rowIdx - (nodesInDepth.length-1)/2) * 90;
-        let z2d = 0;
-
-        // 3D pos
-        let ang = clusterAngles[n.cluster] + (Math.random() - 0.5) * 1.5;
-        let radius = 200 + Math.random() * 300;
-        let x3d = Math.cos(ang) * radius;
-        let y3d = Math.sin(ang) * radius;
-        let z3d = (Math.random() - 0.5) * 600;
-
-        const color = new THREE.Color(APP_CONFIG.colors.clusters[n.cluster]);
-        const material = new THREE.MeshBasicMaterial({ color: color });
-        const mesh = new THREE.Mesh(sphereGeo, material);
-
-        // Use calculated 3D pos as initial
+        const color = new THREE.Color(CFG.cluster[n.cl]);
+        const mesh  = new THREE.Mesh(nodeGeo, new THREE.MeshBasicMaterial({ color }));
         mesh.position.set(x3d, y3d, z3d);
         scene.add(mesh);
 
-        // Label DOM Element
-        const labelDiv = document.createElement('div');
-        labelDiv.className = 'node-label';
-        labelDiv.style.position = 'absolute';
-        labelDiv.style.color = APP_CONFIG.colors.mode3DText;
-        labelDiv.style.fontFamily = APP_CONFIG.fontFamily;
-        labelDiv.style.fontSize = '12px';
-        labelDiv.style.transform = 'translate(-50%, -50%)';
-        labelDiv.style.marginTop = '20px';
-        labelDiv.style.whiteSpace = 'nowrap';
-        labelDiv.style.pointerEvents = 'none';
-        labelDiv.textContent = n.id;
-        labelsContainer.appendChild(labelDiv);
+        const label = document.createElement('div');
+        label.className = 'node-label';
+        label.textContent = n.id;
+        label.style.cssText = `position:absolute;pointer-events:none;
+            font-family:${CFG.font};font-size:11px;color:#fff;
+            white-space:nowrap;letter-spacing:0.12em;text-transform:uppercase;`;
+        labelsContainer.appendChild(label);
 
         nodesData.push({
-            id: n.id,
-            cluster: n.cluster,
-            mesh: mesh,
-            labelDom: labelDiv,
+            id: n.id, cl: n.cl, mesh, labelDom: label,
             pos3D: new THREE.Vector3(x3d, y3d, z3d),
-            pos2D: new THREE.Vector3(x2d, y2d, z2d),
-            vx: 0, vy: 0, vz: 0,
-            baseColor: color,
-            activeColor: new THREE.Color(APP_CONFIG.colors.hoverAccent),
-            degree: nodeDegree[n.id]
+            pos2D: POS2D[n.id].clone(),
+            vx:0, vy:0, vz:0,
+            baseColor: color.clone(),
+            degree: DEGREE[n.id]
         });
     });
 
-    const lineMat = new THREE.LineBasicMaterial({
-        color: new THREE.Color(APP_CONFIG.colors.mode3DEdge),
-        transparent: true,
-        opacity: 0.4
+    // ── Workflow edges ──────────────────────
+    const edgeMat = new THREE.LineBasicMaterial({ color:0xffffff, transparent:true, opacity:CFG.edge3D });
+    EDGES.forEach(([sid, tid]) => {
+        const s = nodesData.find(n => n.id===sid);
+        const t = nodesData.find(n => n.id===tid);
+        if (!s||!t) return;
+        const pts = new Float32Array(6);
+        const geo = new THREE.BufferGeometry();
+        geo.setAttribute('position', new THREE.BufferAttribute(pts, 3));
+        geo.setDrawRange(0, 2);
+        const line = new THREE.Line(geo, edgeMat.clone());
+        scene.add(line);
+        edgesData.push({ s, t, line, mat: line.material });
     });
 
-    edges.forEach(e => {
-        let s = nodesData.find(n => n.id === e.source);
-        let t = nodesData.find(n => n.id === e.target);
-        if (!s || !t) return;
+    // ── File satellites ──────────────────────
+    // Pre-group file counts per parent for fibonacci distribution
+    const groupCounts = {};
+    FILES.forEach(f => { groupCounts[f.p] = (groupCounts[f.p]||0)+1; });
+    const groupIdx = {};
+    FILES.forEach(f => { groupIdx[f.p] = (groupIdx[f.p]||0); });
 
-        const geo = new THREE.BufferGeometry();
-        // Create bezier curve in 2D mode, straight line in 3D
-        // Initialize with max points for smooth 2D curve interpolation
-        const points = new Float32Array(50 * 3);
-        geo.setAttribute('position', new THREE.BufferAttribute(points, 3));
+    const PHI = (1+Math.sqrt(5))/2;
 
-        const line = new THREE.Line(geo, lineMat);
-        scene.add(line);
+    FILES.forEach((f) => {
+        const parent = nodesData.find(n => n.id===f.p);
+        if (!parent) return;
 
-        edgesData.push({
-            source: s,
-            target: t,
-            line: line,
-            baseMat: lineMat,
-            activeMat: new THREE.LineBasicMaterial({ color: new THREE.Color(APP_CONFIG.colors.hoverAccent), linewidth: 2 })
+        // Fibonacci sphere placement
+        const total = groupCounts[f.p];
+        const idx   = groupIdx[f.p]++;
+        const theta = 2*Math.PI*idx/PHI;
+        const phi   = Math.acos(1 - 2*(idx+0.5)/total);
+        const [rMin, rMax] = CFG.satRange;
+        const r = rMin + (idx/total)*(rMax-rMin);
+
+        const offset = new THREE.Vector3(
+            Math.sin(phi)*Math.cos(theta)*r,
+            Math.sin(phi)*Math.sin(theta)*r,
+            Math.cos(phi)*r*0.55
+        );
+
+        const col  = new THREE.Color(CFG.file[f.ext]||CFG.file.other);
+        const mesh = new THREE.Mesh(fileGeo, new THREE.MeshBasicMaterial({ color: col.clone() }));
+        mesh.position.set(parent.pos3D.x+offset.x, parent.pos3D.y+offset.y, parent.pos3D.z+offset.z);
+        mesh.scale.setScalar(CFG.fileR3D);
+        scene.add(mesh);
+
+        const label = document.createElement('div');
+        label.className = 'file-label';
+        const displayName = f.n.length>24 ? f.n.slice(0,22)+'..' : f.n;
+        label.textContent = displayName + '.' + f.ext;
+        label.style.cssText = `position:absolute;pointer-events:none;display:none;
+            font-family:${CFG.font};font-size:7px;white-space:nowrap;
+            letter-spacing:0.05em;color:${CFG.file[f.ext]||CFG.file.other};opacity:0;`;
+        labelsContainer.appendChild(label);
+
+        fileNodesData.push({
+            name: f.n+'.'+f.ext, ext: f.ext,
+            parent, mesh, labelDom: label,
+            offset: offset.clone(),
+            phase: Math.random()*Math.PI*2,
+            baseColor: col.clone(),
+            pos3D: new THREE.Vector3()
         });
     });
 }
 
+// ==========================================
+// PHYSICS — workflow nodes only
+// ==========================================
 function updatePhysics() {
-    if (transitionProgress > 0.1) return; // Only apply physics in 3D mode
+    if (tProgress > 0.04) return;
+    const { len, k, rep, damp } = CFG.spring;
+    const clAng = { research:0, analysis:Math.PI*0.72, output:Math.PI*1.44 };
 
-    const dt = 0.1;
-    // Apply repulsion
-    for(let i=0; i<nodesData.length; i++) {
-        for(let j=i+1; j<nodesData.length; j++) {
-            let n1 = nodesData[i];
-            let n2 = nodesData[j];
-            let dx = n1.pos3D.x - n2.pos3D.x;
-            let dy = n1.pos3D.y - n2.pos3D.y;
-            let dz = n1.pos3D.z - n2.pos3D.z;
-            let distSq = dx*dx + dy*dy + dz*dz;
-            if (distSq > 0 && distSq < 100000) {
-                let dist = Math.sqrt(distSq);
-                let f = APP_CONFIG.physics.repulsion / distSq;
-                let fx = (dx/dist) * f;
-                let fy = (dy/dist) * f;
-                let fz = (dz/dist) * f;
-                n1.vx += fx; n1.vy += fy; n1.vz += fz;
-                n2.vx -= fx; n2.vy -= fy; n2.vz -= fz;
-            }
+    for (let i=0; i<nodesData.length; i++) {
+        for (let j=i+1; j<nodesData.length; j++) {
+            const a=nodesData[i], b=nodesData[j];
+            const dx=a.pos3D.x-b.pos3D.x, dy=a.pos3D.y-b.pos3D.y, dz=a.pos3D.z-b.pos3D.z;
+            const d2=dx*dx+dy*dy+dz*dz;
+            if (d2<1||d2>180000) continue;
+            const d=Math.sqrt(d2), f=rep/d2;
+            const fx=(dx/d)*f, fy=(dy/d)*f, fz=(dz/d)*f;
+            a.vx+=fx; a.vy+=fy; a.vz+=fz;
+            b.vx-=fx; b.vy-=fy; b.vz-=fz;
         }
     }
-
-    // Apply springs
     edgesData.forEach(e => {
-        let s = e.source; let t = e.target;
-        let dx = t.pos3D.x - s.pos3D.x;
-        let dy = t.pos3D.y - s.pos3D.y;
-        let dz = t.pos3D.z - s.pos3D.z;
-        let dist = Math.sqrt(dx*dx + dy*dy + dz*dz);
-        let diff = dist - APP_CONFIG.physics.springLength;
-
-        let f = diff * APP_CONFIG.physics.springFactor;
-        if(dist > 0) {
-            let fx = (dx/dist) * f;
-            let fy = (dy/dist) * f;
-            let fz = (dz/dist) * f;
-            s.vx += fx; s.vy += fy; s.vz += fz;
-            t.vx -= fx; t.vy -= fy; t.vz -= fz;
-        }
+        const s=e.s, t=e.t;
+        const dx=t.pos3D.x-s.pos3D.x, dy=t.pos3D.y-s.pos3D.y, dz=t.pos3D.z-s.pos3D.z;
+        const d=Math.sqrt(dx*dx+dy*dy+dz*dz)||1;
+        const f=(d-len)*k;
+        const fx=(dx/d)*f, fy=(dy/d)*f, fz=(dz/d)*f;
+        s.vx+=fx; s.vy+=fy; s.vz+=fz;
+        t.vx-=fx; t.vy-=fy; t.vz-=fz;
     });
-
-    // Update 3D positions
     nodesData.forEach(n => {
-        // Attract to origin slightly based on cluster to maintain shape
-        const clusterAngles = { "research": 0, "analysis": Math.PI * 0.66, "output": Math.PI * 1.33 };
-        let ang = clusterAngles[n.cluster];
-        let tx = Math.cos(ang) * 200;
-        let ty = Math.sin(ang) * 200;
-
-        n.vx += (tx - n.pos3D.x) * 0.001;
-        n.vy += (ty - n.pos3D.y) * 0.001;
-        n.vz += (0 - n.pos3D.z) * 0.001;
-
-        n.pos3D.x += n.vx * dt;
-        n.pos3D.y += n.vy * dt;
-        n.pos3D.z += n.vz * dt;
-
-        n.vx *= APP_CONFIG.physics.damping;
-        n.vy *= APP_CONFIG.physics.damping;
-        n.vz *= APP_CONFIG.physics.damping;
+        const ang=clAng[n.cl];
+        n.vx+=(Math.cos(ang)*165-n.pos3D.x)*0.0007;
+        n.vy+=(Math.sin(ang)*165-n.pos3D.y)*0.0007;
+        n.vz+=(0-n.pos3D.z)*0.0007;
+        n.pos3D.x+=n.vx; n.pos3D.y+=n.vy; n.pos3D.z+=n.vz;
+        n.vx*=damp; n.vy*=damp; n.vz*=damp;
     });
 }
 
-function updateLabels() {
-    const halfWidth = window.innerWidth / 2;
-    const halfHeight = window.innerHeight / 2;
-
-    nodesData.forEach(n => {
-        // Project 3D pos to 2D screen space
-        const pos = n.mesh.position.clone();
-        pos.project(camera);
-
-        if (pos.z > 1) {
-            n.labelDom.style.display = 'none'; // Behind camera
-            return;
-        }
-
-        const x = (pos.x * halfWidth) + halfWidth;
-        const y = -(pos.y * halfHeight) + halfHeight;
-
-        n.labelDom.style.display = 'block';
-        n.labelDom.style.left = `${x}px`;
-        n.labelDom.style.top = `${y}px`;
-
-        
-        // Scale text based on depth in 3D
-        let scale = 1;
-        if (currentMode === "A") {
-            scale = Math.max(0.3, 1 - (n.mesh.position.distanceTo(camera.position) / 1500));
-        } else {
-            // In 2D we also need to scale down because the graph is huge
-            scale = 0.5;
-        }
-        n.labelDom.style.transform = `translate(-50%, -50%) scale(${scale})`;
-
-    });
+// ==========================================
+// LABEL PROJECTION
+// ==========================================
+function projectLabel(el, worldPos, offsetY=0) {
+    const hw=window.innerWidth/2, hh=window.innerHeight/2;
+    const p = worldPos.clone();
+    p.project(camera);
+    if (p.z>1) { el.style.display='none'; return false; }
+    el.style.display='block';
+    el.style.left=`${p.x*hw+hw}px`;
+    el.style.top =`${-p.y*hh+hh+offsetY}px`;
+    return true;
 }
 
+// ==========================================
+// RENDER LOOP
+// ==========================================
 function render() {
     requestAnimationFrame(render);
-
     controls.update();
     updatePhysics();
 
-    // Mode Transition
-    const targetProgress = currentMode === "A" ? 0 : 1;
-    transitionProgress += (targetProgress - transitionProgress) * 0.05;
+    const t = tProgress;
+    const target = currentMode==='A' ? 0 : 1;
+    tProgress += (target-tProgress)*0.046;
+    const is2D = tProgress > 0.5;
+    const time  = clock.getElapsedTime();
 
-    // Determine current colors
-    const nodeRadius = THREE.MathUtils.lerp(APP_CONFIG.material.nodeRadius3D, APP_CONFIG.material.nodeRadius2D, transitionProgress);
-    const textCol = currentMode === "A" ? APP_CONFIG.colors.mode3DText : APP_CONFIG.colors.mode2DText;
-    const is2D = transitionProgress > 0.5;
+    // Toggle controls based on mode
+    controls.enableRotate = !is2D;
+    grid2D.visible = is2D;
 
+    renderer.setClearColor(is2D ? 0xf2f2f2 : 0x000000, 1);
+
+    // ── Workflow nodes ──────────────────────
     nodesData.forEach(n => {
-        // Interpolate position
-        n.mesh.position.lerpVectors(n.pos3D, n.pos2D, transitionProgress);
-        
+        n.mesh.position.lerpVectors(n.pos3D, n.pos2D, tProgress);
 
-        let s = nodeRadius;
-        if (currentMode === "A") {
-            s += n.degree * 0.5; // vary size based on connections
-        }
-        if (n === hoveredNode) s *= 1.5;
-        n.mesh.scale.set(s, s, s);
-
-
-        
-        // Update colors based on hover and mode
-        n.labelDom.style.color = textCol;
+        const baseR = is2D ? 5 : (CFG.nodeR3D + n.degree*0.9);
+        const isHov = n===hoveredNode;
+        n.mesh.scale.setScalar(isHov ? baseR*1.7 : baseR);
 
         if (is2D) {
-            n.mesh.material.color.setStyle(APP_CONFIG.colors.mode2DNode);
-            if (n === hoveredNode) n.mesh.material.color.setStyle(APP_CONFIG.colors.hoverAccent);
-
-            // 2D pill shapes
-            n.labelDom.style.background = '#ffffff';
-            n.labelDom.style.border = `2px solid ${n === hoveredNode ? APP_CONFIG.colors.hoverAccent : APP_CONFIG.colors.mode2DNode}`;
-            n.labelDom.style.padding = '5px 10px';
-            n.labelDom.style.borderRadius = '25px';
-            n.labelDom.style.color = n === hoveredNode ? APP_CONFIG.colors.hoverAccent : APP_CONFIG.colors.mode2DText;
-            n.mesh.visible = false; // Hide 3D sphere in 2D mode
+            n.mesh.visible = false;
+            n.labelDom.style.color      = isHov ? '#ffffff' : '#000000';
+            n.labelDom.style.background = isHov ? '#000000' : '#ffffff';
+            n.labelDom.style.border     = '1px solid #111111';
+            n.labelDom.style.padding    = '4px 10px';
+            n.labelDom.style.borderRadius = '0';
+            n.labelDom.style.fontSize   = '9px';
+            n.labelDom.style.letterSpacing = '0.14em';
         } else {
-            n.mesh.material.color.copy(n.baseColor);
-            if (n === hoveredNode) n.mesh.material.color.copy(n.activeColor);
-
-            // Revert to 3D label
+            n.mesh.visible = true;
+            if (isHov) {
+                n.mesh.material.color.set(0xffffff);
+            } else {
+                n.mesh.material.color.copy(n.baseColor);
+            }
+            n.labelDom.style.color      = isHov ? '#ffffff' : '#ffffff';
             n.labelDom.style.background = 'transparent';
-            n.labelDom.style.border = 'none';
-            n.labelDom.style.padding = '0';
-            n.labelDom.style.color = currentMode === "A" ? APP_CONFIG.colors.mode3DText : APP_CONFIG.colors.mode2DText;
-            n.mesh.visible = true; // Show sphere in 3D mode
+            n.labelDom.style.border     = 'none';
+            n.labelDom.style.padding    = '0';
+            n.labelDom.style.borderRadius = '0';
+            n.labelDom.style.fontSize   = '11px';
+            n.labelDom.style.letterSpacing = '0.12em';
         }
 
+        const sc = is2D ? 0.75 : Math.max(0.35, 1-(n.mesh.position.distanceTo(camera.position)/1400));
+        projectLabel(n.labelDom, n.mesh.position, is2D ? 0 : 18);
+        n.labelDom.style.transform = `translate(-50%,${is2D?'-50%':'0'}) scale(${sc})`;
     });
 
-    edgesData.forEach(e => {
-        const positions = e.line.geometry.attributes.position.array;
-        
-        const pS = e.source.mesh.position;
-        const pT = e.target.mesh.position;
-
-        // Create curve. In 3D (progress=0), control points match start/end (straight line).
-        // In 2D (progress=1), control points are offset on X axis to make horizontal flow curves.
-        const c1 = new THREE.Vector3().copy(pS).lerp(new THREE.Vector3(pS.x + 100, pS.y, pS.z), transitionProgress);
-        const c2 = new THREE.Vector3().copy(pT).lerp(new THREE.Vector3(pT.x - 100, pT.y, pT.z), transitionProgress);
-
-        const curve = new THREE.CubicBezierCurve3(pS, c1, c2, pT);
-        const points = curve.getPoints(49);
-
-        for (let i = 0; i < 50; i++) {
-            positions[i*3] = points[i].x;
-            positions[i*3+1] = points[i].y;
-            positions[i*3+2] = points[i].z;
+    // ── File satellites ──────────────────────
+    const camZ = camera.position.z;
+    fileNodesData.forEach(f => {
+        if (is2D) {
+            f.mesh.visible = false;
+            f.labelDom.style.display = 'none';
+            return;
         }
+        f.mesh.visible = true;
+
+        // Follow parent + gentle float
+        const osc = Math.sin(time*0.35+f.phase)*1.3;
+        f.mesh.position.set(
+            f.parent.pos3D.x + f.offset.x + osc,
+            f.parent.pos3D.y + f.offset.y + Math.cos(time*0.28+f.phase)*1.3,
+            f.parent.pos3D.z + f.offset.z
+        );
+        f.pos3D.copy(f.mesh.position);
+
+        const isParentHov = f.parent===hoveredNode;
+        if (isParentHov) {
+            f.mesh.material.color.set(0xffffff);
+            f.mesh.scale.setScalar(3.2);
+        } else {
+            f.mesh.material.color.copy(f.baseColor);
+            f.mesh.scale.setScalar(CFG.fileR3D);
+        }
+
+        // Label: visible only when zoomed in
+        const distToCam = camera.position.distanceTo(f.mesh.position);
+        const labelAlpha = Math.max(0, Math.min(1, (420-distToCam)/220));
+        if (labelAlpha > 0.02) {
+            f.labelDom.style.opacity = String(labelAlpha*0.9);
+            const visible = projectLabel(f.labelDom, f.mesh.position, -6);
+            if (visible) {
+                f.labelDom.style.transform = 'translate(-50%,-100%)';
+            }
+        } else {
+            f.labelDom.style.display = 'none';
+        }
+    });
+
+    // ── Workflow edges ──────────────────────
+    edgesData.forEach(e => {
+        const pS = e.s.mesh.position;
+        const pT = e.t.mesh.position;
+        const arr = e.line.geometry.attributes.position.array;
+        arr[0]=pS.x; arr[1]=pS.y; arr[2]=pS.z;
+        arr[3]=pT.x; arr[4]=pT.y; arr[5]=pT.z;
         e.line.geometry.attributes.position.needsUpdate = true;
 
-        // Highlight active edges
-        let isHoveredEdge = (e.source === hoveredNode || e.target === hoveredNode);
-
+        const isHov = e.s===hoveredNode || e.t===hoveredNode;
         if (is2D) {
-            e.line.material.color.setStyle(APP_CONFIG.colors.mode2DEdge);
+            e.mat.color.set(isHov ? 0xCA8A04 : 0x111111);
+            e.mat.opacity = isHov ? 1 : CFG.edge2D;
         } else {
-            e.line.material.color.setStyle(APP_CONFIG.colors.mode3DEdge);
-        }
-        
-        if (isHoveredEdge) {
-             e.line.material.color.setStyle(APP_CONFIG.colors.hoverAccent);
-             e.line.material.opacity = 1.0;
-        } else {
-             e.line.material.opacity = is2D ? 1.0 : 0.4;
+            e.mat.color.set(isHov ? 0xCA8A04 : 0xffffff);
+            e.mat.opacity = isHov ? 1 : CFG.edge3D;
         }
     });
 
-    updateLabels();
-
-    if (currentMode === "A") {
-        composer.render(); // Use Bloom
-    } else {
-        renderer.render(scene, camera);
-    }
+    renderer.render(scene, camera);
 }
 
-// --- INTERACTIVITY & DOM LOGIC ---
-function onMouseMove(event) {
-    mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-    mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
-
+// ==========================================
+// HOVER
+// ==========================================
+function onMouseMove(e) {
+    mouse.x =  (e.clientX/window.innerWidth )*2-1;
+    mouse.y = -(e.clientY/window.innerHeight)*2+1;
     raycaster.setFromCamera(mouse, camera);
-
-    const intersects = raycaster.intersectObjects(nodesData.map(n => n.mesh));
-
-    if (intersects.length > 0) {
-        let mesh = intersects[0].object;
-        hoveredNode = nodesData.find(n => n.mesh === mesh);
-        document.body.style.cursor = "pointer";
-    } else {
-        hoveredNode = null;
-        document.body.style.cursor = "crosshair";
-    }
-
+    const hits = raycaster.intersectObjects(nodesData.map(n => n.mesh));
+    hoveredNode = hits.length > 0
+        ? nodesData.find(n => n.mesh===hits[0].object) || null
+        : null;
+    document.body.style.cursor = hoveredNode ? 'pointer' : 'crosshair';
     updateHUD();
 }
 
-function onClick() {
-    if (hoveredNode) {
-        if (hoveredNode.id === "ARTISTS") {
-            window.location.href = "./media_artists_map/index.html";
-        } else {
-            const folderName = hoveredNode.id.toLowerCase().replace(/ /g, '_');
-            window.location.href = `./${folderName}/index.html`;
-        }
-    }
+// ==========================================
+// CLICK
+// ==========================================
+function onClick(e) {
+    if (e.target.id==='toggleBtn') return;
+    if (!hoveredNode) return;
+    const id = hoveredNode.id;
+    const nav = {
+        "PROJECT MODEL":    "./HYPEROBJECT_midterm/exploded_diagram.html",
+        "MEDIA M. CONCEPT": "./HYPEROBJECT_midterm/blueprint.html",
+        "PROGRAM":          "./HYPEROBJECT_midterm/diagnostic_ui.html",
+        "ARTISTS":          "./media_artists_map/index.html"
+    };
+    window.location.href = nav[id] || ('.' + id.toLowerCase().replace(/\s+/g,'_') + '/');
 }
 
+// ==========================================
+// HUD
+// ==========================================
 function updateHUD() {
-    document.getElementById("hud-mode").innerText = currentMode === "A" ? "NETWORK_3D" : "DIAGRAM_2D";
-    
-    let trg = document.getElementById("hud-target");
-    let clus = document.getElementById("hud-cluster");
-    
+    document.getElementById('hud-mode').innerText = currentMode==='A' ? 'NETWORK_3D' : 'DIAGRAM_2D';
+    const trg  = document.getElementById('hud-target');
+    const clus = document.getElementById('hud-cluster');
     if (hoveredNode) {
-        trg.innerText = hoveredNode.id;
-        trg.classList.add("active");
-        clus.innerText = hoveredNode.cluster.toUpperCase();
+        trg.innerText=hoveredNode.id; trg.classList.add('active');
+        clus.innerText=hoveredNode.cl.toUpperCase();
     } else {
-        trg.innerText = "---";
-        trg.classList.remove("active");
-        clus.innerText = "---";
+        trg.innerText='---'; trg.classList.remove('active');
+        clus.innerText='---';
     }
+    const c = document.getElementById('hud-coords');
+    if (c) c.innerText=`${camera.position.x.toFixed(0)} / ${camera.position.y.toFixed(0)}`;
 }
 
-// Init
+// ==========================================
+// BOOT
+// ==========================================
 window.onload = () => {
-    // Read CSS variables dynamically
-    const rootStyle = getComputedStyle(document.documentElement);
-    APP_CONFIG.colors.hoverAccent = rootStyle.getPropertyValue('--accent').trim();
-
     initThree();
     buildGraph();
 
-    window.addEventListener("click", () => {
-        if (hoveredNode) {
-            const nodeId = hoveredNode.id.toUpperCase();
-            if (nodeId === "PROJECT MODEL") {
-                window.location.href = "./HYPEROBJECT_midterm/exploded_diagram.html";
-            } else if (nodeId === "MEDIA M. CONCEPT") {
-                window.location.href = "./HYPEROBJECT_midterm/blueprint.html";
-            } else if (nodeId === "PROGRAM") {
-                window.location.href = "./HYPEROBJECT_midterm/diagnostic_ui.html";
-            } else if (nodeId === "ARTISTS") {
-                window.location.href = "./media_artists_map/index.html";
-            } else {
-                window.location.href = "./" + hoveredNode.id.toLowerCase().replace(/\s+/g, '_') + "/";
-            }
-        }
-
-        // Re-read CSS variables dynamically as theme changes
-        setTimeout(() => {
-            const currentStyle = getComputedStyle(document.body);
-            APP_CONFIG.colors.hoverAccent = currentStyle.getPropertyValue('--accent').trim();
-            nodesData.forEach(n => {
-                n.activeColor = new THREE.Color(APP_CONFIG.colors.hoverAccent);
-            });
-        }, 50);
-
+    document.getElementById('toggleBtn').addEventListener('click', () => {
+        currentMode = currentMode==='A' ? 'B' : 'A';
+        document.body.classList.toggle('mode-diagram', currentMode==='B');
         updateHUD();
     });
 
