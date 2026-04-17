@@ -1,0 +1,250 @@
+[
+  {
+    "museum_name": "Hugh Lane Gallery",
+    "image_url": "https://upload.wikimedia.org/wikipedia/commons/2/28/Dublino%2C_Hugh_Lane_Municipal_Gallery_of_modern_art%2C_salone_ovale_nella_parte_vecchia_01.jpg",
+    "description": "The Hugh Lane Gallery, and originally the Municipal Gallery of Modern Art, is an art museum operated by Dublin City Council and its wholly owned company, the Hugh Lane Gallery Trust. It is in Charlemont House (built 1763) on Parnell Square, Dublin, Ireland. Admission is free. The gallery closed September 28, 2025 for major refurbishment.",
+    "city": "Dublin",
+    "latitude": 53.354166666,
+    "longitude": -6.264722222
+  },
+  {
+    "museum_name": "Leeum, Samsung Museum of Art",
+    "image_url": "https://upload.wikimedia.org/wikipedia/commons/5/5a/Korea-Nam_Gyewoo-Hwajeopdo-01.jpg",
+    "description": "The Leeum Museum of Art (Korean: 리움미술관) is a museum in Hannam-dong, Yongsan District, Seoul, South Korea. It is run by the Samsung Foundation of Culture. It is considered one of South Korea's top three private art museums.\nThe museum consists of two parts, one of which houses traditional Korean art, the other contemporary art. The first part of the museum was designed by Swiss architect Mario Botta and the second part of the museum by French architect Jean Nouvel and Dutch architect Rem Koolhaas.",
+    "city": "Seoul",
+    "latitude": 37.537969,
+    "longitude": 126.99949
+  },
+  {
+    "museum_name": "Serpentine Galleries",
+    "image_url": "https://upload.wikimedia.org/wikipedia/commons/5/5e/20110606_London_96.JPG",
+    "description": "The Serpentine Galleries are two contemporary art galleries in Kensington Gardens, Westminster, Greater London. Recently rebranded to just Serpentine, the organisation is split across Serpentine South (previously known as the Serpentine Gallery) and Serpentine North (previously known as the Sackler Gallery). \nThe gallery spaces are within five minutes' walk of each other, linked by the bridge over the Serpentine Lake from which the galleries get their names. Their exhibitions, architecture, education and public programmes attract up to 1.2 million visitors a year. Admission to both galleries is free. The CEO is Bettina Korek, and the artistic director Hans Ulrich Obrist.",
+    "city": "Kensington Gardens",
+    "latitude": 51.5047,
+    "longitude": -0.17505
+  },
+  {
+    "museum_name": "Hamburger Bahnhof",
+    "image_url": "https://upload.wikimedia.org/wikipedia/commons/a/a6/Anhalter_Bahnhof_2005.jpg",
+    "description": "Hamburger Bahnhof – Nationalgalerie der Gegenwart is the former terminus of the Berlin–Hamburg Railway in Berlin, Germany, on Invalidenstrasse in the Moabit district opposite the Charité hospital. Today it serves as a contemporary art museum, the Museum für Gegenwart, part of the Berlin National Gallery.",
+    "city": "Bezirk Mitte",
+    "latitude": 52.528333333,
+    "longitude": 13.372222222
+  },
+  {
+    "museum_name": "Van Gogh Museum",
+    "image_url": "https://upload.wikimedia.org/wikipedia/commons/0/0f/Logo_-_Van_Gogh_Museum.png",
+    "description": "The Van Gogh Museum (Dutch pronunciation: [vɑŋˈɣɔx mʏˌzeːjʏm]) is a Dutch art museum dedicated to the works of Vincent van Gogh and his contemporaries in the Museum Square in Amsterdam South, close to the Stedelijk Museum, the Rijksmuseum, and the Concertgebouw. The museum opened on 2 June 1973, and its buildings were designed by Gerrit Rietveld and Kisho Kurokawa.\nThe museum contains the largest collection of Van Gogh's paintings and drawings in the world. In 2017, the museum had 2.3 million visitors and was the most-visited museum in the Netherlands, and the 23rd-most-visited art museum in the world. In 2019, the Van Gogh Museum launched the Meet Vincent Van Gogh Experience, a technology-driven \"immersive exhibition\" on Van Gogh's life and works, which has toured globally.\n\n",
+    "city": "Kurokawavleugel Van Gogh Museum",
+    "latitude": 52.358333333,
+    "longitude": 4.881111111
+  },
+  {
+    "museum_name": "Massachusetts Museum of Contemporary Art",
+    "image_url": "https://upload.wikimedia.org/wikipedia/commons/5/5a/20240920_doyle.jpg",
+    "description": "The Massachusetts Museum of Contemporary Art (MASS MoCA) is a museum within the converted Arnold Print Works factory building complex in North Adams, Massachusetts. It is one of the largest centers for contemporary visual art and performing arts in the United States.\nBuilt by the Arnold Print Works, which operated on the site from 1860 to 1942, the complex was used by the Sprague Electric company before its conversion. MASS MoCA originally opened with 19 galleries and 100,000 sq ft (9,300 m2) of exhibition space in 1999. It has expanded since, including the 2008 expansion of Building 7 and the May 2017 addition of roughly 130,000 square feet when Building 6 was opened.\nIn addition to housing galleries and performing arts spaces, it also rents space to commercial tenants. It is the home of the Bang on a Can Summer Institute, where composers and performers from around the world come to create new music. The festival, started in 2001, includes concerts in galleries for three weeks during the summer. Starting in 2010, MASS MoCA has become the home for the Solid Sound Music Festival.\nMASS MoCA, along with the Clark Art Institute and the Williams College Museum of Art (WCMA), forms a trio of significant art museums in the northern Berkshires.",
+    "city": "Arnold Print Works",
+    "latitude": 42.701389,
+    "longitude": -73.116389
+  },
+  {
+    "museum_name": "Secession Building",
+    "image_url": "https://upload.wikimedia.org/wikipedia/commons/8/85/2004_Austria_100_Euro_Secession_front.jpg",
+    "description": "The Secession Building (German: Secessionsgebäude) is a contemporary art exhibition hall in Vienna, Austria. It was completed in 1898 by Joseph Maria Olbrich as an architectural manifesto for the Vienna Secession, a group of rebel artists that seceded from the long-established fine art institution.",
+    "city": "Innere Stadt",
+    "latitude": 48.200395,
+    "longitude": 16.365934
+  },
+  {
+    "museum_name": "MOMus–Museum of Modern Art–Costakis Collection",
+    "image_url": "https://upload.wikimedia.org/wikipedia/commons/5/5d/Green_Stripe_%28Rozanova%2C_1917_%28Costakis_collection%29%29.jpg",
+    "description": "MOMus Modern, in full MOMus–Museum of Modern Art–Costakis Collection (Greek: MOMus-Μουσείο Μοντέρνας Τέχνης-Συλλογή Κωστάκη), is a modern art museum based in Thessaloniki, Central Macedonia, Greece. It is housed in the renovated building of the old Lazariston Monastery in the Borough of Stavroupoli in west Thessaloniki. It was formerly known as the State Museum of Contemporary Art (SMCA, Greek: Κρατικό Μουσείο Σύγχρονης Τέχνης, ΚΜΣΤ).",
+    "city": "Thessaloniki",
+    "latitude": 40.65811711,
+    "longitude": 22.93099881
+  },
+  {
+    "museum_name": "Museum Ludwig",
+    "image_url": "https://upload.wikimedia.org/wikipedia/commons/8/89/August_Macke_005.jpg",
+    "description": "Museum Ludwig, located in Cologne, Germany, houses a collection of modern art. It includes works from Pop Art, Abstract and Surrealism, and has one of the largest Picasso collections in Europe. It holds many works by Andy Warhol and Roy Lichtenstein.",
+    "city": "Gebäudekomplex der Kölner Philharmonie und des Museum Ludwig",
+    "latitude": 50.94083333,
+    "longitude": 6.96027778
+  },
+  {
+    "museum_name": "Ars Electronica Center",
+    "image_url": "https://upload.wikimedia.org/wikipedia/commons/6/68/AEC-Clay3D.jpg",
+    "description": "Ars Electronica Linz GmbH is an Austrian cultural, educational and scientific institute active in the field of new media art, founded in Linz in 1979. It is based at the Ars Electronica Center (AEC), which houses the Museum of the Future, in the city of Linz. \nArs Electronica's activities focus on the interlinkages between art, technology and society. It runs an annual festival, and manages a multidisciplinary media arts R&D facility known as the Futurelab. It also confers the Prix Ars Electronica awards.\n\n",
+    "city": "Linz",
+    "latitude": 48.309166666,
+    "longitude": 14.284166666
+  },
+  {
+    "museum_name": "Museum Brandhorst",
+    "image_url": "https://upload.wikimedia.org/wikipedia/commons/4/42/Museum_Brandhorst_Fassade_1.JPG",
+    "description": "The Brandhorst Museum was opened in Munich on 21 May 2009. It displays about 200 exhibits from the modern art collection of the heirs of the Henkel trust Udo and Anette Brandhorst. In 2009 the Brandhorst Collection comprises more than 700 works.\n\n",
+    "city": "Maxvorstadt",
+    "latitude": 48.1481,
+    "longitude": 11.5742
+  },
+  {
+    "museum_name": "Kunsthaus Bregenz",
+    "image_url": "https://upload.wikimedia.org/wikipedia/commons/9/97/Kornmarktstra%C3%9Fe_3_Kunsthaus%2C_1.JPG",
+    "description": "The Kunsthaus Bregenz (KUB) presents temporary exhibitions of international contemporary art in Bregenz, Vorarlberg (Austria).",
+    "city": "Bregenz",
+    "latitude": 47.505001,
+    "longitude": 9.747287
+  },
+  {
+    "museum_name": "Kunstmuseum Bonn",
+    "image_url": "https://upload.wikimedia.org/wikipedia/commons/2/25/August_Macke_014.jpg",
+    "description": "The Kunstmuseum Bonn or Bonn Museum of Modern Art is an art museum in Bonn, Germany, founded in 1947. The Kunstmuseum exhibits both temporary exhibitions and its collection. Its collection is focused on Rhenish Expressionism and post-war German art.  It is part of Bonn's \"Museum Mile\".",
+    "city": "Gronau",
+    "latitude": 50.715056,
+    "longitude": 7.121028
+  },
+  {
+    "museum_name": "Tate Liverpool",
+    "image_url": "https://upload.wikimedia.org/wikipedia/commons/9/91/Liverpool_Anglican_Cathedral_North_elevation.jpg",
+    "description": "Tate Liverpool is an art gallery in Liverpool, Merseyside, England, and part of Tate, along with Tate St Ives, Cornwall,  Tate Britain, London, and Tate Modern, London. The gallery was an initiative of the Merseyside Development Corporation. Tate Liverpool was created to display work from the Tate Collection which comprises the national collection of British art from the year 1500 to the present day, and international modern art. The gallery also has a programme of temporary exhibitions.",
+    "city": "Liverpool",
+    "latitude": 53.40075,
+    "longitude": -2.99445
+  },
+  {
+    "museum_name": "Portland Art Museum",
+    "image_url": "https://upload.wikimedia.org/wikipedia/commons/1/1d/Portland_Art_Museum%2C_Portland%2C_Oregon.jpg",
+    "description": "The Portland Art Museum (PAM) is an art museum  in downtown Portland, Oregon, United States. The Portland Art Museum has 240,000 square feet (22,000 m2), with more than 112,000 square feet (10,400 m2) of gallery space.  The museum’s permanent collection has over 42,000 works of art. PAM features a center for Native American art, a center for Northwest art, a center for modern and contemporary art, permanent exhibitions of Asian art, and an outdoor public sculpture garden. The Northwest Film Center is also a component of Portland Art Museum.\nThe museum is accredited by the American Alliance of Museums, with accreditation through 2024.",
+    "city": "Oregon",
+    "latitude": 45.51615,
+    "longitude": -122.683357
+  },
+  {
+    "museum_name": "John and Mable Ringling Museum of Art",
+    "image_url": "https://upload.wikimedia.org/wikipedia/commons/1/17/2017_Sarasota_Ringling_Museum_Garden_Gnomes_FRD_9060.jpg",
+    "description": "The John and Mable Ringling Museum of Art is the official art museum of the state of Florida, located in Sarasota, Florida, United States. It was established in 1927 as the legacy of Mable Burton Ringling and John Ringling for the people of Florida. Florida State University assumed governance of the museum in 2000.\nThe institution offers 21 galleries of European paintings as well as Cypriot antiquities and Asian, American, and contemporary art. The museum's art collection consists of more than 10,000 objects, including paintings, sculpture, drawings, prints, photographs, and decorative arts from ancient through contemporary periods. Notable holdings include 16th–20th-century European paintings, especially a significant collection of works by Peter Paul Rubens. Other artists represented include Benjamin West, Marcel Duchamp, Mark Kostabi, Baruj Salinas, Diego Velázquez, Paolo Veronese, Rosa Bonheur, Gianlorenzo Bernini, Giuliano Finelli, Lucas Cranach the Elder, Frans Hals, Nicolas Poussin, Joseph Wright of Derby, Thomas Gainsborough, Eugène Boudin, and Benedetto Pagni.\nIn all, more than 150,000 square feet (14,000 m2) have been added to the campus, which includes the art museum, the Circus Museum, Ca' d'Zan, and the historic Asolo Theater. New additions to the campus include the McKay Visitor's Pavilion, the Kotler-Coville Glass Pavilion exhibiting studio glass art, the Johnson-Blalock Education Building housing The Ringling Art Library and Cuneo Conservation Lab, the Tibbals Learning Center complete with a miniature circus, the Searing Wing, a 30,000-square-foot (2,800 m2) gallery for special exhibitions attached to the art museum, the Chao Center for Asian Art, and the Monda Gallery for Contemporary Art.",
+    "city": "Sarasota",
+    "latitude": 27.381467222,
+    "longitude": -82.559801111
+  },
+  {
+    "museum_name": "Kunsthaus Tacheles",
+    "image_url": "https://upload.wikimedia.org/wikipedia/commons/9/90/Berlin_Tacheles_18780007-a_Mario_Duhanic.jpg",
+    "description": "The Kunsthaus Tacheles ([ˈkʰʊnst.haʊ̯s ˈtaxələs], lit. 'Art-house \"Straight-Talking\"') was an art center in Berlin, Germany, a large (9,000 m2 (97,000 sq ft)) building and sculpture park on Oranienburger Straße, in the sub-neighborhood of Spandauer Vorstadt in the Mitte district. Huge, colorful graffiti-style murals were painted on the exterior walls, and modern art sculptures were featured inside. The building housed an artist collective from 1990 until 2012.\nOriginally called Friedrichstraßenpassage, it was built in 1907–1908 as a department store opposite the synagogue. During World War II it served as a Nazi prison for a short while. Under GDR authorities it was later partially demolished. After the Berlin Wall had come down in 1989, it was taken over by artists, who called it Tacheles, \"straight talking,\" a term taken from Yiddish תּכלית (takhles, 'purpose, result').. The building contained studios and workshops, a nightclub, and a cinema. Outside, the garden featured an open-air exhibition of metal sculptures as well as galleries and studios for sculptors and painters.",
+    "city": "Berlin-Mitte",
+    "latitude": 52.525555555,
+    "longitude": 13.388611111
+  },
+  {
+    "museum_name": "David Collection",
+    "image_url": "https://upload.wikimedia.org/wikipedia/commons/c/ce/Davids_Samling.JPG",
+    "description": "The David Collection (Danish: Davids Samling) is a museum of fine and applied art in Copenhagen, Denmark, built around the private collections of lawyer, businessman and art collector C. L. David. The building at Kronprinsessegade 30 which houses the museum used to be the private home of the founder and was originally bought in 1810 by his great-grandfather, C. N. David, but sold again in 1830. In 1917 it was re-acquired by C. L. David, who took up residence in it but also made his collection available to the public at the upper floors of the building. Admission is free.\nThe museum is particularly noted for its collection of Islamic art from the 8th to the 19th century, which is one of the largest in Northern Europe. The museum also holds fine and applied art from Europe in the 18th century and the Danish Golden Age as well as a small collection of Danish early modern art. All the works of art in the collection of Danish early modern art were acquired by C. L. David himself.\nFrom 2006 to 2009 the collection was closed to the public while the premises underwent a major refurbishment and rearrangement. When it reopened on 15 May 2009, it was described as \"the most exclusive museum in Denmark\" in national Danish newspaper Politiken.",
+    "city": "Copenhagen Municipality",
+    "latitude": 55.68429,
+    "longitude": 12.58225
+  },
+  {
+    "museum_name": "Sammlung Goetz",
+    "image_url": "https://upload.wikimedia.org/wikipedia/commons/3/3f/Art-gallery-2.jpg",
+    "description": "The Goetz Collection (Sammlung Goetz) is a private collection of contemporary art in Munich, Germany. It opened in 1992. The collection is owned and continually being enlarged by the former gallery dealer Ingvild Goetz, who presents the collection to the public in a series of themed exhibitions in a purpose built museum. Rather than taking an encyclopedic view, the collection focuses on developing particular artists.\nSammlung Goetz organizes exhibitions along with video and film programmes on the lower level of the building. The building was designed by the Swiss architectural firm Herzog & de Meuron.",
+    "city": "Munich",
+    "latitude": 48.1661,
+    "longitude": 11.6231
+  },
+  {
+    "museum_name": "Manggha",
+    "image_url": "https://upload.wikimedia.org/wikipedia/commons/a/af/Krak%C3%B3w%2C_Wn%C4%99trze_muzeum_sztuki_japo%C5%84skiej_-_fotopolska.eu_%28331193%29.jpg",
+    "description": "”Manggha” Museum of Japanese Art and Technology (Polish: Muzeum Sztuki i Techniki Japońskiej „Manggha”) is a museum located at 26 M. Konopnickiej Street in Dębniki, the former district of Kraków, Poland. Until 2005, it was a branch of the National Museum of Kraków.",
+    "city": "Kraków",
+    "latitude": 50.05079444,
+    "longitude": 19.93151667
+  },
+  {
+    "museum_name": "Kunstmuseum Stuttgart",
+    "image_url": "https://upload.wikimedia.org/wikipedia/commons/3/3f/Art-gallery-2.jpg",
+    "description": "The Kunstmuseum Stuttgart is a contemporary and modern art museum in Stuttgart, Germany, built and opened in 2005.",
+    "city": "Stuttgart-Mitte",
+    "latitude": 48.7783,
+    "longitude": 9.1776
+  },
+  {
+    "museum_name": "Kunsthalle Tübingen",
+    "image_url": "https://upload.wikimedia.org/wikipedia/commons/a/a5/Kunsthalle_T%C3%BCbingen_%282005%29.jpg",
+    "description": "Kunsthalle Tübingen is an art museum in the university town of Tübingen, Baden-Württemberg, Germany.\nIt was founded (and the erection of its building financed) in 1971 by Paula Zundel and Dr. Margarethe Fischer-Bosch, daughters of the industrialist Robert Bosch (founder of Robert Bosch GmbH) in memory of painter Georg Friedrich Zundel, Paula Zundel's late husband.\nThe building was erected during the big northern expansion of Tübingen in the 1960s and early 1970s, when the Wanne district (a.o.) was built almost from scratch as a residential area on the town's (formerly) rural northern hills.\nFor the first eleven years of its existence, it hosted mainly exhibitions of modern art and contemporary art. From 1982, it also frequently presented the works of painters of the classical modernity, e.g. Cézanne, Degas, Picasso, Renoir, Toulouse-Lautrec or Henri Rousseau, while keeping up the focus on modern art and contemporary art.\nThe first director of the Kunsthalle and, so far, for most of its existence, was Götz Adriani, from 1971 to 2005. His main theme was the leading role of the 19th century and early 20th-century French art for international modernity. Adriani managed to organize the first exhibitions in Germany of the works many of the French painters of the period of the late 19th and early 20th centuries at the Kunsthalle Tübingen. As for contemporary art, he was helpful in promoting the careers of artists such as George Segal (1972), Richard Hamilton (1974), and Claes Oldenburg (1975).\nFrom 2006 to 2009, Martin Hellmond was the director at Kunsthalle. The current director (curator) is Dr. Nicole Fritz.\nSince 2003, the museum is financed by a charitable non-profit foundation (before, it had been an institution of the city of Tübingen), consisting of private donations and the money of the Zundel family.",
+    "city": "Tübingen",
+    "latitude": 48.5419,
+    "longitude": 9.04778
+  },
+  {
+    "museum_name": "Sursock Museum",
+    "image_url": "https://upload.wikimedia.org/wikipedia/commons/b/bc/Sursock_house.jpg",
+    "description": "The Sursock Museum (Arabic: قصر سرسق), officially known as the Nicolas Ibrahim Sursock Museum, is a modern and contemporary art museum in Beirut, Lebanon.",
+    "city": "Beirut",
+    "latitude": 33.892942,
+    "longitude": 35.516228
+  },
+  {
+    "museum_name": "Kunsthalle Bielefeld",
+    "image_url": "https://upload.wikimedia.org/wikipedia/commons/c/c5/Bielefeld_Parkanlage_Kunsthalle_-_Mai_1985.jpg",
+    "description": "The Kunsthalle Bielefeld is a modern and contemporary art museum in Bielefeld, Germany.  It was designed by Philip Johnson in 1968, and paid for by the businessman and art patron Rudolf August Oetker.",
+    "city": "Bielefeld-Mitte",
+    "latitude": 52.0182,
+    "longitude": 8.52611
+  },
+  {
+    "museum_name": "McNay Art Museum",
+    "image_url": "https://upload.wikimedia.org/wikipedia/commons/d/da/El_Greco_018.jpg",
+    "description": "The McNay Art Museum, founded in 1954 in San Antonio, is the first modern art museum in Texas. The museum was created by Marion Koogler McNay's original bequest of most of her fortune, her important art collection and her 24-room Spanish Colonial Revival-style mansion that sits on 23 acres (9.3 ha) that are landscaped with fountains, broad lawns as well as a Japanese-inspired garden and fishpond.\nMcNay was an American painter and art teacher who inherited a substantial oil fortune upon the death of her father. The museum was named after her, and has been expanded to include galleries of medieval and Renaissance artwork and a larger collection of 20th-century European and American modernist work. She built a home in 1927 designed by Atlee Ayres and his son Robert M. Ayres. When she died, the house was bequeathed to the City of San Antonio to house the museum.\nThe museum focuses primarily on 19th- and 20th-century European and American art by artists including Paul Cézanne, Pablo Picasso, Paul Gauguin, Henri Matisse, Georgia O'Keeffe, Diego Rivera, Mary Cassatt, and Edward Hopper. The collection today consists of over 20,000 objects and is one of the finest collections of contemporary art and sculpture in the Southwestern United States. The museum also is home to the Tobin Collection of Theatre Arts, which is one of the premiere collections of its kind in the U.S., and a research library with over 30,000 volumes.\nThe McNay Art Museum added the Jane and Arthur Stieren Center for Exhibitions in 2008, built by architect Jean-Paul Viguier, to display their Modern collection. The 45,000-square-foot structure houses light-filled galleries for special exhibitions, a glass-fronted gallery for sculpture from the museum's collection, a gallery for paper works, wall cases for small objects, a lecture hall, and learning centers. The center's design, materials, and architectural details both contrast with and complement the original Spanish Colonial Revival-style residence, which it adjoins.",
+    "city": "San Antonio",
+    "latitude": 29.485516,
+    "longitude": -98.456748
+  },
+  {
+    "museum_name": "Kunsthaus Graz",
+    "image_url": "https://upload.wikimedia.org/wikipedia/commons/4/49/07_Graz%2C_Austria.jpg",
+    "description": "The Kunsthaus Graz, Grazer Kunsthaus, or Graz Art Museum was built as part of the European Capital of Culture celebrations in 2003 and has since become an architectural landmark in Graz, Austria. Its exhibition program specializes in contemporary art from the 1960s onwards. The museum doesn't translate its name to English but uses its German name in all its English communications.",
+    "city": "Graz",
+    "latitude": 47.0714,
+    "longitude": 15.434
+  },
+  {
+    "museum_name": "Osthaus-Museum Hagen",
+    "image_url": "https://upload.wikimedia.org/wikipedia/commons/4/41/Hagen_Brunnenhalle-im-Osthaus-Museum.jpg",
+    "description": "The Karl Ernst Osthaus-Museum is an art museum in Hagen, North Rhine-Westphalia, Germany. The center of the museum is a building whose interior was designed by Henry van de Velde to house Karl Ernst Osthaus' art collection, open to the public as the Museum Folkwang. When Osthaus' heirs sold his art collection to the city of Essen, the city of Hagen gained possession of the empty museum building. For a time it served as offices for the local electric company.\nAfter World War II, the new director of Hagen's city art museum, Herta Hesse, oversaw the restoration of the old Folkwang building into a new home for Hagen's art museum. Although the original interior design was lost due to reconstruction and World War II bombings, the interior has been restored several times and gives a reasonable approximation of Osthaus' original museum, if not its collection. Under her direction, the museum focused on recapturing what the city had lost when the Folkwang collection was sold to Essen. The museum became a focus for exhibits of Art Nouveau and expressionist art, particularly the artists associated with Osthaus or his art colony.\nUnder Michael Fehr, the Karl Ernst Osthaus-Museum adopted a more playful attitude toward local history. Large installations created sensations in the city, and numerous works poke fun at Hagen's inability to transcend the Osthaus past.\nThe painting collection stems from private donations and gradual purchases. It houses one of the main collections of paintings by Christian Rohlfs and the most important collection of paintings by Emil Schumacher. Both are considered Hagen artists. Other notable works on exhibit include environmental art by Herman de Vries, and the German branch of the Museum of Jurassic Technology.\nThe Karl Ernst Osthaus-Museum also houses the Karl Ernst Osthaus-Archive, a major depository of documents relating to the Folkwang Museum and early 20th century avant garde art and architecture.",
+    "city": "Hagen",
+    "latitude": 51.356033333,
+    "longitude": 7.473036111
+  },
+  {
+    "museum_name": "MoCA Taipei",
+    "image_url": "https://upload.wikimedia.org/wikipedia/commons/a/a4/%E5%8F%B0%E5%8C%97%E7%95%B6%E4%BB%A3%E8%97%9D%E8%A1%93%E9%A4%A8.JPG",
+    "description": "The Museum of Contemporary Art Taipei (MoCA Taipei; traditional Chinese: 台北當代藝術館; simplified Chinese: 台北当代艺术馆; pinyin: Táiběi Dāngdài Yìshùguǎn) is a museum of contemporary art, located in Datong District, Taipei, Taiwan.",
+    "city": "Datong District",
+    "latitude": 25.050776,
+    "longitude": 121.519022
+  },
+  {
+    "museum_name": "Taipei Fine Arts Museum",
+    "image_url": "https://upload.wikimedia.org/wikipedia/commons/9/97/Superflex%2C_Free_Beer_Factory%2C_2008_ongoing%2C_taiwan_taipeh_3.jpg",
+    "description": "The Taipei Fine Arts Museum (TFAM; traditional Chinese: 臺北市立美術館; simplified Chinese: 台北市立美术馆; pinyin: Táiběi Shìlì Měishùguǎn) is a museum in Zhongshan District, Taipei, Taiwan. It is in the Taipei Expo Park. The museum first opened on August 8, 1983, at the former site of the United States Taiwan Defense Command. It was the first museum in Taiwan built for contemporary art exhibitions. The architecture is a local interpretation of the Japanese Metabolist Movement, and the building was designed by architect Kao Er-Pan.",
+    "city": "Taipei",
+    "latitude": 25.0725,
+    "longitude": 121.525
+  },
+  {
+    "museum_name": "Kunsthaus Zürich",
+    "image_url": "https://upload.wikimedia.org/wikipedia/commons/6/60/Arnold_B%C3%B6cklin_002.jpg",
+    "description": "The Kunsthaus Zürich is an art museum in Zurich. It is the biggest art museum in Switzerland by area and houses one of the most important art collections in Switzerland, assembled over time by the Zürcher Kunstgesellschaft, a nonprofit art society. The collection spans from the Middle Ages to contemporary art, with an emphasis on Swiss art.",
+    "city": "Zurich",
+    "latitude": 47.370277777,
+    "longitude": 8.548055555
+  },
+  {
+    "museum_name": "Kunsthalle Bremen",
+    "image_url": "https://upload.wikimedia.org/wikipedia/commons/e/e2/Albrecht_D%C3%BCrer_-_Selbstbildnis%2C_krank_%281509-1511%29.jpg",
+    "description": "The Kunsthalle Bremen is an art museum in Bremen, Germany. It is located close to the Bremen Old Town on the \"Culture Mile\" (German: Kulturmeile). The Kunsthalle was built in 1849, enlarged in 1902 by architect Eduard Gildemeister, and expanded several more times, most notably in 2011. Since 1977, the building has been designated a Kulturdenkmal on Germany's buildings heritage list.\nThe museum houses a collection of European paintings from the 14th century to the present day, sculptures from the 16th to 21st century and a New Media collection. Among its highlights are French and German paintings from the 19th and 20th centuries, including important works by Claude Monet, Édouard Manet and Paul Cézanne, along with major paintings by Lovis Corinth, Max Liebermann, Max Beckmann and Paula Modersohn-Becker. The New Media section features works by John Cage, Otto Piene, Peter Campus, Olafur Eliasson, and Nam June Paik. The Department of Prints and Drawings has 220,000 sheets from the 15th to 20th century, one of largest collections of its kind in Europe.\nThe Kunsthalle Bremen is operated by the non-profit Bremen Art Society (German: Kunstverein Bremen), making it the only German museum with an extensive art collection from the 14th to 21st century which is still in private ownership.",
+    "city": "Mitte",
+    "latitude": 53.072778,
+    "longitude": 8.813611
+  }
+]
