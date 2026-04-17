@@ -803,7 +803,10 @@ function performNav(id) {
         "WEB INTERACTIVE MODEL": "https://mattia137.github.io/2GBX_environment-2/",
         "UE ANIMATION": "https://vimeo.com/1183403180?share=copy&fl=sv&fe=ci",
         "STONES RESEARCH": "./stone_research/index.html",
-        "OPEN SOURCE": "./open_source/index.html"
+        "OPEN SOURCE": "./open_source/index.html",
+        "PATTERN": "./stone_research/index.html",
+        "PY SKIN GENERATOR": "./stone_research/index.html",
+        "SITE": "./site_model/index.html"
     };
     window.location.href = nav[id] || ('.' + id.toLowerCase().replace(/\s+/g, '_') + '/');
 }
