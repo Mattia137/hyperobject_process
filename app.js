@@ -801,7 +801,8 @@ function performNav(id) {
         "PROGRAM": "./HYPEROBJECT_midterm/diagnostic_ui.html",
         "ARTISTS": "./media_artists_map/index.html",
         "WEB INTERACTIVE MODEL": "https://mattia137.github.io/2GBX_environment-2/",
-        "UE ANIMATION": "https://vimeo.com/1183403180?share=copy&fl=sv&fe=ci"
+        "UE ANIMATION": "https://vimeo.com/1183403180?share=copy&fl=sv&fe=ci",
+        "STONES RESEARCH": "./stone_research/index.html"
     };
     window.location.href = nav[id] || ('.' + id.toLowerCase().replace(/\s+/g, '_') + '/');
 }
