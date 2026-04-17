@@ -281,6 +281,7 @@
                     if (m.name === "MASS_WIRE") m.setEnabled(true);
                 });
             };
+            window.updateVisibility = updateVisibility;
 
             document.getElementById('btn-mass').onclick = () => updateVisibility(false);
             document.getElementById('btn-program').onclick = () => updateVisibility(true);
@@ -296,6 +297,29 @@
         const engine = new BABYLON.Engine(canvas, true);
         createScene(engine).then(scene => { engine.runRenderLoop(() => { scene.render(); }); });
         window.addEventListener("resize", () => { engine.resize(); });
+
+        // ── REMOTE CONTROL LISTENER ──────────────────────────────
+        window.addEventListener('message', (e) => {
+            if (!e.data || e.data.source !== 'hyperobject-remote') return;
+            const d = e.data;
+            if (!camera) return;
+
+            if (d.type === 'MOVE') {
+                // Orbit: x = rotate azimuth, y = tilt elevation
+                camera.alpha -= d.x * d.force * 0.04;
+                camera.beta  += d.y * d.force * 0.04;
+                camera.beta   = Math.max(0.1, Math.min(Math.PI - 0.1, camera.beta));
+            }
+            if (d.type === 'ROTATE') {
+                // Gyro y axis = zoom
+                camera.radius = Math.max(camera.lowerRadiusLimit || 5,
+                    Math.min(camera.upperRadiusLimit || 500,
+                    camera.radius - d.y * d.force * 2.0));
+            }
+            if (d.type === 'MODE' && window.updateVisibility) {
+                window.updateVisibility(d.mode === 'program');
+            }
+        });
     </script>
 </body>
 </html>
