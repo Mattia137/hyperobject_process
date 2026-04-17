@@ -91,6 +91,12 @@
         <h1>Stone Catalogue</h1>
         <p>The presentation is a comprehensive architectural facade study titled "Sequences and Repetitions in Metallic and Rocky Aggregates". It details an automated computational workflow designed to translate physical geological data into digital architectural geometry.</p>
         <p>The document catalogs a diverse database of geological samples—including meteorites, magmatic rocks, and metallic minerals—and demonstrates how AI vision and shape analysis are used to extract inherent 2D structural patterns from their raw textures. These extracted patterns are processed into black-and-white masks and subsequently used in a 3D geometry pipeline to algorithmically extrude complex, data-driven facade panels.</p>
+        
+        <div id="dynamic-info" style="display: none; margin-top: 25px; pointer-events: auto;">
+            <img id="info-image" src="" alt="Selected Node" style="width: 100%; border: 1px solid #000; margin-bottom: 10px; mix-blend-mode: multiply;"/>
+            <p id="info-title" style="font-size: 10px; font-weight: bold; text-transform: uppercase; margin-bottom: 5px;"></p>
+            <p id="info-desc" style="font-size: 8px; line-height: 1.5;"></p>
+        </div>
     </div>
     <div id="d3-container"></div>
     <!-- Load the application logic -->
