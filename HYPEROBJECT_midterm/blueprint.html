@@ -1,0 +1,1082 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>HYPEROBJECT</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fragment+Mono&display=swap" rel="stylesheet">
+
+  <style>
+    html, body { margin:0; height:100%; background:#fff; overflow:hidden; }
+    canvas { display:block; width:100%; height:100%; background:#fff; }
+
+    .hud{
+      position:fixed;
+      top:-16px;
+      left:16px;
+      z-index:10;
+      text-align:left;
+      font: 12px/1.35 "Fragment Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      color: rgba(0,0,0,.88);
+      user-select:none;
+      white-space:pre;
+      pointer-events:none;
+    }
+    .hud .t{
+      font-size:50px;
+      letter-spacing:0.6px;
+      color:#000;
+    }
+    .hud .m{
+      color:rgba(0,0,0,.84);
+      margin-top:-35px;
+      line-height:1.25;
+    }
+
+    .reset{
+      position:fixed;
+      right:16px;
+      bottom:16px;
+      z-index:10;
+      font: 12px/1 "Fragment Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      color: rgba(0,0,0,.86);
+      background: rgba(0,0,0,.06);
+      padding: 6px 10px;
+      border-radius: 6px;
+      border: none;
+      outline: none;
+      cursor:pointer;
+      pointer-events:auto;
+    }
+    .reset:hover{
+      background: rgba(0,0,0,.12);
+      color: rgba(0,0,0,.96);
+    }
+
+    .diag{
+      position:fixed;
+      left:16px;
+      bottom:16px;
+      z-index:10;
+      font: 12px/1.35 "Fragment Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      color: rgba(0,0,0,.64);
+      user-select:none;
+      white-space:pre;
+      pointer-events:none;
+    }
+  </style>
+</head>
+<body>
+  <div class="hud">
+    <div class="t">HYPEROBJECT</div>
+    <div class="m">JAROSLAV HERRERA + MATTIA GALBUSERA
+2GBX - SS26 - CONCEPT DIAGRAM</div>
+  </div>
+
+  <button class="reset" id="resetBtn">RESET</button>
+  <div class="diag">DIAGNOSTIC STATE // SIMULATION LIVE // DATA TRANSFER READY</div>
+
+  <canvas id="c"></canvas>
+
+  <script>
+    // =========================================================
+    // PROGRAM
+    // =========================================================
+    const NODES = [
+      { id: "Public Entry", desc: "Threshold into the field." },
+      { id: "Digital Twin Earth Ground Truth", desc: "Immersive present-condition model." },
+      { id: "Operational Data Center", desc: "Working data center on display; the museum’s heart." },
+      { id: "Simulation Cache", desc: "Real-time processing + scenario generation." },
+      { id: "Stream Filter Corridors Media Conditions", desc: "Physical media thresholds that modulate perception." },
+      { id: "Mega Fields", desc: "Space Clouds, Mega Asteroids, Black Holes, Galaxies" },
+      { id: "Collied Humans", desc: "Artificially Intelligent Machines, Artificial Landscapes, Plastic, Raw Material" },
+      { id: "Invisible Entities", desc: "Viruses, Parasites, Termites, Physarum Polycephalm" },
+      { id: "Terrace Exit", desc: "Decompression + release back to the city." }
+    ];
+
+    const ENTRY_IDX = 0;
+    const EXIT_IDX = NODES.length - 1;
+
+    let LINKS = [];
+    let parentOf = new Array(NODES.length).fill(-1);
+    let childrenOf = Array.from({ length: NODES.length }, () => []);
+    let depthOf = new Array(NODES.length).fill(0);
+    let revealSetState = new Set([ENTRY_IDX]);
+
+    // =========================================================
+    // CANVAS
+    // =========================================================
+    const canvas = document.getElementById("c");
+    const ctx = canvas.getContext("2d", { alpha:false });
+    let W = 0, H = 0, DPR = 1;
+
+    function resize(){
+      DPR = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
+      W = Math.floor(window.innerWidth);
+      H = Math.floor(window.innerHeight);
+      canvas.width = Math.floor(W * DPR);
+      canvas.height = Math.floor(H * DPR);
+      canvas.style.width = W + "px";
+      canvas.style.height = H + "px";
+      ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    }
+    window.addEventListener("resize", resize);
+    resize();
+
+    // =========================================================
+    // UTILS
+    // =========================================================
+    function clamp(v,a,b){ return Math.max(a, Math.min(b, v)); }
+    function rand(min,max){ return min + Math.random()*(max-min); }
+    function pick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+    function shuffle(arr){
+      for (let i=arr.length-1;i>0;i--){
+        const j = Math.floor(Math.random()*(i+1));
+        [arr[i],arr[j]] = [arr[j],arr[i]];
+      }
+      return arr;
+    }
+    function fract(x){ return x - Math.floor(x); }
+    function hash1(n){ return fract(Math.sin(n) * 43758.5453123); }
+    function hash2(n){ return fract(Math.sin(n*1.37 + 10.1) * 15731.743); }
+    function smoothstep(t){ return t*t*(3-2*t); }
+    function noise1(x){
+      const i = Math.floor(x);
+      const f = x - i;
+      const a = hash1(i);
+      const b = hash1(i+1);
+      return a + (b-a)*smoothstep(f);
+    }
+    function proximityToSegment(px,py, ax,ay, bx,by){
+      const vx = bx-ax, vy = by-ay;
+      const wx = px-ax, wy = py-ay;
+      const c1 = wx*vx + wy*vy;
+      if (c1 <= 0) return Math.hypot(px-ax, py-ay);
+      const c2 = vx*vx + vy*vy;
+      if (c2 <= c1) return Math.hypot(px-bx, py-by);
+      const t = c1 / c2;
+      const cx = ax + t*vx, cy = ay + t*vy;
+      return Math.hypot(px-cx, py-cy);
+    }
+
+    // =========================================================
+    // FIXED FRAME
+    // =========================================================
+    const mouse = { x:0, y:0, down:false, px:0, py:0 };
+    const FIXED_CAM_Z = 510;
+    let focus = { x:0, y:0, z:0 };
+    let focusTarget = { x:0, y:0, z:0 };
+
+    function project(p){
+      const x = p.x + focus.x;
+      const y = p.y + focus.y;
+      const z = p.z + focus.z;
+      const depthZ = z * 0.82;
+      const s = FIXED_CAM_Z / (FIXED_CAM_Z + depthZ);
+      return {
+        x: W/2 + x*s,
+        y: H/2 + y*s,
+        s,
+        z: depthZ
+      };
+    }
+
+    function screenDeltaToWorld(dx, dy, atZ){
+      const s = FIXED_CAM_Z / (FIXED_CAM_Z + atZ * 0.82);
+      return { wx: dx / s, wy: dy / s };
+    }
+
+    const WORLD_CLAMP_X = 1250;
+    const WORLD_CLAMP_Y = 620;
+    const WORLD_CLAMP_Z = 260;
+
+    function clampToWorld(p){
+      p.x = clamp(p.x, -WORLD_CLAMP_X, WORLD_CLAMP_X);
+      p.y = clamp(p.y, -WORLD_CLAMP_Y, WORLD_CLAMP_Y);
+      p.z = clamp(p.z, -WORLD_CLAMP_Z, WORLD_CLAMP_Z);
+    }
+
+    function autoFitView(){
+      const list = nodes.filter(n => revealSetState.has(n.idx));
+      if (!list.length){
+        focusTarget.x = 0;
+        focusTarget.y = 0;
+        focusTarget.z = 0;
+        return;
+      }
+
+      let cx = 0, cy = 0;
+      for (const p of list){
+        cx += p.x;
+        cy += p.y;
+      }
+      cx /= list.length;
+      cy /= list.length;
+
+      focusTarget.x = -cx * 0.05;
+      focusTarget.y = -cy * 0.05;
+      focusTarget.z = 0;
+    }
+
+    // =========================================================
+    // NODE STATE
+    // =========================================================
+    const nodes = NODES.map((n, i) => ({
+      idx: i,
+      x: 0,
+      y: 0,
+      z: rand(-120, 120),
+      vx: 0,
+      vy: 0,
+      vz: 0,
+      fixed: false
+    }));
+
+    function getFrontierNodes(){
+      const result = [];
+      for (const idx of revealSetState){
+        const unrevealed = childrenOf[idx].filter(c => !revealSetState.has(c));
+        if (unrevealed.length) result.push(idx);
+      }
+      return result;
+    }
+
+    function isActiveNode(idx){
+      return getFrontierNodes().includes(idx);
+    }
+
+    // =========================================================
+    // BRANCHING GRAPH
+    // =========================================================
+    function buildBranchingGraph(){
+      LINKS = [];
+      parentOf = new Array(NODES.length).fill(-1);
+      childrenOf = Array.from({ length: NODES.length }, () => []);
+      depthOf = new Array(NODES.length).fill(0);
+
+      const available = [];
+      for (let i=1; i<EXIT_IDX; i++) available.push(i);
+      shuffle(available);
+
+      const frontier = [ENTRY_IDX];
+
+      while (available.length){
+        const parent = pick(frontier);
+        const depth = depthOf[parent];
+
+        let childCount = 1;
+        if (depth < 2 && available.length >= 2 && Math.random() < 0.55){
+          childCount = 2;
+        }
+
+        for (let k=0; k<childCount && available.length; k++){
+          const child = available.shift();
+          LINKS.push([parent, child]);
+          parentOf[child] = parent;
+          childrenOf[parent].push(child);
+          depthOf[child] = depth + 1;
+          frontier.push(child);
+        }
+
+        if (childrenOf[parent].length >= 2 || depth > 2){
+          const idx = frontier.indexOf(parent);
+          if (idx !== -1) frontier.splice(idx, 1);
+        }
+      }
+
+      const leaves = [];
+      for (let i=0; i<EXIT_IDX; i++){
+        if (childrenOf[i].length === 0) leaves.push(i);
+      }
+
+      const exitParent = leaves.length
+        ? leaves.sort((a,b)=>depthOf[b]-depthOf[a])[0]
+        : ENTRY_IDX;
+
+      LINKS.push([exitParent, EXIT_IDX]);
+      parentOf[EXIT_IDX] = exitParent;
+      childrenOf[exitParent].push(EXIT_IDX);
+      depthOf[EXIT_IDX] = depthOf[exitParent] + 1;
+    }
+
+    // =========================================================
+    // PLAN LAYOUT
+    // MUCH LONGER DISTANCES
+    // =========================================================
+    function subtreeWeight(idx){
+      const kids = childrenOf[idx];
+      if (!kids.length) return 1;
+      let sum = 0;
+      for (const c of kids) sum += subtreeWeight(c);
+      return sum;
+    }
+
+    function assignPlanLayout(){
+      const spacingX = 420;
+      const spacingY = 250;
+
+      const weights = new Map();
+      for (let i=0; i<NODES.length; i++){
+        weights.set(i, subtreeWeight(i));
+      }
+
+      function placeSubtree(idx, x, y){
+        nodes[idx].x = x;
+        nodes[idx].y = y;
+        nodes[idx].z = rand(-125, 125);
+
+        const kids = childrenOf[idx];
+        if (!kids.length) return;
+
+        let totalWeight = 0;
+        for (const c of kids) totalWeight += weights.get(c);
+
+        let cursor = y - (totalWeight * spacingY * 0.5) + (spacingY * 0.5);
+
+        for (const c of kids){
+          const w = weights.get(c);
+          const childY = cursor + (w * spacingY * 0.5) - (spacingY * 0.5);
+          const childX = x + spacingX + rand(-20, 28);
+          placeSubtree(c, childX, childY);
+          cursor += w * spacingY;
+        }
+      }
+
+      placeSubtree(ENTRY_IDX, -760, 0);
+
+      let cx = 0, cy = 0;
+      for (const p of nodes){ cx += p.x; cy += p.y; }
+      cx /= nodes.length;
+      cy /= nodes.length;
+
+      for (const p of nodes){
+        p.x -= cx * 0.46;
+        p.y -= cy * 0.46;
+        clampToWorld(p);
+        p.vx = p.vy = p.vz = 0;
+      }
+    }
+
+    // =========================================================
+    // AMBIENT BACKGROUND FIELD
+    // =========================================================
+    let cloud = [];
+    function seedCloud(){
+      cloud.length = 0;
+      const count = 3200;
+      const R = 1200;
+      const Z = 500;
+
+      for (let i=0; i<count; i++){
+        const t = Math.pow(Math.random(), 0.74);
+        const r = t * R;
+        const a = Math.random() * Math.PI * 2;
+
+        const ox = Math.cos(a)*r + rand(-10,10);
+        const oy = Math.sin(a)*r*0.55 + rand(-10,10);
+        const oz = rand(-Z, Z);
+
+        cloud.push({
+          ox, oy, oz,
+          x: ox, y: oy, z: oz,
+          w: 0.55 + Math.random()*1.1,
+          a: 0.018 + Math.random()*0.05,
+          phase: Math.random() * Math.PI * 2,
+          phase2: Math.random() * Math.PI * 2,
+          phase3: Math.random() * Math.PI * 2,
+          driftX: rand(1.0, 4.0),
+          driftY: rand(0.8, 3.4),
+          driftZ: rand(0.6, 2.8)
+        });
+      }
+    }
+
+    function updateCloud(tNow){
+      for (const p of cloud){
+        p.x = p.ox + Math.sin(tNow * 0.030 * p.driftX + p.phase) * 8;
+        p.y = p.oy + Math.cos(tNow * 0.026 * p.driftY + p.phase2) * 7;
+        p.z = p.oz + Math.sin(tNow * 0.018 * p.driftZ + p.phase3) * 16;
+      }
+    }
+
+    // =========================================================
+    // NODE FORCES
+    // =========================================================
+    function resolveNodePlanarity(){
+      const list = nodes.filter(n => revealSetState.has(n.idx));
+      if (list.length <= 1) return;
+
+      const minPlanDist = 225;
+      for (let it=0; it<6; it++){
+        for (let i=0; i<list.length; i++){
+          const a = list[i];
+          for (let j=i+1; j<list.length; j++){
+            const b = list[j];
+            const dx = b.x - a.x;
+            const dy = b.y - a.y;
+            const d = Math.hypot(dx,dy) + 1e-6;
+            if (d < minPlanDist){
+              const push = (minPlanDist - d) / minPlanDist;
+              const ux = dx / d;
+              const uy = dy / d;
+              const amt = 12 * push;
+
+              if (!a.fixed){
+                a.x -= ux * amt;
+                a.y -= uy * amt;
+              }
+              if (!b.fixed){
+                b.x += ux * amt;
+                b.y += uy * amt;
+              }
+              clampToWorld(a);
+              clampToWorld(b);
+            }
+          }
+        }
+      }
+    }
+
+    function containRevealedLayout(){
+      const list = nodes.filter(n => revealSetState.has(n.idx));
+      if (list.length <= 1) return;
+
+      let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+      for (const p of list){
+        minX = Math.min(minX, p.x);
+        minY = Math.min(minY, p.y);
+        maxX = Math.max(maxX, p.x);
+        maxY = Math.max(maxY, p.y);
+      }
+
+      const cx = (minX + maxX) * 0.5;
+      const cy = (minY + maxY) * 0.5;
+      const w = maxX - minX;
+      const h = maxY - minY;
+
+      const safeW = 1500;
+      const safeH = 760;
+
+      if (w > safeW || h > safeH){
+        const sx = safeW / Math.max(w, 1);
+        const sy = safeH / Math.max(h, 1);
+        const s = Math.min(sx, sy, 0.985);
+
+        for (const p of list){
+          p.x = cx + (p.x - cx) * s;
+          p.y = cy + (p.y - cy) * s;
+          clampToWorld(p);
+        }
+      }
+    }
+
+    function stepForces(dt){
+      const list = nodes.filter(n => revealSetState.has(n.idx));
+      if (!list.length) return;
+
+      const repelK = 3400;
+      const linkK = 0.028;
+      const damp = 0.88;
+      const desiredLink = 360;
+
+      for (let i=0; i<list.length; i++){
+        const a = list[i];
+        for (let j=i+1; j<list.length; j++){
+          const b = list[j];
+          const dx = b.x-a.x;
+          const dy = b.y-a.y;
+          const d2 = dx*dx + dy*dy + 160;
+          const f = repelK / d2;
+          const invD = 1 / Math.sqrt(d2);
+
+          if (!a.fixed){
+            a.vx -= dx * invD * f * dt;
+            a.vy -= dy * invD * f * dt;
+          }
+          if (!b.fixed){
+            b.vx += dx * invD * f * dt;
+            b.vy += dy * invD * f * dt;
+          }
+        }
+      }
+
+      for (const [ia, ib] of LINKS){
+        if (!revealSetState.has(ia) || !revealSetState.has(ib)) continue;
+        const a = nodes[ia];
+        const b = nodes[ib];
+
+        const dx = b.x-a.x;
+        const dy = b.y-a.y;
+        const d = Math.hypot(dx,dy) + 1e-6;
+        const diff = d - desiredLink;
+        const fx = (dx/d) * diff * linkK;
+        const fy = (dy/d) * diff * linkK;
+
+        if (!a.fixed){
+          a.vx += fx * dt;
+          a.vy += fy * dt;
+        }
+        if (!b.fixed){
+          b.vx -= fx * dt;
+          b.vy -= fy * dt;
+        }
+      }
+
+      for (const p of list){
+        if (!p.fixed){
+          p.vx += (-p.x) * 0.00055 * dt;
+          p.vy += (-p.y) * 0.00092 * dt;
+          p.vz += (-p.z) * 0.00040 * dt;
+        }
+      }
+
+      for (const p of list){
+        if (!p.fixed){
+          p.vz *= 0.94;
+          p.z += p.vz;
+        }
+      }
+
+      for (const p of list){
+        if (p.fixed) continue;
+        p.vx *= damp;
+        p.vy *= damp;
+        p.x += p.vx;
+        p.y += p.vy;
+        clampToWorld(p);
+      }
+
+      resolveNodePlanarity();
+      containRevealedLayout();
+    }
+
+    // =========================================================
+    // LABEL BUBBLES
+    // BETTER BALANCE THAN LAST VERSION
+    // =========================================================
+    function wrapDesc(text, maxChars){
+      const words = text.split(" ");
+      const lines = [];
+      let line = "";
+      for (const word of words){
+        const test = line ? line + " " + word : word;
+        if (test.length > maxChars){
+          if (line) lines.push(line);
+          line = word;
+        } else {
+          line = test;
+        }
+      }
+      if (line) lines.push(line);
+      return lines;
+    }
+
+    function computeLabelBubbles(){
+      const bubbles = [];
+
+      for (const p of nodes){
+        if (!revealSetState.has(p.idx)) continue;
+        const pr = project(p);
+        const node = NODES[p.idx];
+        const descLines = wrapDesc(node.desc, 30);
+
+        const nameW = Math.max(130, node.id.length * 9.2);
+        let descW = 0;
+        for (const line of descLines) descW = Math.max(descW, line.length * 7.6);
+
+        const w = Math.max(nameW, descW) + 34;
+        const h = 30 + (descLines.length * 17) + 20;
+
+        bubbles.push({
+          idx: p.idx,
+          x: pr.x + 30,
+          y: pr.y,
+          ox: pr.x + 30,
+          oy: pr.y,
+          w,
+          h,
+          lines: descLines
+        });
+      }
+
+      for (let it=0; it<44; it++){
+        for (let i=0; i<bubbles.length; i++){
+          for (let j=i+1; j<bubbles.length; j++){
+            const a = bubbles[i];
+            const b = bubbles[j];
+
+            const ax1 = a.x;
+            const ay1 = a.y - a.h*0.5;
+            const ax2 = a.x + a.w;
+            const ay2 = a.y + a.h*0.5;
+
+            const bx1 = b.x;
+            const by1 = b.y - b.h*0.5;
+            const bx2 = b.x + b.w;
+            const by2 = b.y + b.h*0.5;
+
+            const overlapX = Math.min(ax2, bx2) - Math.max(ax1, bx1);
+            const overlapY = Math.min(ay2, by2) - Math.max(ay1, by1);
+
+            if (overlapX > 0 && overlapY > 0){
+              if (overlapX < overlapY){
+                const push = overlapX * 0.58 + 4;
+                if (a.x < b.x){ a.x -= push; b.x += push; }
+                else { a.x += push; b.x -= push; }
+              } else {
+                const push = overlapY * 0.58 + 4;
+                if (a.y < b.y){ a.y -= push; b.y += push; }
+                else { a.y += push; b.y -= push; }
+              }
+            }
+          }
+        }
+
+        for (const a of bubbles){
+          const pr = project(nodes[a.idx]);
+          a.x += (a.ox - a.x) * 0.08;
+          a.y += (a.oy - a.y) * 0.08;
+          if (a.x < pr.x + 24) a.x = pr.x + 24;
+          if (Math.abs(a.y - pr.y) < 14){
+            a.y = pr.y + (a.y >= pr.y ? 14 : -14);
+          }
+          a.x = clamp(a.x, 24, W - a.w - 24);
+          a.y = clamp(a.y, 36 + a.h*0.5, H - 36 - a.h*0.5);
+        }
+      }
+
+      return bubbles;
+    }
+
+    // =========================================================
+    // PARTICLES ON LINKS
+    // =========================================================
+    let carriers = [];
+    function seedCarriers(){
+      carriers.length = 0;
+
+      for (let li=0; li<LINKS.length; li++){
+        const [a,b] = LINKS[li];
+        if (!revealSetState.has(a) || !revealSetState.has(b)) continue;
+
+        const n = 30;
+        for (let k=0; k<n; k++){
+          carriers.push({
+            li,
+            t: Math.random(),
+            drift: rand(-0.00045, 0.00045),
+            lane: rand(-2.0, 2.0),
+            size: rand(1.0, 1.7),
+            phase: Math.random() * Math.PI * 2
+          });
+        }
+      }
+    }
+
+    // =========================================================
+    // DRAW HELPERS
+    // LOW STATIC ALWAYS ON, HIGHER ON HOVER
+    // =========================================================
+    function drawElectricBundle(ap, bp, intensity, seed){
+      const t = performance.now() * 0.001;
+      const strands = Math.floor(2 + intensity * 8);
+      const steps = 22;
+
+      const dx = bp.x - ap.x, dy = bp.y - ap.y;
+      const len = Math.hypot(dx,dy) + 1e-9;
+      const nx = -dy / len, ny = dx / len;
+      const baseAmp = (0.8 + 2.4*intensity) * (0.22 + Math.min(1.0, len/260));
+
+      ctx.save();
+      ctx.globalCompositeOperation = "multiply";
+      ctx.lineCap = "round";
+      ctx.lineJoin = "round";
+
+      for (let s=0; s<strands; s++){
+        const phase = seed*2.31 + s*1.37;
+        const flick = 0.6 + 0.8*noise1(t*6.5 + phase);
+        const amp = baseAmp * (0.55 + 0.55*hash2(phase)) * flick;
+        const alpha = 0.020 + 0.16 * intensity * (0.5 + 0.5*hash1(phase));
+        const width = 0.55 + 1.0 * intensity;
+
+        ctx.strokeStyle = `rgba(0,0,0,${alpha})`;
+        ctx.lineWidth = width;
+
+        ctx.beginPath();
+        for (let i=0; i<=steps; i++){
+          const u = i/steps;
+          let x = ap.x + dx*u;
+          let y = ap.y + dy*u;
+
+          const hi  = Math.sin((u*18 + t*10 + phase)) * 0.45;
+          const hi2 = Math.sin((u*29 + t*12 + phase*0.8)) * 0.28;
+          const mid = Math.sin((u*7.3 + t*4.2 + phase*1.1)) * 0.9;
+          const w = (mid + hi + hi2) * amp;
+
+          x += nx * w;
+          y += ny * w;
+
+          if (i===0) ctx.moveTo(x,y);
+          else ctx.lineTo(x,y);
+        }
+        ctx.stroke();
+      }
+
+      ctx.restore();
+    }
+
+    function drawHaze(x, y, r, a){
+      ctx.save();
+      ctx.globalCompositeOperation = "multiply";
+      ctx.fillStyle = `rgba(80,80,80,${a})`;
+      ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI*2); ctx.fill();
+      ctx.fillStyle = `rgba(120,120,120,${a*0.22})`;
+      ctx.beginPath(); ctx.arc(x, y, r*2.6, 0, Math.PI*2); ctx.fill();
+      ctx.restore();
+    }
+
+    // =========================================================
+    // INTERACTION
+    // =========================================================
+    function getPointerPos(e){
+      const r = canvas.getBoundingClientRect();
+      return { x:e.clientX-r.left, y:e.clientY-r.top };
+    }
+
+    function hitNode(mx,my){
+      let best = null, bestD = Infinity;
+      for (const p of nodes){
+        if (!revealSetState.has(p.idx)) continue;
+        const pr = project(p);
+        const rr = 16 * pr.s;
+        const d = Math.hypot(mx-pr.x, my-pr.y);
+        if (d < rr && d < bestD){
+          bestD = d;
+          best = p;
+        }
+      }
+      return best;
+    }
+
+    let wheelBoost = 0;
+    let drag = { active:false, sx:0, sy:0 };
+    let dragMoved = false;
+    let draggingNode = null;
+
+    canvas.addEventListener("pointerdown", (e)=>{
+      const pos = getPointerPos(e);
+      mouse.down = true;
+      mouse.x = pos.x;
+      mouse.y = pos.y;
+      mouse.px = pos.x;
+      mouse.py = pos.y;
+      drag.active = true;
+      drag.sx = pos.x;
+      drag.sy = pos.y;
+      dragMoved = false;
+
+      const hit = hitNode(pos.x, pos.y);
+      if (hit){
+        draggingNode = hit;
+        draggingNode.fixed = true;
+      } else {
+        draggingNode = null;
+      }
+
+      canvas.setPointerCapture(e.pointerId);
+    });
+
+    canvas.addEventListener("pointermove", (e)=>{
+      const pos = getPointerPos(e);
+      mouse.x = pos.x;
+      mouse.y = pos.y;
+
+      if (!drag.active || !mouse.down) return;
+
+      const dx = pos.x - mouse.px;
+      const dy = pos.y - mouse.py;
+      mouse.px = pos.x;
+      mouse.py = pos.y;
+
+      if (Math.hypot(pos.x - drag.sx, pos.y - drag.sy) > 4){
+        dragMoved = true;
+      }
+
+      if (draggingNode){
+        const pr = project(draggingNode);
+        const d = screenDeltaToWorld(dx, dy, pr.z);
+        draggingNode.x += d.wx;
+        draggingNode.y += d.wy;
+        clampToWorld(draggingNode);
+      }
+    });
+
+    canvas.addEventListener("pointerup", (e)=>{
+      const pos = getPointerPos(e);
+      mouse.down = false;
+      drag.active = false;
+
+      const hit = hitNode(pos.x, pos.y);
+
+      if (draggingNode){
+        draggingNode.fixed = false;
+        draggingNode = null;
+      }
+
+      if (!dragMoved && hit){
+        const idx = hit.idx;
+        const unrevealedChildren = childrenOf[idx].filter(c => !revealSetState.has(c));
+
+        if (unrevealedChildren.length){
+          for (const c of unrevealedChildren){
+            revealSetState.add(c);
+          }
+          seedCarriers();
+          wheelBoost = 1;
+        }
+      }
+
+      canvas.releasePointerCapture(e.pointerId);
+    });
+
+    window.addEventListener("wheel", (e)=>{
+      e.preventDefault();
+    }, { passive:false });
+
+    document.getElementById("resetBtn").addEventListener("click", resetSystem);
+
+    // =========================================================
+    // RESET / BUILD
+    // =========================================================
+    function resetSystem(){
+      buildBranchingGraph();
+      assignPlanLayout();
+      revealSetState = new Set([ENTRY_IDX]);
+
+      focus.x = focus.y = focus.z = 0;
+      focusTarget.x = focusTarget.y = focusTarget.z = 0;
+
+      for (const p of nodes){
+        p.vx = p.vy = p.vz = 0;
+        p.fixed = false;
+      }
+
+      seedCloud();
+      seedCarriers();
+    }
+
+    // =========================================================
+    // DRAW
+    // =========================================================
+    function drawCloud(){
+      ctx.save();
+      ctx.globalCompositeOperation = "multiply";
+      for (const p of cloud){
+        const pr = project({ x:p.x, y:p.y, z:p.z });
+        if (pr.s < 0.10) continue;
+        const a = p.a * clamp(pr.s, 0.12, 1.0);
+        ctx.fillStyle = `rgba(88,88,88,${a * 1.08})`;
+        const r = p.w * pr.s;
+        ctx.beginPath();
+        ctx.arc(pr.x, pr.y, r, 0, Math.PI*2);
+        ctx.fill();
+      }
+      ctx.restore();
+    }
+
+    function drawGraph(){
+      const labelBubbles = computeLabelBubbles();
+      const bubbleMap = new Map(labelBubbles.map(b => [b.idx, b]));
+      const nodeHover = hitNode(mouse.x, mouse.y);
+
+      const linkEmit = new Array(LINKS.length).fill(0);
+      for (let li=0; li<LINKS.length; li++){
+        const [ia, ib] = LINKS[li];
+        if (!revealSetState.has(ia) || !revealSetState.has(ib)) continue;
+
+        const ap = project(nodes[ia]);
+        const bp = project(nodes[ib]);
+        const d = proximityToSegment(mouse.x, mouse.y, ap.x, ap.y, bp.x, bp.y);
+        const hoverLink = clamp((280 - d)/280, 0, 1);
+
+        let hoverNodeAdj = 0;
+        if (nodeHover && (nodeHover.idx === ia || nodeHover.idx === ib)) hoverNodeAdj = 1;
+
+        // baseline animation always on
+        linkEmit[li] = clamp(Math.max(0.18, hoverLink*hoverLink, wheelBoost, hoverNodeAdj), 0, 1);
+      }
+
+      // links
+      for (let li=0; li<LINKS.length; li++){
+        const [ia, ib] = LINKS[li];
+        if (!revealSetState.has(ia) || !revealSetState.has(ib)) continue;
+
+        const ap = project(nodes[ia]);
+        const bp = project(nodes[ib]);
+
+        ctx.save();
+        ctx.globalCompositeOperation = "multiply";
+        ctx.strokeStyle = "rgba(0,0,0,0.16)";
+        ctx.lineWidth = 1.2;
+        ctx.lineCap = "round";
+        ctx.beginPath();
+        ctx.moveTo(ap.x, ap.y);
+        ctx.lineTo(bp.x, bp.y);
+        ctx.stroke();
+        ctx.restore();
+
+        const intensity = linkEmit[li];
+        drawHaze(ap.x, ap.y, 2.0, 0.04 + 0.14*intensity);
+        drawHaze(bp.x, bp.y, 2.0, 0.04 + 0.14*intensity);
+        drawElectricBundle(ap, bp, intensity, li);
+      }
+
+      // particles
+      ctx.save();
+      ctx.globalCompositeOperation = "multiply";
+      const tNow = performance.now() * 0.001;
+
+      for (const c of carriers){
+        const [ia, ib] = LINKS[c.li];
+        if (!revealSetState.has(ia) || !revealSetState.has(ib)) continue;
+        const emit = linkEmit[c.li];
+        if (emit <= 0.01) continue;
+
+        c.t = (c.t + c.drift) % 1;
+        if (c.t < 0) c.t += 1;
+
+        const ap = project(nodes[ia]);
+        const bp = project(nodes[ib]);
+        const dx = bp.x - ap.x;
+        const dy = bp.y - ap.y;
+        const len = Math.hypot(dx,dy) + 1e-9;
+        const nx = -dy/len, ny = dx/len;
+
+        const u = c.t;
+        const floatA = Math.sin(tNow*0.45 + c.phase) * 1.5;
+        const floatB = Math.cos(tNow*0.30 + c.phase*1.7) * 1.1;
+        const jitter = c.lane + floatA + floatB;
+
+        const x = ap.x + dx*u + nx*jitter;
+        const y = ap.y + dy*u + ny*jitter;
+
+        const r = c.size + emit * 0.16;
+        const alpha = 0.28 + emit * 0.18;
+
+        ctx.fillStyle = `rgba(55,55,55,${alpha})`;
+        ctx.beginPath();
+        ctx.arc(x, y, r, 0, Math.PI*2);
+        ctx.fill();
+
+        ctx.fillStyle = `rgba(95,95,95,${alpha*0.18})`;
+        ctx.beginPath();
+        ctx.arc(x, y, r*2.1, 0, Math.PI*2);
+        ctx.fill();
+      }
+      ctx.restore();
+
+      // nodes
+      for (const p of nodes){
+        if (!revealSetState.has(p.idx)) continue;
+        const pr = project(p);
+        const active = isActiveNode(p.idx);
+
+        const baseR = (active ? 3.0 : 2.45) * clamp(pr.s, 0.92, 1.22);
+
+        ctx.save();
+        ctx.globalCompositeOperation = "multiply";
+        ctx.fillStyle = active ? "rgba(0,0,0,0.95)" : "rgba(0,0,0,0.76)";
+        ctx.beginPath();
+        ctx.arc(pr.x, pr.y, baseR, 0, Math.PI*2);
+        ctx.fill();
+
+        ctx.strokeStyle = "rgba(0,0,0,0.34)";
+        ctx.lineWidth = 1.0;
+        ctx.beginPath();
+        ctx.arc(pr.x, pr.y, baseR + 2.5, 0, Math.PI*2);
+        ctx.stroke();
+
+        if (active){
+          ctx.globalAlpha = 0.56;
+          ctx.fillStyle = "rgba(0,0,0,1)";
+          ctx.font = `400 16px "Fragment Mono", ui-monospace, monospace`;
+          ctx.textBaseline = "middle";
+          ctx.fillText("↳", pr.x - 16, pr.y);
+        }
+        ctx.restore();
+      }
+
+      // labels
+      for (const p of nodes){
+        if (!revealSetState.has(p.idx)) continue;
+        const bubble = bubbleMap.get(p.idx);
+        if (!bubble) continue;
+
+        const active = isActiveNode(p.idx);
+        const name = NODES[p.idx].id;
+
+        ctx.save();
+        ctx.globalCompositeOperation = "multiply";
+
+        ctx.strokeStyle = "rgba(0,0,0,0.05)";
+        ctx.lineWidth = 1;
+        ctx.strokeRect(bubble.x, bubble.y - bubble.h*0.5, bubble.w, bubble.h);
+
+        ctx.textBaseline = "middle";
+        ctx.font = `400 ${active ? 16 : 13.5}px "Fragment Mono", ui-monospace, monospace`;
+        ctx.fillStyle = active ? "rgba(0,0,0,.95)" : "rgba(0,0,0,.84)";
+        ctx.fillText(name, bubble.x + 12, bubble.y - bubble.h*0.5 + 15);
+
+        const dotY = bubble.y - bubble.h*0.5 + 34;
+        ctx.fillStyle = "rgba(0,0,0,0.58)";
+        ctx.beginPath();
+        ctx.arc(bubble.x + 3.2, dotY, 1.35, 0, Math.PI*2);
+        ctx.fill();
+
+        ctx.font = `400 11.6px "Fragment Mono", ui-monospace, monospace`;
+        ctx.fillStyle = "rgba(0,0,0,.58)";
+
+        for (let i=0; i<bubble.lines.length; i++){
+          ctx.fillText(bubble.lines[i], bubble.x + 12, dotY + i*15.5);
+        }
+
+        ctx.restore();
+      }
+    }
+
+    // =========================================================
+    // LOOP
+    // =========================================================
+    let last = performance.now();
+    function loop(now){
+      const dt = clamp((now - last) / 16.666, 0.5, 2.0);
+      last = now;
+
+      const tNow = now * 0.001;
+      updateCloud(tNow);
+      autoFitView();
+
+      focus.x += (focusTarget.x - focus.x) * 0.08;
+      focus.y += (focusTarget.y - focus.y) * 0.08;
+      focus.z += (focusTarget.z - focus.z) * 0.08;
+
+      wheelBoost *= 0.88;
+      stepForces(dt);
+
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(0,0,W,H);
+
+      drawCloud();
+      drawGraph();
+
+      requestAnimationFrame(loop);
+    }
+
+    resetSystem();
+    requestAnimationFrame(loop);
+  </script>
+</body>
+</html>

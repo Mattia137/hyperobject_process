@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>HYPEROBJECT_environment</title>
+    <link href="https://fonts.googleapis.com/css2?family=Fragment+Mono&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <style>
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #000; font-family: 'Fragment Mono', monospace; }
+        #renderCanvas { width: 100%; height: 100%; position: absolute; z-index: 1; outline: none; cursor: crosshair; }
+        #loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 20000; display: flex; flex-direction: column; justify-content: center; align-items: center; color: #fff; }
+        #loading-bar-container { width: 200px; height: 1px; background: rgba(255,255,255,0.1); margin-top: 20px; }
+        #loading-bar-fill { width: 0%; height: 100%; background: #fff; transition: width 0.2s; }
+        #mode-selection { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 15000; display: none; flex-direction: column; justify-content: center; align-items: center; gap: 30px; }
+        .mode-btn { background: none; border: 1px solid rgba(255,255,255,0.3); color: #fff; padding: 15px 40px; font-family: 'Fragment Mono', monospace; font-size: 11px; letter-spacing: 4px; cursor: pointer; transition: all 0.3s; }
+        .mode-btn:hover { background: #fff; color: #000; }
+        #pairing-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 16000; display: none; flex-direction: column; justify-content: center; align-items: center; }
+        #qrcode { padding: 20px; background: #fff; border: 10px solid #fff; }
+        #interface { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 10; pointer-events: none; color: rgba(255, 255, 255, 0.9); font-size: 8px; letter-spacing: 0.15em; }
+        svg { position: absolute; width: 100%; height: 100%; stroke: #fff; stroke-width: 0.7; fill: none; opacity: 0.8; }
+        .hud-cluster { position: absolute; display: flex; flex-direction: column; }
+        .top-center { top: 120px; left: 50%; transform: translateX(-50%); text-align: center; width: 400px; }
+        .top-left { top: 30px; left: 30px; }
+        .top-right { top: 30px; right: 30px; text-align: right; }
+        .bottom-left { bottom: 30px; left: 30px; }
+        .center-readout { top: 50%; left: 70%; transform: translateY(-50%); }
+        .label { opacity: 0.4; font-size: 6px; margin-bottom: 2px; text-transform: uppercase; }
+        .label-grey { color: #666; font-size: 6px; margin-bottom: 2px; text-transform: uppercase; }
+        .val { margin-bottom: 10px; font-size: 10px; }
+        #target-id { font-size: 14px; letter-spacing: 0.4em; transition: opacity 0.2s; color: #fff; }
+        #cursor-ring { position: absolute; width: 40px; height: 40px; border: 0.5px solid #fff; border-radius: 50%; pointer-events: none; z-index: 11; opacity: 0; transform: translate(-50%, -50%); transition: opacity 0.2s; }
+        @keyframes pulse { 0% { transform: translate(-50%, -50%) scale(1); opacity: 0.8; } 50% { transform: translate(-50%, -50%) scale(1.2); opacity: 0.2; } 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.8; } }
+        .active-pulse { animation: pulse 1.5s infinite ease-in-out; opacity: 1 !important; }
+        #flare-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 5; pointer-events: none; mix-blend-mode: screen; }
+        #transition-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: white; opacity: 0; pointer-events: none; transition: opacity 0.8s ease-in-out; z-index: 9999; }
+        #project-container { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; display: none; z-index: 9998; background: #000; }
+        #project-iframe { width: 100%; height: 100%; border: none; }
+        #exit-button { position: absolute; top: 40px; right: 40px; font-family: 'Fragment Mono', monospace; font-size: 11px; letter-spacing: 3px; color: #fff; cursor: pointer; z-index: 10000; text-transform: uppercase; padding: 10px 20px; border: 1px solid rgba(255,255,255,0.3); background: rgba(0,0,0,0.6); backdrop-filter: blur(5px); transition: all 0.3s ease; }
+        #exit-button:hover { background: #fff; color: #000; }
+    </style>
+</head>
+<body>
+    <div id="loading-overlay"><div style="letter-spacing: 5px; font-size: 10px;">INITIALIZING_HYPEROBJECT</div><div id="loading-bar-container"><div id="loading-bar-fill"></div></div></div>
+    <div id="mode-selection"><div style="letter-spacing: 8px; opacity: 0.5; margin-bottom: 20px; font-size: 9px;">CHOOSE_INTERFACE_MODE</div><button class="mode-btn" onclick="selectMode('local')">LOCAL_CONTROLLER</button><button class="mode-btn" onclick="selectMode('remote')">REMOTE_CONTROLLER</button></div>
+    <div id="pairing-overlay"><div id="qrcode"></div><div style="margin-top: 30px; letter-spacing: 4px; font-size: 10px; color: #fff;">SCAN_TO_PAIR_DEVICE</div></div>
+    <div id="cursor-ring"></div>
+    <div id="transition-overlay"></div>
+    <div id="project-container"><div id="exit-button" onclick="closeProject()">EXIT_PROJECT</div><iframe id="project-iframe" src=""></iframe></div>
+    <div id="flare-container"><svg id="flare-svg"><ellipse id="streak" cx="-100" cy="-100" rx="450" ry="0.8" fill="rgba(255, 255, 255, 0.2)" filter="blur(4px)" /></svg></div>
+    <div id="interface">
+        <svg viewBox="0 0 1000 600"><path d="M 480 300 H 520 M 500 280 V 320" stroke-width="1"/><circle cx="500" cy="300" r="5" stroke-width="1"/><path d="M 100 100 V 50 H 150 M 850 50 H 900 V 100 M 100 500 V 550 H 150 M 850 550 H 900 V 500" opacity="0.3"/><path d="M 460 200 H 480 M 520 200 H 540 M 470 250 H 490 M 510 250 H 530 M 470 350 H 490 M 510 350 H 530 M 460 400 H 480 M 520 400 H 540" opacity="0.5" /><path d="M 300 40 H 700 M 500 35 V 45" /></svg>
+        <div class="hud-cluster top-center"><div class="label-grey">SCAN_OBJ_ID</div><div class="val" id="target-id">---</div></div>
+        <div class="hud-cluster top-left"><div class="label">MCP SPD</div><div class="val">285</div><div class="label">VOR/L OC</div><div class="val">NAV 1</div></div>
+        <div class="hud-cluster top-right"><div class="label-grey">YEAR</div><div class="val" id="year-counter">2026</div><div class="label">ALT_MTR</div><div class="val">21,170</div></div>
+        <div class="hud-cluster center-readout"><div class="label">TGT_DIST</div><div class="val">1.12 KM</div><div class="label">LOCK</div><div class="val">STABLE</div></div>
+        <div class="hud-cluster bottom-left"><div class="label">COORDS</div><div class="val" id="coord-val">0.00 // 0.00</div><div class="label">IDENT</div><div class="val">HYPEROBJECT_PROBE</div></div>
+    </div>
+    <canvas id="renderCanvas"></canvas>
+
+    <script src="https://cdn.babylonjs.com/babylon.js"></script>
+    <script src="https://cdn.babylonjs.com/loaders/babylonjs.loaders.min.js"></script>
+
+    <script>
+        const canvas = document.getElementById("renderCanvas");
+        const yearDisplay = document.getElementById("year-counter");
+        const targetDisplay = document.getElementById("target-id");
+        const cursorRing = document.getElementById("cursor-ring");
+        const overlay = document.getElementById('transition-overlay');
+        const container = document.getElementById('project-container');
+        const iframe = document.getElementById('project-iframe');
+        const loadFill = document.getElementById('loading-bar-fill');
+        
+        let scene, camera, initialY;
+        let remoteInput = { move: {x:0, y:0, force:0}, rotate: {x:0, y:0, force:0} };
+        
+        const CONFIG = {
+            camera: { fov: 1.3, position: new BABYLON.Vector3(0, 15, 0), speed: 1.0, radiusLimit: 130 },
+            sun: { rotation: 300, elevation: 25, intensity: 60.0 },
+            environment: { intensity: 0.1, textureUrl: "https://assets.babylonjs.com/environments/environmentSpecular.env" },
+            postProcess: { caAmount: 0.007, maskPower: 4.5, vignette: 0.75, bloomWeight: 1.0, bloomThreshold: 0.2, grainIntensity: 0.07 },
+            hyperobject: { roughness: 0.1, metallic: 0.8, normalStrength: 0.7, directIntensity: 5.0 },
+            terrain: { roughness: 0.98, metallic: 0.0, normalStrength: 4.0, directIntensity: 0.23 },
+            worldScale: 40,
+            nav: { transitionSpeed: 800, projects: { "the world": "diagnostic_ui.html", "assembly instructions": "exploded_diagram.html", "blueprint": "blueprint.html" } }
+        };
+
+        function selectMode(mode) {
+            document.getElementById('mode-selection').style.display = 'none';
+            if (mode === 'remote') { initRemoteSystem(); } 
+            else { camera.attachControl(canvas, true); }
+        }
+
+        function initRemoteSystem() {
+            const peer = new Peer();
+            document.getElementById('pairing-overlay').style.display = 'flex';
+            peer.on('open', (id) => {
+                new QRCode(document.getElementById("qrcode"), { 
+                    text: `https://mattia137.github.io/controller_test/?id=${id}`, 
+                    width: 200, height: 200, colorDark: "#000000", colorLight: "#ffffff" 
+                });
+            });
+            peer.on('connection', (conn) => {
+                document.getElementById('pairing-overlay').style.display = 'none';
+                conn.on('data', (raw) => {
+                    let data;
+                    try { data = typeof raw === 'string' ? JSON.parse(raw) : raw; } catch(e) { return; }
+
+                    if(data.force > 0) {
+                        targetDisplay.innerText = `RCVD_${data.type}`;
+                        targetDisplay.style.color = "#00ff00";
+                    } else if (data.force === 0 && data.type) {
+                        targetDisplay.innerText = "---";
+                        targetDisplay.style.color = "#ffffff";
+                    }
+
+                    if (data.type === 'MOVE') { remoteInput.move = { x: Number(data.x)||0, y: Number(data.y)||0, force: Number(data.force)||0 }; }
+                    if (data.type === 'ROTATE') { remoteInput.rotate = { x: Number(data.x)||0, y: Number(data.y)||0, force: Number(data.force)||0 }; }
+                    if (data.type === 'SLIDE') { if(window.updateExplosion) updateExplosion(data.value); }
+                    if (data.type === 'BUTTON') {
+                        if (data.action === 'RESET') { 
+                            camera.position.copyFrom(CONFIG.camera.position); 
+                            camera.rotationQuaternion = null;
+                            camera.rotation.y = Math.atan2(90 - CONFIG.camera.position.x, 90 - CONFIG.camera.position.z);
+                            camera.rotation.x = 0;
+                            camera.rotation.z = 0;
+                        }
+                        if (data.action === 'ACTION') openProject('diagnostic_ui.html');
+                    }
+                });
+            });
+        }
+
+        function openProject(url) { overlay.style.opacity = '1'; overlay.style.pointerEvents = 'all'; setTimeout(() => { iframe.src = url; container.style.display = 'block'; setTimeout(() => { overlay.style.opacity = '0'; overlay.style.pointerEvents = 'none'; }, 600); }, CONFIG.nav.transitionSpeed); }
+        function closeProject() { overlay.style.opacity = '1'; overlay.style.pointerEvents = 'all'; setTimeout(() => { container.style.display = 'none'; iframe.src = ''; setTimeout(() => { overlay.style.opacity = '0'; overlay.style.pointerEvents = 'none'; }, 600); }, CONFIG.nav.transitionSpeed); }
+
+        BABYLON.Effect.ShadersStore["lensMaskFragmentShader"] = `varying vec2 vUV; uniform sampler2D textureSampler; uniform float strength; uniform float maskPower; uniform float vignette; uniform float time; uniform float grain; float noise(vec2 p) { return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453); } void main(void) { vec2 center = vec2(0.5, 0.5); float dist = distance(vUV, center); float mask = pow(dist * 1.5, maskPower); float shift = strength * mask; float r = texture2D(textureSampler, vUV + vec2(shift, 0.0)).r; float g = texture2D(textureSampler, vUV).g; float bl = texture2D(textureSampler, vUV - vec2(shift, 0.0)).b; vec3 color = vec3(r, g, bl); float gray = dot(color, vec3(0.299, 0.587, 0.114)); color = vec3(gray); color += (noise(vUV * time) - 0.5) * grain; color *= (1.0 - mask * vignette); gl_FragColor = vec4(color, 1.0); }`;
+        BABYLON.Effect.ShadersStore["starSkyboxFragmentShader"] = `precision highp float; varying vec3 vPosition; void main(void) { vec3 dir = normalize(vPosition); float s = fract(sin(dot(dir ,vec3(12.989, 78.233, 45.164))) * 43758.5453); vec3 col = vec3(0.0); if (s > 0.9994) col += vec3(pow(s, 60.0) * 4.0); gl_FragColor = vec4(col, 1.0); }`;
+        BABYLON.Effect.ShadersStore["starSkyboxVertexShader"] = `precision highp float; attribute vec3 position; uniform mat4 worldViewProjection; varying vec3 vPosition; void main(void) { gl_Position = worldViewProjection * vec4(position, 1.0); vPosition = position; }`;
+
+        async function startScene() {
+            const engine = new BABYLON.Engine(canvas, true); scene = new BABYLON.Scene(engine); scene.clearColor = new BABYLON.Color4(0,0,0,1);
+            const skybox = BABYLON.MeshBuilder.CreateBox("skyBox", {size: 5000.0}, scene);
+            const skyboxMaterial = new BABYLON.ShaderMaterial("starSky", scene, { vertex: "starSkybox", fragment: "starSkybox", }, { attributes: ["position"], uniforms: ["worldViewProjection"] });
+            skyboxMaterial.backFaceCulling = false; skybox.infiniteDistance = true; skybox.material = skyboxMaterial;
+            scene.environmentTexture = BABYLON.CubeTexture.CreateFromPrefilteredData(CONFIG.environment.textureUrl, scene);
+            scene.environmentIntensity = CONFIG.environment.intensity;
+            
+            initialY = CONFIG.camera.position.y; 
+            camera = new BABYLON.UniversalCamera("Hero", CONFIG.camera.position, scene);
+            
+            // THE FIX: Directly establish Euler angles, ignoring quaternion completely
+            camera.rotationQuaternion = null;                     
+            camera.rotation.y = Math.atan2(90 - CONFIG.camera.position.x, 90 - CONFIG.camera.position.z);
+            camera.rotation.x = 0;
+            camera.rotation.z = 0;
+            
+            camera.fov = CONFIG.camera.fov;
+            const hRad = BABYLON.Tools.ToRadians(CONFIG.sun.rotation); const vRad = BABYLON.Tools.ToRadians(CONFIG.sun.elevation);
+            const sunDir = new BABYLON.Vector3(Math.cos(vRad) * Math.sin(hRad), -Math.sin(vRad), Math.cos(vRad) * Math.cos(hRad));
+            const sun = new BABYLON.DirectionalLight("sun", sunDir, scene); sun.intensity = CONFIG.sun.intensity;
+            const shadowGen = new BABYLON.ShadowGenerator(2048, sun); shadowGen.usePercentageCloserFiltering = true; sun.autoCalcShadowZBounds = true;
+            const pipeline = new BABYLON.DefaultRenderingPipeline("pipeline", true, scene, [camera]); pipeline.imageProcessingEnabled = true; pipeline.imageProcessing.toneMappingEnabled = true; pipeline.imageProcessing.toneMappingType = BABYLON.ImageProcessingConfiguration.TONEMAPPING_ACES; pipeline.bloomEnabled = true; pipeline.bloomWeight = CONFIG.postProcess.bloomWeight;
+            const lensPost = new BABYLON.PostProcess("Lens", "lensMask", ["strength", "maskPower", "vignette", "time", "grain"], null, 1.0, camera);
+            let time = 0; lensPost.onApply = (e) => { time += 0.01; e.setFloat("strength", CONFIG.postProcess.caAmount); e.setFloat("maskPower", CONFIG.postProcess.maskPower); e.setFloat("vignette", CONFIG.postProcess.vignette); e.setFloat("grain", CONFIG.postProcess.grainIntensity); e.setFloat("time", time); };
+
+            BABYLON.SceneLoader.ImportMesh("", "./", "space.glb", scene, (meshes) => {
+                loadFill.style.width = "100%"; meshes[0].scaling.setAll(CONFIG.worldScale);
+                meshes.forEach(m => { m.isPickable = true; if (m.material) { const isStructure = m.name.toUpperCase().includes("HYPEROBJECT"); const sets = isStructure ? CONFIG.hyperobject : CONFIG.terrain; m.material.roughness = sets.roughness; m.material.metallic = sets.metallic; m.material.directIntensity = sets.directIntensity; if (m.material.bumpTexture) m.material.bumpTexture.level = sets.normalStrength; shadowGen.addShadowCaster(m); m.receiveShadows = true; } });
+                setTimeout(() => { document.getElementById('loading-overlay').style.display = 'none'; document.getElementById('mode-selection').style.display = 'flex'; }, 800);
+            }, (evt) => { if (evt.lengthComputable) { loadFill.style.width = (evt.loaded / evt.total * 100) + "%"; } });
+
+            scene.onPointerMove = () => { cursorRing.style.left = scene.pointerX + "px"; cursorRing.style.top = scene.pointerY + "px"; const pickResult = scene.pick(scene.pointerX, scene.pointerY); if (pickResult.hit && pickResult.pickedMesh) { const nameRaw = pickResult.pickedMesh.name; const name = nameRaw.toLowerCase(); if (name.includes("skybox") || name.includes("terrain") || name.includes("ground") || name.includes("background")) { targetDisplay.innerText = "---"; targetDisplay.style.opacity = "0.3"; cursorRing.classList.remove("active-pulse"); } else { targetDisplay.innerText = nameRaw.toUpperCase(); targetDisplay.style.opacity = "1"; if (CONFIG.nav.projects[nameRaw.toLowerCase()]) { cursorRing.classList.add("active-pulse"); } else { cursorRing.classList.remove("active-pulse"); } } } else { targetDisplay.innerText = "---"; targetDisplay.style.opacity = "0.3"; cursorRing.classList.remove("active-pulse"); } };
+            scene.onPointerDown = () => { const pickResult = scene.pick(scene.pointerX, scene.pointerY); if (pickResult.hit && pickResult.pickedMesh) { const name = pickResult.pickedMesh.name.toLowerCase(); if (CONFIG.nav.projects[name]) { openProject(CONFIG.nav.projects[name]); } } };
+
+            let exactYear = 2026; const yearsPerSecond = 10;
+            
+            engine.runRenderLoop(() => {
+                // THE FIX: Use getDirection which reads the true view matrix safely
+                if (remoteInput.move.force > 0) {
+                    const moveSpeed = remoteInput.move.force * 0.8;
+                    const fwd   = camera.getDirection(BABYLON.Axis.Z);
+                    const right = camera.getDirection(BABYLON.Axis.X);
+
+                    camera.position.x += (fwd.x * remoteInput.move.y + right.x * remoteInput.move.x) * moveSpeed;
+                    camera.position.z += (fwd.z * remoteInput.move.y + right.z * remoteInput.move.x) * moveSpeed;
+                }
+                
+                if (remoteInput.rotate.force > 0) {
+                    camera.rotation.y += remoteInput.rotate.x * 0.03 * remoteInput.rotate.force;
+                    camera.rotation.x -= remoteInput.rotate.y * 0.03 * remoteInput.rotate.force;
+                    // Prevents flipping upside down
+                    camera.rotation.x = Math.max(-1.2, Math.min(1.2, camera.rotation.x));
+                }
+
+                camera.position.y = initialY; // Locks altitude
+                
+                let horizontalDist = Math.sqrt(camera.position.x * camera.position.x + camera.position.z * camera.position.z);
+                if (horizontalDist > CONFIG.camera.radiusLimit) { let angle = Math.atan2(camera.position.z, camera.position.x); camera.position.x = Math.cos(angle) * CONFIG.camera.radiusLimit; camera.position.z = Math.sin(angle) * CONFIG.camera.radiusLimit; }
+                skybox.position = camera.position;
+                
+                const deltaSeconds = engine.getDeltaTime() / 1000; exactYear += yearsPerSecond * deltaSeconds; yearDisplay.innerText = Math.floor(exactYear);
+                const sunPos = sunDir.scale(-100); const proj = BABYLON.Vector3.Project(sunPos, BABYLON.Matrix.Identity(), scene.getTransformMatrix(), camera.viewport.toGlobal(engine.getRenderWidth(), engine.getRenderHeight()));
+                if (proj.z > 0 && proj.z < 1) { document.getElementById("streak").setAttribute("cx", proj.x); document.getElementById("streak").setAttribute("cy", proj.y); document.getElementById("flare-svg").style.opacity = 1; } else { document.getElementById("flare-svg").style.opacity = 0; }
+                document.getElementById("coord-val").innerText = `${camera.position.x.toFixed(2)} // ${camera.position.z.toFixed(2)}`;
+                
+                scene.render();
+            });
+            window.addEventListener("resize", () => engine.resize());
+        }
+        startScene();
+    </script>
+</body>
+</html>
