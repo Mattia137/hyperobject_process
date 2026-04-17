@@ -20,37 +20,63 @@
     </script>
 </head>
 <body>
-    <canvas id="c"></canvas>
+    <div id="layout">
+        <!-- 2D DOM Diagram -->
+        <div id="left-pane" oncontextmenu="return false;">
+            <div class="fixed-title">
+                <h1>HYPEROBJECT DESIGN PROCESS</h1>
+                <div class="title-description">
+                    <p>This diagram serves as the project's spatial database and central nervous system. Rather than using a traditional folder hierarchy, every digital artifact (models, scripts, research) is tethered directly to its architectural node.</p>
+                    <p>The workflow tracks the design's evolution across four converging phases:<br><br>
+                    Research: The Brief branches into parallel tracks of Site analysis, Media context, and Geological (Stone/Pattern) research.<br>
+                    Synthesis: Raw data crystallizes into spatial logic and footprint (Program, Massing).<br>
+                    Execution: Abstract concepts fuse into tangible systems (Skin, Structure, UE Environments) and the master Project Model.<br>
+                    Output: The master model generates technical documentation, animations, and final Open Source data.</p>
+                </div>
+            </div>
+            
+            <div id="diagram-container">
+                <div id="diagram-content">
+                    <svg id="diagram-edges"></svg>
+                    <!-- Nodes injected here via JS -->
+                </div>
+            </div>
+        </div>
+        
+        <div id="gutter"></div>
 
-    <div id="labels-container" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; overflow: hidden; z-index: 5;"></div>
+        <!-- 3D Three.js Network -->
+        <div id="right-pane">
+            <canvas id="c"></canvas>
+            
+            <div id="labels-container" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; overflow: hidden; z-index: 5;"></div>
 
-    <div id="hud">
-        <div class="hud-cluster top-left">
-            <div class="label">SYSTEM</div>
-            <div class="val">HYPEROBJECT PROJECT</div>
-            <div class="label">MODE</div>
-            <div class="val" id="hud-mode">NETWORK</div>
-        </div>
-        <div class="hud-cluster top-center">
-            <div class="label">NODE_ID</div>
-            <div class="val" id="hud-target">---</div>
-        </div>
-        <div class="hud-cluster top-right">
-            <div class="label">NODES</div>
-            <div class="val">23</div>
-            <div class="label">EDGES</div>
-            <div class="val">34</div>
-            <div class="label">FILES</div>
-            <div class="val">195</div>
-        </div>
-        <div class="hud-cluster bottom-left">
-            <div class="label">CLUSTER</div>
-            <div class="val" id="hud-cluster">---</div>
-            <div class="label">COORDS</div>
-            <div class="val" id="hud-coords">0.00 / 0.00</div>
-        </div>
-        <div class="hud-cluster bottom-center">
-            <button id="toggleBtn" class="toggle-btn">DIAGRAM_MODE</button>
+            <div id="hud">
+                <div class="hud-cluster top-left">
+                    <div class="label">SYSTEM</div>
+                    <div class="val">HYPEROBJECT PROJECT</div>
+                    <div class="label">MODE</div>
+                    <div class="val">NETWORK</div>
+                </div>
+                <div class="hud-cluster top-center">
+                    <div class="label">NODE_ID</div>
+                    <div class="val" id="hud-target">---</div>
+                </div>
+                <div class="hud-cluster top-right">
+                    <div class="label">NODES</div>
+                    <div class="val">23</div>
+                    <div class="label">EDGES</div>
+                    <div class="val">34</div>
+                    <div class="label">FILES</div>
+                    <div class="val">195</div>
+                </div>
+                <div class="hud-cluster bottom-left">
+                    <div class="label">CLUSTER</div>
+                    <div class="val" id="hud-cluster">---</div>
+                    <div class="label">COORDS</div>
+                    <div class="val" id="hud-coords">0.00 / 0.00</div>
+                </div>
+            </div>
         </div>
     </div>
 

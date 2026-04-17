@@ -21,15 +21,15 @@
 :root {
     --bg:     #000000;
     --fg:     rgba(255,255,255,0.85);
-    --fg-dim: rgba(255,255,255,0.25);
+    --fg-dim: rgb(61, 61, 61);
     --accent: #CA8A04;
     --font:   'Fragment Mono', monospace;
 }
 
 body.mode-diagram {
     --bg:     #f2f2f2;
-    --fg:     rgba(0,0,0,0.85);
-    --fg-dim: rgba(0,0,0,0.2);
+    --fg:     rgba(162, 162, 162, 0.85);
+    --fg-dim: rgb(89, 89, 89);
     --accent: #CA8A04;
 }
 
@@ -47,6 +47,104 @@ body, html {
     user-select: none;
     -webkit-user-select: none;
     transition: background 0.4s ease, color 0.4s ease;
+}
+
+#layout {
+    display: flex;
+    width: 100%;
+    height: 100%;
+}
+
+#left-pane {
+    width: 33.33%;
+    flex: none;
+    height: 100%;
+    background: #0a0a0a;
+    border-right: 1px solid #252525;
+    position: relative;
+    overflow: hidden;
+    cursor: grab;
+}
+
+#left-pane:active {
+    cursor: grabbing;
+}
+
+.fixed-title {
+    position: absolute;
+    top: 28px;
+    left: 28px;
+    z-index: 10;
+    pointer-events: none;
+}
+.fixed-title h1 {
+    font-size: 16px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: #ffffff;
+    font-weight: normal;
+}
+.title-description {
+    font-family: 'Fragment Mono', monospace;
+    font-size: 6.5px;
+    opacity: 0.5;
+    color: #ffffff;
+    letter-spacing: 0.05em;
+    line-height: 1.4;
+    margin-top: 20px;
+    max-width: 450px;
+}
+.title-description p {
+    margin-bottom: 12px;
+}
+
+#diagram-container {
+    width: 100%;
+    height: 100%;
+    position: relative;
+}
+
+#diagram-content {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    transform-origin: 0 0;
+}
+
+#diagram-edges {
+    position: absolute;
+    top: -4000px;
+    left: -4000px;
+    width: 8000px;
+    height: 8000px;
+    pointer-events: none;
+    overflow: visible;
+}
+
+#gutter {
+    width: 4px;
+    flex: none;
+    height: 100%;
+    background: #111;
+    cursor: col-resize;
+    z-index: 100;
+    transition: background 0.2s ease;
+}
+#gutter:hover { background: #333; }
+#gutter:active { background: #555; }
+
+#right-pane {
+    flex: 1;
+    min-width: 0;
+    height: 100%;
+    position: relative;
+    background: #000;
+    background-size: 40px 40px;
+    background-image: 
+        linear-gradient(to right, rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
 }
 
 #c {
@@ -106,8 +204,8 @@ body.mode-diagram .node-label {
 }
 
 .label {
-    opacity: 0.3;
-    font-size: 6px;
+    opacity: 0.8;
+    font-size: 8px;
     margin-bottom: 2px;
     font-family: var(--font);
 }
@@ -138,21 +236,75 @@ body.mode-diagram .node-label {
 /* ==========================================
    TOGGLE BUTTON
    ========================================== */
-.toggle-btn {
-    pointer-events: auto;
-    background: none;
-    border: 1px solid var(--fg-dim);
-    color: var(--fg);
-    font-family: var(--font);
-    font-size: 9px;
-    letter-spacing: 0.4em;
-    padding: 10px 24px;
+/* ==========================================
+   2D DOM DIAGRAM NODES
+   ========================================== */
+/* Base Node Layout */
+.node-dom {
+    position: absolute;
+    border-radius: 0; /* Sharp, perfect rectangles */
+    padding: 0;
+    width: 108px;
+    height: 34px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    transform: translate(-50%, -50%);
     cursor: pointer;
-    text-transform: uppercase;
-    transition: background 0.18s ease, color 0.18s ease, border-color 0.18s ease;
+    transition: transform 0.15s ease, background 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+    user-select: none;
+    box-sizing: border-box;
 }
-.toggle-btn:hover {
-    background: var(--fg);
-    color: var(--bg);
-    border-color: var(--fg);
+
+/* Primary: Solid white background with black text */
+.node-dom.primary {
+    background: #ffffff;
+    border: 2px solid #ffffff;
+}
+.node-dom.primary .node-dom-title { color: #000000; }
+
+.node-dom.primary:hover, .node-dom.primary.hovered { background: #000000; }
+.node-dom.primary:hover .node-dom-title, .node-dom.primary.hovered .node-dom-title { color: #ffffff; }
+
+/* Secondary: Transparent background, solid white border, white text */
+.node-dom.secondary {
+    background: #000000;
+    border: 2px solid #ffffff;
+}
+.node-dom.secondary .node-dom-title { color: #ffffff; }
+
+.node-dom.secondary:hover, .node-dom.secondary.hovered { background: #ffffff; }
+.node-dom.secondary:hover .node-dom-title, .node-dom.secondary.hovered .node-dom-title { color: #000000; }
+
+/* Tertiary/Ghost: Transparent background, dashed white border, white text */
+.node-dom.tertiary {
+    background: #000000;
+    border: 2px dashed #ffffff;
+}
+.node-dom.tertiary .node-dom-title { color: #ffffff; }
+
+.node-dom.tertiary:hover, .node-dom.tertiary.hovered { background: #ffffff; border: 2px solid #ffffff; }
+.node-dom.tertiary:hover .node-dom-title, .node-dom.tertiary.hovered .node-dom-title { color: #000000; }
+
+.node-dom-label {
+    display: none; 
+}
+
+.node-dom-title {
+    font-size: 9px;
+    font-family: 'Fragment Mono', monospace;
+    font-weight: normal;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    line-height: 1.2;
+    pointer-events: none;
+    transition: color 0.15s ease;
+}
+.node-dom-sub {
+    font-size: 10px;
+    color: #555;
+    margin-top: 5px;
+    line-height: 1.7;
+    pointer-events: none;
 }
