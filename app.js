@@ -301,7 +301,18 @@ window.onload = () => {
 
     window.addEventListener("click", () => {
         if (hoveredNode) {
-            window.location.href = hoveredNode.id.replace(/\s+/g, '-') + ".html";
+            const nodeId = hoveredNode.id.toUpperCase();
+            if (nodeId === "PROJECT MODEL") {
+                window.location.href = "./HYPEROBJECT_midterm/exploded_diagram.html";
+            } else if (nodeId === "MEDIA M. CONCEPT") {
+                window.location.href = "./HYPEROBJECT_midterm/blueprint.html";
+            } else if (nodeId === "PROGRAM") {
+                window.location.href = "./HYPEROBJECT_midterm/diagnostic_ui.html";
+            } else if (nodeId === "ARTISTS") {
+                window.location.href = "./media_artists_map/index.html";
+            } else {
+                window.location.href = "./" + hoveredNode.id.toLowerCase().replace(/\s+/g, '_') + "/";
+            }
         }
     });
 
