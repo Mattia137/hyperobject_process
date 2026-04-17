@@ -301,7 +301,11 @@ window.onload = () => {
 
     window.addEventListener("click", () => {
         if (hoveredNode) {
-            window.location.href = hoveredNode.id.replace(/\s+/g, '-') + ".html";
+            if (hoveredNode.id === "stones research") {
+                window.location.href = "stone_research/index.html";
+            } else {
+                window.location.href = hoveredNode.id.replace(/\s+/g, '-') + ".html";
+            }
         }
     });
 
