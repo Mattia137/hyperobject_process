@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hyperobject - UE Environment</title>
+    <link rel="stylesheet" href="styles.css">
+
+    <!-- Import maps polyfill -->
+    <script async src="https://unpkg.com/es-module-shims@1.8.0/dist/es-module-shims.js"></script>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+                "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+            }
+        }
+    </script>
+</head>
+<body>
+    <!-- Loading Overlay -->
+    <div id="loading-overlay">
+        <div class="loader-content">
+            <div class="loader-spinner"></div>
+            <div id="loader-text">INITIALIZING ENVIRONMENT... 0%</div>
+        </div>
+    </div>
+
+    <div id="layout">
+        <!-- 3D Viewer Canvas -->
+        <canvas id="c"></canvas>
+
+        <!-- Tactical HUD (Top Left) -->
+        <div id="hud">
+            <div class="hud-cluster top-left">
+                <a href="../index.html" class="nav-back">< [BACK TO TOPOLOGY]</a>
+                <div class="label" style="margin-top: 15px;">SYSTEM</div>
+                <div class="val">HYPEROBJECT PROJECT</div>
+                <div class="label">NODE_ID</div>
+                <div class="val active">UE ENVIRONMENT</div>
+                <div class="label">MODE</div>
+                <div class="val">360° OBSERVATION</div>
+            </div>
+
+            <div class="hud-cluster top-right">
+                <div class="label">CAMERA RIG</div>
+                <div class="val">CineCameraActor</div>
+                <div class="label">FOV</div>
+                <div class="val" id="hud-fov">75.0</div>
+                <div class="label">PITCH / YAW</div>
+                <div class="val" id="hud-rot">0.0 / 0.0</div>
+            </div>
+        </div>
+
+        <!-- Minimap Navigation Box (Left) -->
+        <div id="minimap-panel">
+            <div class="panel-header">SPATIAL TELEMETRY</div>
+            <div class="minimap-container">
+                <!-- Top map layout -->
+                <img src="map.png" alt="Map Layout" class="minimap-img" />
+
+                <!-- Interactive nodes -->
+                <div class="map-node active" id="map-node-0" style="left: 20%; top: 30%;">
+                    <div class="node-pulse"></div>
+                    <div class="node-core">01</div>
+                </div>
+                <div class="map-node" id="map-node-1" style="left: 40%; top: 20%;">
+                    <div class="node-pulse"></div>
+                    <div class="node-core">02</div>
+                </div>
+                <div class="map-node" id="map-node-2" style="left: 60%; top: 40%;">
+                    <div class="node-pulse"></div>
+                    <div class="node-core">03</div>
+                </div>
+                <div class="map-node" id="map-node-3" style="left: 80%; top: 30%;">
+                    <div class="node-pulse"></div>
+                    <div class="node-core">04</div>
+                </div>
+                <div class="map-node" id="map-node-4" style="left: 30%; top: 70%;">
+                    <div class="node-pulse"></div>
+                    <div class="node-core">05</div>
+                </div>
+                <div class="map-node" id="map-node-5" style="left: 70%; top: 80%;">
+                    <div class="node-pulse"></div>
+                    <div class="node-core">06</div>
+                </div>
+            </div>
+            <div class="panel-footer">ACTIVE: <span id="active-cam-name">CineCameraActor16.0001</span></div>
+        </div>
+
+        <!-- Bottom Navigation Controls -->
+        <div id="nav-controls">
+            <button class="nav-btn" id="btn-prev">&lt; PREV</button>
+            <div class="nav-indicator">
+                <span class="dot active" id="dot-0"></span>
+                <span class="dot" id="dot-1"></span>
+                <span class="dot" id="dot-2"></span>
+                <span class="dot" id="dot-3"></span>
+                <span class="dot" id="dot-4"></span>
+                <span class="dot" id="dot-5"></span>
+            </div>
+            <button class="nav-btn" id="btn-next">NEXT &gt;</button>
+        </div>
+    </div>
+
+    <script type="module" src="app.js"></script>
+</body>
+</html>
