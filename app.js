@@ -796,6 +796,7 @@ function onThreeClick(e) {
 
 function performNav(id) {
     const nav = {
+        "DRAWINGS + DETAILS": "./drawings/index.html",
         "PROJECT MODEL": "./HYPEROBJECT_midterm/exploded_diagram.html",
         "MEDIA M. CONCEPT": "./HYPEROBJECT_midterm/blueprint.html",
         "PROGRAM": "./HYPEROBJECT_midterm/diagnostic_ui.html",

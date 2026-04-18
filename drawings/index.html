@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hyperobject - Drawings + Details</title>
+    <link rel="stylesheet" href="styles.css">
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script>
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    </script>
+    
+    <!-- Import maps polyfill -->
+    <script async src="https://unpkg.com/es-module-shims@1.8.0/dist/es-module-shims.js"></script>
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+                "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+            }
+        }
+    </script>
+</head>
+<body>
+    <div id="layout">
+        <!-- PDF Viewer Panel -->
+        <div id="pdf-panel">
+            <a href="../index.html" class="nav-back">< [BACK TO TOPOLOGY]</a>
+            <div id="pdf-container">
+                <canvas id="pdf-render"></canvas>
+            </div>
+        </div>
+
+        <!-- Sidebar Panel -->
+        <div id="sidebar-panel">
+            <div id="three-container">
+                <canvas id="c"></canvas>
+            </div>
+            
+            <div class="sidebar-content">
+                <div class="section-title">ACTIVE DRAWING_NODE</div>
+                <div class="drawing-list">
+                    <button class="draw-btn active" data-id="p0">P0_groundfloor</button>
+                    <button class="draw-btn" data-id="p3">P3_theater</button>
+                    <button class="draw-btn" data-id="s1">S1_short-section</button>
+                </div>
+                
+                <div class="section-title">TELEMETRY DATA</div>
+                <table class="data-table">
+                    <tr><td>TOTAL SQFT</td><td id="d-sqft">85,400</td></tr>
+                    <tr><td>EXHIBITION SPACES</td><td id="d-exh">4</td></tr>
+                    <tr><td>ELEVATORS</td><td id="d-elv">6</td></tr>
+                    <tr><td>PARKING SPOTS</td><td id="d-park">0</td></tr>
+                    <tr><td>MAX OCCUPANCY</td><td id="d-occ">1,200</td></tr>
+                </table>
+                
+                <div class="section-title">DESCRIPTION</div>
+                <div id="d-desc" class="description-text">
+                    The ground floor serves as the primary ingress and core distributor for the hyperobject. Sprawling lobby areas directly funnel into the structural bedrock interfaces.
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script type="module" src="app.js"></script>
+</body>
+</html>
