@@ -61,7 +61,8 @@ const RAW_NODES = [
     { id: "OPEN SOURCE", cl: "output", type: "primary" },
     { id: "WEB INTERACTIVE MODEL", cl: "output", type: "primary" },
     { id: "UE ENVIRONMENT", cl: "output", type: "primary" },
-    { id: "UE ANIMATION", cl: "output", type: "primary" }
+    { id: "UE ANIMATION", cl: "output", type: "primary" },
+    { id: "MOON ENVIRONMENT", cl: "output", type: "primary" }
 ];
 
 const EDGES = [
@@ -77,6 +78,7 @@ const EDGES = [
     ["SKIN", "PROJECT MODEL"],
     ["STRUCTURE", "PROJECT MODEL"],
     ["MEDIA PROJECT", "PROJECT MODEL"],
+    ["MEDIA PROJECT", "MOON ENVIRONMENT"], ["MOON ENVIRONMENT", "PROJECT MODEL"],
     ["PROJECT MODEL", "DRAWINGS + DETAILS"], ["PROJECT MODEL", "PROJECT DATA"], ["PROJECT MODEL", "UE ANIMATION"],
     ["DRAWINGS + DETAILS", "PROJECT DATA"],
     ["PROJECT DATA", "OPEN SOURCE"],
@@ -276,6 +278,24 @@ const FILES = [
         F(i === 0 ? 'fix_app' : `fix_app_${i + 1}`, 'js', 'WEB INTERACTIVE MODEL')
     ),
 
+    // ── MOON ENVIRONMENT ─────────────────────
+    F('2GBX_Hyperobject/index', 'html', 'MOON ENVIRONMENT'),
+    F('2GBX_Hyperobject/exploded_diagram', 'html', 'MOON ENVIRONMENT'),
+    F('2GBX_Hyperobject/blueprint', 'html', 'MOON ENVIRONMENT'),
+    F('2GBX_Hyperobject/diagnostic_ui', 'html', 'MOON ENVIRONMENT'),
+    F('2GBX_Hyperobject/contorller', 'html', 'MOON ENVIRONMENT'),
+    F('2GBX_Hyperobject/space', 'glb', 'MOON ENVIRONMENT'),
+    F('2GBX_Hyperobject/mass', 'glb', 'MOON ENVIRONMENT'),
+    F('2GBX_Hyperobject/program', 'glb', 'MOON ENVIRONMENT'),
+    F('2GBX_Hyperobject/site', 'glb', 'MOON ENVIRONMENT'),
+    F('2GBX_Hyperobject/streets', 'glb', 'MOON ENVIRONMENT'),
+    F('2GBX_Hyperobject/260303_3dmod_exploded-circulation', 'glb', 'MOON ENVIRONMENT'),
+    F('2GBX_Hyperobject/260303_3dmod_exploded-interiors', 'glb', 'MOON ENVIRONMENT'),
+    F('2GBX_Hyperobject/260303_3dmod_exploded-machinary', 'glb', 'MOON ENVIRONMENT'),
+    F('2GBX_Hyperobject/260303_3dmod_exploded-media', 'glb', 'MOON ENVIRONMENT'),
+    F('2GBX_Hyperobject/260303_3dmod_exploded-skin', 'glb', 'MOON ENVIRONMENT'),
+    F('2GBX_Hyperobject/260303_3dmod_exploded-structure', 'glb', 'MOON ENVIRONMENT'),
+
     // ── DRAWINGS + DETAILS ───────────────────
     F('drawings/index', 'html', 'DRAWINGS + DETAILS'),
     F('drawings/app', 'js', 'DRAWINGS + DETAILS'),
@@ -358,6 +378,7 @@ function compute2DPos() {
         "STRUCTURE": [5, 0],
         
         "PROJECT MODEL": [6, 0],
+        "MOON ENVIRONMENT": [6, 1],
         
         "UE ANIMATION": [7, -1],
         "DRAWINGS + DETAILS": [7, 0],
@@ -833,6 +854,7 @@ function performNav(id) {
         "PROJECT MODEL": "./HYPEROBJECT_midterm/exploded_diagram.html",
         "MEDIA M. CONCEPT": "./HYPEROBJECT_midterm/blueprint.html",
         "PROGRAM": "./HYPEROBJECT_midterm/diagnostic_ui.html",
+        "MASSING": "./HYPEROBJECT_midterm/diagnostic_ui.html",
         "ARTISTS": "./media_artists_map/index.html",
         "WEB INTERACTIVE MODEL": "https://mattia137.github.io/2GBX_environment-2/",
         "UE ANIMATION": "https://vimeo.com/1183403180?share=copy&fl=sv&fe=ci",
@@ -842,7 +864,8 @@ function performNav(id) {
         "PY SKIN GENERATOR": "./stone_research/index.html",
         "SITE": "./site_model/index.html",
         "UE ENVIRONMENT": "./ue-360/index.html",
-        "STRUCTURE": "./structure/index.html"
+        "STRUCTURE": "./structure/index.html",
+        "MOON ENVIRONMENT": "./2GBX_Hyperobject/index.html"
     };
     window.location.href = nav[id] || ('.' + id.toLowerCase().replace(/\s+/g, '_') + '/');
 }
