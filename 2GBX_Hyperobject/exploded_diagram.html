@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>STRUCTURAL_ANALYSIS // 260303</title>
+    <link href="https://fonts.googleapis.com/css2?family=Fragment+Mono&display=swap" rel="stylesheet">
+    <script src="https://cdn.babylonjs.com/babylon.js"></script>
+    <script src="https://cdn.babylonjs.com/loaders/babylonjs.loaders.min.js"></script>
+    <script src="https://cdn.babylonjs.com/gui/babylon.gui.min.js"></script>
+    <style>
+
+        body, html { 
+            margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; 
+            font-family: 'Fragment Mono', monospace; color: #000;
+            background-color: #f2f2f2;
+        }
+        canvas { width: 100%; height: 100%; outline: none; display: block; background: transparent; }
+
+        /* ── TOP VIEW BAR ── */
+        #view-nav {
+            position: absolute; top: 40px; left: 50%; transform: translateX(-50%);
+            z-index: 30; pointer-events: all; display: flex; gap: 0;
+        }
+        .view-btn {
+            padding: 8px 20px; border: none; border-right: 1px solid rgba(0,0,0,0.4); background: none; color: #000;
+            font-family: 'Fragment Mono', monospace; font-size: 9px; letter-spacing: 0.1em;
+            text-transform: uppercase; transition: background 0.1s; outline: none;
+        }
+        .view-btn:last-child { border-right: none; }
+        .view-btn:hover { background: rgba(0,0,0,0.1); }
+        .view-btn.active { background: #000; color: #fff; }
+
+        /* ── LAYER NAV ── */
+        #interface {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 10;
+            pointer-events: none; text-transform: uppercase; font-size: 8px; letter-spacing: 0.15em; color: #000;
+        }
+        .hud-element { position: absolute; opacity: 0.8; }
+        .t-l { top: 40px; left: 40px; }
+        .b-l { bottom: 40px; left: 40px; line-height: 1.8; }
+        .b-r { bottom: 40px; right: 40px; text-align: right; line-height: 1.8; }
+
+        #system-nav {
+            position: absolute; left: 40px; top: 50%; transform: translateY(-50%);
+            z-index: 30; pointer-events: all; background: none;
+        }
+        .nav-btn {
+            display: block; width: 160px; padding: 10px 12px;
+            border: none; border-left: 1px solid rgba(0,0,0,0.4); background: none; color: #000;
+            font-family: 'Fragment Mono', monospace; font-size: 8px; text-align: left;
+            letter-spacing: 0.15em; text-transform: uppercase;
+            transition: background 0.1s, padding-left 0.2s; outline: none;
+        }
+        .nav-btn:hover { padding-left: 20px; background: rgba(0,0,0,0.1); }
+        .nav-btn.active { border-left: 2px solid #000; font-weight: bold; padding-left: 20px; }
+
+        /* ── SCRUBBER ── */
+        #scrubber-box {
+            position: absolute; bottom: 80px; left: 50%; transform: translateX(-50%);
+            width: 400px; z-index: 20; padding: 10px 0; pointer-events: all;
+        }
+        input[type=range] { width: 100%; appearance: none; background: rgba(0,0,0,0.2); height: 1px; outline: none; }
+        input[type=range]::-webkit-slider-thumb {
+            appearance: none; width: 10px; height: 10px; background: #000; border-radius: 50%;
+        }
+        
+        /* ── SCHEMATIC HUD PANEL ── */
+        #info-panel {
+            position: absolute; right: 40px; top: 50%; transform: translateY(-50%);
+            width: 200px; z-index: 30; pointer-events: none;
+            background: transparent; border: none;
+            color: #000; padding: 15px 0;
+            opacity: 0; transition: opacity 0.2s ease, transform 0.2s ease;
+            font-family: 'Fragment Mono', monospace;
+        }
+        
+        #info-panel.active { opacity: 1; transform: translateY(-50%) translateX(0); }
+        #info-panel.hidden { transform: translateY(-50%) translateX(10px); }
+        
+        .panel-header {
+            font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase;
+            border-bottom: 1px solid #000;
+            padding-bottom: 8px; margin-bottom: 12px; font-weight: bold;
+        }
+        .panel-data-row {
+            display: flex; justify-content: space-between; font-size: 8px;
+            letter-spacing: 0.1em; margin-bottom: 6px; color: #666;
+        }
+        .data-val { color: #000; font-weight: bold; }
+        
+        #loading-screen {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #fff;
+            z-index: 9999; display: flex; justify-content: center; align-items: center;
+            font-family: 'Fragment Mono', monospace; font-size: 10px; letter-spacing: 0.3em;
+            transition: opacity 0.5s ease; pointer-events: none; color: #000;
+        }
+
+        /* ── AMBIENT CROSSHAIRS ── */
+        .ambient-cross { position: absolute; width: 10px; height: 10px; opacity: 0.8; pointer-events: none; }
+        .ambient-cross::before, .ambient-cross::after { content: ''; position: absolute; background: #000; }
+        .ambient-cross::before { width: 100%; height: 1px; top: 4.5px; left: 0; }
+        .ambient-cross::after { height: 100%; width: 1px; left: 4.5px; top: 0; }
+        #cross-1 { top: 20%; left: 20%; }
+        #cross-2 { top: 30%; right: 25%; }
+        #cross-3 { bottom: 25%; left: 30%; }
+        #cross-4 { bottom: 20%; right: 20%; }
+    </style>
+</head>
+<body>
+    <canvas id="renderCanvas"></canvas>
+    
+    <!-- UI LAYER -->
+    <div id="loading-screen">ASSEMBLING...</div>
+
+    <div class="ambient-cross" id="cross-1"></div>
+    <div class="ambient-cross" id="cross-2"></div>
+    <div class="ambient-cross" id="cross-3"></div>
+    <div class="ambient-cross" id="cross-4"></div>
+
+    <div id="view-nav">
+        <button class="view-btn" data-view="TOP">TOP</button>
+        <button class="view-btn" data-view="FRONT">FRONT</button>
+        <button class="view-btn" data-view="LEFT">LEFT</button>
+        <button class="view-btn" data-view="RIGHT">RIGHT</button>
+        <button class="view-btn" data-view="BACK">BACK</button>
+    </div>
+
+    <div id="system-nav">
+        <button class="nav-btn" data-id="structure">STRUCTURE</button>
+        <button class="nav-btn" data-id="interiors">INTERIOR SPACES</button>
+        <button class="nav-btn" data-id="circulation">CIRCULATION</button>
+        <button class="nav-btn" data-id="machinary">MACHINERY</button>
+        <button class="nav-btn" data-id="media">MEDIA</button>
+        <button class="nav-btn" data-id="skin">SKIN</button>
+    </div>
+
+    <div id="info-panel" class="hidden">
+        <canvas id="previewCanvas" width="200" height="200" style="width:200px; height:200px; outline:none; background:transparent; display:block; margin-bottom:15px; pointer-events:none;"></canvas>
+        <div class="panel-header" id="panel-title">SYS_DATA</div>
+        <div class="panel-data-row"><span>SYS_ID:</span><span class="data-val" id="data-uid">...</span></div>
+        <div class="panel-data-row"><span>STATUS:</span><span class="data-val">ACTIVE</span></div>
+        <div class="panel-data-row"><span>COMPONENTS:</span><span class="data-val" id="data-meshes">...</span></div>
+        <div class="panel-data-row"><span>VERTEX_CNT:</span><span class="data-val" id="data-verts">...</span></div>
+        <div class="panel-data-row" style="margin-top:10px; border-top:1px dashed rgba(0,0,0,0.2); padding-top:8px;"></div>
+        <div class="panel-data-row"><span>MATERIAL:</span><span class="data-val">SOLID_BLK</span></div>
+    </div>
+
+    <div id="interface">
+        <div class="hud-element t-l" id="hud-tl">DWG: 260303<br>PROJ: B/W X-RAY</div>
+        <div class="hud-element b-l">SYS: <span id="coord-val">0.00 // 0.00</span><br>CTRL: ORBIT</div>
+        <div class="hud-element b-r">INDUSTRIAL_DESIGN<br>ASSEMBLY_VIEWER</div>
+    </div>
+
+    <div id="scrubber-box">
+        <input type="range" id="animSlider" min="0" max="100" value="0">
+    </div>
+
+<script>
+// ================================================================
+// SCENE PARAMETERS
+// ================================================================
+const PARAMS = {
+    location: { verticalOffset: -15.0, yOffset: 0.0, xOffset: 0.0, rotationX: 0.0, rotationY: 1.5, rotationZ: 0.0 },
+    camera: { pivotX: 0.0, pivotY: -12.0, pivotZ: 0.0, focalLength: 100, radius: 40, alpha: 3.2, beta: 1.25 }
+};
+
+const MATERIAL_PARAMS = {
+    structure:   { alpha: 0.8 },
+    interiors:   { alpha: 0.3 },
+    circulation: { alpha: 0.5 },
+    machinary:   { alpha: 0.9 },
+    media:       { alpha: 0.2 },
+    skin:        { alpha: 0.3 },
+};
+
+const _ry = PARAMS.location.rotationY;
+const ORTHO_VIEWS = {
+    TOP:   { alpha: Math.PI / 4,               beta: 0.005       },
+    FRONT: { alpha: Math.PI - _ry,             beta: Math.PI / 2 },
+    BACK:  { alpha: -_ry,                      beta: Math.PI / 2 },
+    LEFT:  { alpha: Math.PI / 2 - _ry,        beta: Math.PI / 2 },
+    RIGHT: { alpha: 3 * Math.PI / 2 - _ry,    beta: Math.PI / 2 },
+};
+
+const fileNames = [
+    '260303_3dmod_exploded-structure.glb', '260303_3dmod_exploded-interiors.glb', '260303_3dmod_exploded-circulation.glb',
+    '260303_3dmod_exploded-machinary.glb', '260303_3dmod_exploded-media.glb', '260303_3dmod_exploded-skin.glb'
+];
+
+async function init() {
+    const canvas = document.getElementById("renderCanvas");
+    
+    let engine = new BABYLON.Engine(canvas, true, { preserveDrawingBuffer: false, stencil: false, antialias: true, alpha: true });
+    engine.setHardwareScalingLevel(1 / Math.min(window.devicePixelRatio, 1.5));
+
+    // ── PREVIEW ENGINE ──
+    const previewCanvas = document.getElementById("previewCanvas");
+    let previewEngine = new BABYLON.Engine(previewCanvas, true, { alpha: true, antialias: true });
+    const previewScene = new BABYLON.Scene(previewEngine);
+    previewScene.clearColor = new BABYLON.Color4(0, 0, 0, 0);
+    
+    const previewCam = new BABYLON.ArcRotateCamera("pCam", Math.PI/4, Math.PI/3, 20, BABYLON.Vector3.Zero(), previewScene);
+    previewCam.mode = BABYLON.Camera.ORTHOGRAPHIC_CAMERA;
+    const orthoZoom = 1.0; 
+    // Frame perfectly over the 1x1x1 unit cube
+    previewCam.orthoLeft = -orthoZoom; previewCam.orthoRight = orthoZoom;
+    previewCam.orthoTop = orthoZoom; previewCam.orthoBottom = -orthoZoom;
+    previewCam.minZ = -1000; previewCam.maxZ = 1000;
+
+    const pLight = new BABYLON.DirectionalLight("pLight", new BABYLON.Vector3(-1, -2, -1), previewScene);
+    pLight.intensity = 1.5;
+    let currentPreviewMesh = null;
+
+    previewEngine.runRenderLoop(() => {
+        if (currentPreviewMesh) {
+            // GLTF files use rotationQuaternion, so direct modification of .rotate is required
+            currentPreviewMesh.rotate(BABYLON.Axis.Y, 0.015, BABYLON.Space.WORLD);
+        }
+        previewScene.render();
+    });
+
+    const scene = new BABYLON.Scene(engine);
+    scene.clearColor = new BABYLON.Color4(0, 0, 0, 0); // Keep transparent to reveal HTML #f2f2f2 background
+    scene.environmentTexture = BABYLON.CubeTexture.CreateFromPrefilteredData("https://assets.babylonjs.com/environments/studio.env", scene);
+    scene.environmentIntensity = 1.0;
+
+    const pivotTarget = new BABYLON.Vector3(PARAMS.camera.pivotX, PARAMS.camera.pivotY, PARAMS.camera.pivotZ);
+    const camera = new BABYLON.ArcRotateCamera("camera", PARAMS.camera.alpha, PARAMS.camera.beta, PARAMS.camera.radius, pivotTarget, scene);
+    camera.attachControl(canvas, true);
+    camera.inputs.attached.pointers.buttons = [0];
+    camera.panningSensibility = 0;
+    camera.fov = 2 * Math.atan(18 / PARAMS.camera.focalLength);
+
+    // THE STERILE STUDIO LIGHTING
+    const dirLight1 = new BABYLON.DirectionalLight("dir1", new BABYLON.Vector3(-1, -2, -1), scene);
+    dirLight1.intensity = 1.5;
+    dirLight1.position = new BABYLON.Vector3(20, 40, 20);
+    
+    const dirLight2 = new BABYLON.DirectionalLight("dir2", new BABYLON.Vector3(1, -0.5, 1), scene);
+    dirLight2.intensity = 1.0;
+    
+    // Sharp technical shadows (0 blur)
+    const shadowGen = new BABYLON.ShadowGenerator(4096, dirLight1);
+    shadowGen.useBlurExponentialShadowMap = false;
+    shadowGen.filter = BABYLON.ShadowGenerator.FILTER_PCF;
+    shadowGen.bias = 0.0001;
+
+    const advancedTexture = BABYLON.GUI.AdvancedDynamicTexture.CreateFullscreenUI("UI");
+
+    let masterNode = new BABYLON.TransformNode("master", scene);
+    masterNode.position.set(PARAMS.location.xOffset, PARAMS.location.verticalOffset, PARAMS.location.yOffset);
+    masterNode.rotation.set(PARAMS.location.rotationX, PARAMS.location.rotationY, PARAMS.location.rotationZ);
+
+    let modelGroups = {};
+    let allAnimations = [];
+    let activeGuiElements = [];
+
+    // ── PERFORMANCE OPTIMIZED STANDARD MATERIALS ──
+    const sharedMaterials = {};
+    function getLayerMaterial(id, alpha, isSelected = false) {
+        if (!sharedMaterials[id + alpha]) {
+            const mat = new BABYLON.StandardMaterial("mat_" + id + alpha, scene);
+            mat.diffuseColor = new BABYLON.Color3(0.9, 0.9, 0.9);
+            mat.specularColor = new BABYLON.Color3(0.1, 0.1, 0.1);
+            mat.alpha = alpha; 
+            mat.backFaceCulling = false;
+            mat.disableDepthWrite = false;
+
+            // Selected component highlights dynamically
+            if (isSelected) {
+                mat.diffuseColor = new BABYLON.Color3(0.2, 0.2, 0.2);
+            }
+            
+            sharedMaterials[id + alpha] = mat;
+        }
+        return sharedMaterials[id + alpha];
+    }
+
+    const loadTasks = fileNames.map(fileName => {
+        const id = fileName.replace('260303_3dmod_exploded-', '').replace('.glb', '');
+        return BABYLON.SceneLoader.ImportMeshAsync("", "./", fileName, scene).then(result => {
+            const root = result.meshes[0];
+            root.parent = masterNode; root.rotationQuaternion = null;
+            modelGroups[id] = result.meshes;
+            result.animationGroups.forEach(ag => { ag.stop(); allAnimations.push(ag); });
+
+            const alpha = MATERIAL_PARAMS[id].alpha * 0.15; // User requested 'ghostly trace' as default
+            const mat = getLayerMaterial(id, alpha, false);
+            
+            result.meshes.forEach(m => {
+                if (m.getTotalVertices && m.getTotalVertices() > 0) {
+                    if (m.material) {
+                        m.material.dispose();
+                    }
+                    m.material = mat;
+                    shadowGen.addShadowCaster(m, true);
+                    m.receiveShadows = true;
+                }
+            });
+        });
+    });
+
+    await Promise.all(loadTasks);
+    document.getElementById("loading-screen").style.opacity = "0";
+
+    function clearGUI() {
+        activeGuiElements.forEach(el => el.dispose());
+        activeGuiElements = [];
+    }
+
+    function createMeshGUI(meshes, layerId) {
+        clearGUI();
+        const targetMeshes = meshes.filter(m => m.getTotalVertices() > 200).slice(0, 3);
+        let angle = 0;
+        
+        targetMeshes.forEach((mesh, i) => {
+            const line = new BABYLON.GUI.Line();
+            line.lineWidth = 1; line.color = "#000"; // Technical black lines
+            advancedTexture.addControl(line); activeGuiElements.push(line);
+            
+            // Tiny precise dot at connection point
+            const dot = new BABYLON.GUI.Ellipse();
+            dot.width = "4px"; dot.height = "4px"; dot.color = "#000"; dot.background = "transparent";
+            dot.thickness = 1;
+            advancedTexture.addControl(dot); dot.linkWithMesh(mesh); activeGuiElements.push(dot);
+
+            const rect = new BABYLON.GUI.Rectangle();
+            rect.width = "40px"; rect.height = "16px";
+            rect.thickness = 0; rect.background = "transparent";
+            advancedTexture.addControl(rect); activeGuiElements.push(rect);
+            
+            const text = new BABYLON.GUI.TextBlock();
+            text.text = "x:" + Math.floor(Math.random() * 2000) + "\ny:" + Math.floor(Math.random() * 200);
+            text.color = "#000"; text.fontSize = 7; text.fontFamily = "'Fragment Mono'";
+            text.textHorizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
+            rect.addControl(text);
+            
+            rect.linkWithMesh(mesh);
+            rect.linkOffsetY = -60 - (i * 20) * Math.sin(angle); rect.linkOffsetX = 90 * Math.cos(angle);
+            angle += Math.PI / 1.5;
+
+            line.linkWithMesh(mesh); line.connectedControl = rect;
+        });
+        
+        const panel = document.getElementById("info-panel");
+        panel.classList.remove("hidden"); panel.classList.add("active");
+        
+        document.getElementById("panel-title").innerText = "[" + layerId.toUpperCase() + "]";
+        document.getElementById("data-uid").innerText = "MOD-" + Math.floor(Math.random()*9999);
+        document.getElementById("data-meshes").innerText = meshes.length;
+        let totalVerts = 0; meshes.forEach(m => totalVerts += m.getTotalVertices());
+        document.getElementById("data-verts").innerText = totalVerts.toLocaleString();
+    }
+
+    const navButtons = document.querySelectorAll('.nav-btn');
+    navButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+            const activeId = btn.getAttribute('data-id');
+            const isActive = btn.classList.contains('active');
+
+            if (isOrthoMode) { exitOrthoView(); viewButtons.forEach(b => b.classList.remove('active')); }
+            navButtons.forEach(b => b.classList.remove('active')); clearGUI();
+
+            if (!isActive) {
+                btn.classList.add('active');
+                
+                Object.keys(modelGroups).forEach(id => {
+                    const isM = id === activeId;
+                    const alpha = isM ? 0.9 : (MATERIAL_PARAMS[id].alpha * 0.15); // Layered refractor trace
+                    const newMat = getLayerMaterial(id, alpha, isM);
+                    modelGroups[id].forEach(m => m.material = newMat);
+                });
+                createMeshGUI(modelGroups[activeId], activeId);
+
+                // Load Preview Mesh
+                if (currentPreviewMesh) {
+                    currentPreviewMesh.dispose(false, true);
+                    currentPreviewMesh = null;
+                }
+                const fileName = '260303_3dmod_exploded-' + activeId + '.glb';
+                BABYLON.SceneLoader.ImportMeshAsync("", "./", fileName, previewScene).then(result => {
+                    // STOP ANIMATIONS so it stays perfectly centered
+                    if (result.animationGroups) {
+                        result.animationGroups.forEach(ag => ag.stop());
+                    }
+                    
+                    const root = result.meshes[0];
+                    currentPreviewMesh = root;
+                    root.normalizeToUnitCube(); // Constrains strictly within a 1x1x1 mathematical block
+                    root.position = BABYLON.Vector3.Zero(); // Centers strictly
+
+                    const solidPreviewMat = new BABYLON.StandardMaterial("prevMat", previewScene);
+                    solidPreviewMat.diffuseColor = new BABYLON.Color3(0.95, 0.95, 0.95);
+                    solidPreviewMat.specularColor = new BABYLON.Color3(0.05, 0.05, 0.05);
+                    solidPreviewMat.alpha = 0.6; // Light and translucent
+                    solidPreviewMat.backFaceCulling = false;
+
+                    result.meshes.forEach(m => {
+                        m.material = solidPreviewMat;
+                    });
+                });
+            } else {
+                Object.keys(modelGroups).forEach(id => {
+                    const newMat = getLayerMaterial(id, MATERIAL_PARAMS[id].alpha * 0.15, false); // Return to default ghostly trace
+                    modelGroups[id].forEach(m => m.material = newMat);
+                });
+                document.getElementById("info-panel").classList.add("hidden"); document.getElementById("info-panel").classList.remove("active");
+            }
+        });
+    });
+
+    // ── ORTHO MODE ──
+    let isOrthoMode = false; let baseOrthoRadius = 1; let baseOrthoHalfW = 1; let baseOrthoHalfH = 1;
+
+    function getSceneBounds() {
+        let min = new BABYLON.Vector3( Infinity,  Infinity,  Infinity); let max = new BABYLON.Vector3(-Infinity, -Infinity, -Infinity);
+        scene.meshes.forEach(m => {
+            if (!m.isVisible || m.getTotalVertices() === 0) return;
+            try { m.computeWorldMatrix(true); const bi = m.getBoundingInfo(); min = BABYLON.Vector3.Minimize(min, bi.boundingBox.minimumWorld); max = BABYLON.Vector3.Maximize(max, bi.boundingBox.maximumWorld); } catch(e) {}
+        });
+        return { min, max };
+    }
+    
+    function fitOrthoFrustum() {
+        const { min, max } = getSceneBounds(); if (!isFinite(min.x)) return;
+        const center = min.add(max).scale(0.5); camera.target = center;
+        const maxDim = Math.max(max.x - min.x, max.y - min.y, max.z - min.z);
+        const pad = 1.3; const aspect = canvas.clientWidth / canvas.clientHeight;
+        baseOrthoHalfH = (maxDim * pad) / 2; baseOrthoHalfW = baseOrthoHalfH * aspect; baseOrthoRadius = Math.max(maxDim * 3, 1);
+        camera.radius = baseOrthoRadius; camera.orthoLeft = -baseOrthoHalfW; camera.orthoRight = baseOrthoHalfW; camera.orthoTop = baseOrthoHalfH; camera.orthoBottom = -baseOrthoHalfH;
+    }
+    
+    function createDimensions() {
+        clearGUI();
+        const { min, max } = getSceneBounds(); if (!isFinite(min.x)) return;
+        
+        let wVal = ((max.x - min.x) * 10).toFixed(2) + "m"; let hVal = ((max.y - min.y) * 10).toFixed(2) + "m";
+
+        const hLine = new BABYLON.GUI.Line(); hLine.x1 = "25%"; hLine.y1 = "85%"; hLine.x2 = "75%"; hLine.y2 = "85%"; hLine.lineWidth = 1; hLine.color = "#000"; advancedTexture.addControl(hLine); activeGuiElements.push(hLine);
+        const t1 = new BABYLON.GUI.Line(); t1.x1 = "25%"; t1.x2 = "25%"; t1.y1 = "83%"; t1.y2 = "87%"; t1.lineWidth = 1; t1.color = "#000"; advancedTexture.addControl(t1); activeGuiElements.push(t1);
+        const t2 = new BABYLON.GUI.Line(); t2.x1 = "75%"; t2.x2 = "75%"; t2.y1 = "83%"; t2.y2 = "87%"; t2.lineWidth = 1; t2.color = "#000"; advancedTexture.addControl(t2); activeGuiElements.push(t2);
+        const hText = new BABYLON.GUI.TextBlock(); hText.text = wVal; hText.color = "#000"; hText.fontSize = 8; hText.fontFamily = "'Fragment Mono'"; hText.top = "36%"; advancedTexture.addControl(hText); activeGuiElements.push(hText);
+        
+        const vLine = new BABYLON.GUI.Line(); vLine.x1 = "15%"; vLine.y1 = "25%"; vLine.x2 = "15%"; vLine.y2 = "75%"; vLine.lineWidth = 1; vLine.color = "#000"; advancedTexture.addControl(vLine); activeGuiElements.push(vLine);
+        const t3 = new BABYLON.GUI.Line(); t3.x1 = "14%"; t3.x2 = "16%"; t3.y1 = "25%"; t3.y2 = "25%"; t3.lineWidth = 1; t3.color = "#000"; advancedTexture.addControl(t3); activeGuiElements.push(t3);
+        const t4 = new BABYLON.GUI.Line(); t4.x1 = "14%"; t4.x2 = "16%"; t4.y1 = "75%"; t4.y2 = "75%"; t4.lineWidth = 1; t4.color = "#000"; advancedTexture.addControl(t4); activeGuiElements.push(t4);
+        const vText = new BABYLON.GUI.TextBlock(); vText.text = hVal; vText.color = "#000"; vText.fontSize = 8; vText.fontFamily = "'Fragment Mono'"; vText.left = "-36%"; advancedTexture.addControl(vText); activeGuiElements.push(vText);
+    }
+
+    function enterOrthoView(viewName) {
+        isOrthoMode = true;
+        navButtons.forEach(b => b.classList.remove('active'));
+        document.getElementById("info-panel").classList.add("hidden"); document.getElementById("info-panel").classList.remove("active");
+        
+        // Everything becomes highly transparent wire-like shadows for blueprints
+        Object.keys(modelGroups).forEach(id => {
+            const newMat = getLayerMaterial(id, MATERIAL_PARAMS[id].alpha * 0.5, false);
+            modelGroups[id].forEach(m => m.material = newMat);
+        });
+
+        camera.mode  = BABYLON.Camera.ORTHOGRAPHIC_CAMERA; const view = ORTHO_VIEWS[viewName];
+        camera.alpha = view.alpha; camera.beta  = view.beta; camera.lowerAlphaLimit = camera.upperAlphaLimit = camera.alpha; camera.lowerBetaLimit = camera.upperBetaLimit = camera.beta;
+        fitOrthoFrustum(); createDimensions();
+        document.getElementById('hud-tl').innerHTML = `DWG: 260303<br>PROJ: ORTHO_${viewName}`;
+    }
+
+    function exitOrthoView() {
+        isOrthoMode = false;
+        clearGUI();
+        camera.mode = BABYLON.Camera.PERSPECTIVE_CAMERA;
+        camera.fov = 2 * Math.atan(18 / PARAMS.camera.focalLength); camera.alpha = PARAMS.camera.alpha; camera.beta = PARAMS.camera.beta; camera.radius = PARAMS.camera.radius;
+        camera.target = pivotTarget.clone(); camera.lowerAlphaLimit = camera.upperAlphaLimit = null; camera.lowerBetaLimit = 0.01; camera.upperBetaLimit = Math.PI - 0.01;
+        document.getElementById('hud-tl').innerHTML = 'DWG: 260303<br>PROJ: B/W X-RAY';
+    }
+
+    const viewButtons = document.querySelectorAll('.view-btn');
+    viewButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+            const viewName = btn.getAttribute('data-view'); const isActive = btn.classList.contains('active');
+            viewButtons.forEach(b => b.classList.remove('active'));
+            if (isActive) exitOrthoView(); else { btn.classList.add('active'); enterOrthoView(viewName); }
+        });
+    });
+
+    document.getElementById("animSlider").addEventListener("input", e => {
+        const ratio = e.target.value / 100;
+        allAnimations.forEach(ag => { ag.start(); ag.pause(); ag.goToFrame(BABYLON.Scalar.Lerp(ag.from, ag.to, ratio)); });
+    });
+
+    engine.runRenderLoop(() => {
+        if (isOrthoMode && baseOrthoRadius > 0) {
+            const s = camera.radius / baseOrthoRadius; camera.orthoLeft = -baseOrthoHalfW * s; camera.orthoRight = baseOrthoHalfW * s; camera.orthoTop = baseOrthoHalfH * s; camera.orthoBottom = -baseOrthoHalfH * s;
+        }
+        scene.render(); document.getElementById("coord-val").innerText = `${camera.position.x.toFixed(2)} // ${camera.position.z.toFixed(2)}`;
+    });
+
+    window.addEventListener("resize", () => { engine.resize(); previewEngine.resize(); if (isOrthoMode) { fitOrthoFrustum(); createDimensions(); } });
+}
+init();
+</script>
+</body>
+</html>
