@@ -808,7 +808,8 @@ function performNav(id) {
         "PATTERN": "./stone_research/index.html",
         "PY SKIN GENERATOR": "./stone_research/index.html",
         "SITE": "./site_model/index.html",
-        "UE ENVIRONMENT": "./ue-360/index.html"
+        "UE ENVIRONMENT": "./ue-360/index.html",
+        "STRUCTURE": "./structure/index.html"
     };
     window.location.href = nav[id] || ('.' + id.toLowerCase().replace(/\s+/g, '_') + '/');
 }

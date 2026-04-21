@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>HYPEROBJECT — STRUCTURE</title>
+    <link href="https://fonts.googleapis.com/css2?family=Fragment+Mono&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body, html {
+            width: 100%; height: 100%; overflow: hidden;
+            background: #ffffff;
+            font-family: 'Fragment Mono', monospace;
+            cursor: crosshair;
+            color: #0a0a0a;
+        }
+
+        /* ── LAYOUT ─────────────────────────── */
+        #layout {
+            display: grid;
+            grid-template-columns: 18% 1fr 20%;
+            grid-template-rows: 100vh;
+            width: 100%; height: 100%;
+        }
+
+        /* ── LEFT PANEL ─────────────────────── */
+        #panel-left {
+            border-right: 1px solid #d0d0d0;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            position: relative;
+        }
+
+        #panel-left .panel-label {
+            position: absolute;
+            top: 24px; left: 20px;
+            font-size: 7px;
+            text-transform: uppercase;
+            letter-spacing: 0.18em;
+            opacity: 0.4;
+            z-index: 2;
+        }
+
+        #detail-img {
+            width: calc(120% - 32px);
+            height: auto;
+            max-height: calc(120% - 64px);
+            object-fit: contain;
+            object-position: center;
+            display: block;
+            margin: 48px auto 16px;
+        }
+
+        /* ── CENTER PANEL ───────────────────── */
+        #panel-center {
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #ffffff;
+            overflow: hidden;
+        }
+
+        #viewer {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            user-select: none;
+            overflow: hidden;
+        }
+
+        #frame-canvas {
+            display: block;
+            pointer-events: none;
+            image-rendering: auto;
+            flex-shrink: 0;
+        }
+
+        #frame-counter {
+            position: absolute;
+            bottom: 22px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 7px;
+            text-transform: uppercase;
+            letter-spacing: 0.18em;
+            opacity: 0.3;
+            white-space: nowrap;
+        }
+
+        #zoom-hint {
+            position: absolute;
+            bottom: 38px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.2em;
+            opacity: 0.2;
+            white-space: nowrap;
+        }
+
+        #drag-hint {
+            position: absolute;
+            bottom: 54px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.2em;
+            opacity: 0.22;
+            white-space: nowrap;
+            transition: opacity 0.4s ease;
+        }
+
+        #drag-hint.hidden { opacity: 0; }
+
+        #loading-bar {
+            position: absolute;
+            bottom: 0; left: 0;
+            height: 1px;
+            background: #0a0a0a;
+            width: 0%;
+            transition: width 0.08s linear;
+        }
+
+        #mode-switch {
+            position: absolute;
+            top: 24px; right: 24px;
+            display: flex;
+            z-index: 10;
+        }
+
+        .mode-btn {
+            font-family: 'Fragment Mono', monospace;
+            font-size: 7px;
+            text-transform: uppercase;
+            letter-spacing: 0.18em;
+            color: #0a0a0a;
+            background: #ffffff;
+            border: 1px solid #0a0a0a;
+            padding: 5px 11px;
+            cursor: pointer;
+            transition: background 0.15s ease, color 0.15s ease;
+            user-select: none;
+        }
+
+        .mode-btn:first-child { border-right: none; }
+
+        .mode-btn.active {
+            background: #0a0a0a;
+            color: #ffffff;
+        }
+
+        /* ── RIGHT PANEL ────────────────────── */
+        #panel-right {
+            border-left: 1px solid #d0d0d0;
+            display: flex;
+            flex-direction: column;
+            padding: 28px 24px 24px 24px;
+            overflow: hidden;
+        }
+
+        .back-btn {
+            display: inline-block;
+            font-size: 7px;
+            text-transform: uppercase;
+            letter-spacing: 0.18em;
+            color: #0a0a0a;
+            text-decoration: none;
+            border: 1px solid #0a0a0a;
+            padding: 5px 10px;
+            margin-bottom: 20px;
+            transition: background 0.15s ease, color 0.15s ease;
+            width: fit-content;
+            flex-shrink: 0;
+        }
+        .back-btn:hover { background: #0a0a0a; color: #ffffff; }
+
+        .node-label {
+            font-size: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.22em;
+            opacity: 0.35;
+            margin-bottom: 6px;
+            flex-shrink: 0;
+        }
+
+        .structure-title {
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            line-height: 1.3;
+            margin-bottom: 16px;
+            flex-shrink: 0;
+        }
+
+        .divider {
+            width: 100%;
+            height: 1px;
+            background: #d0d0d0;
+            margin-bottom: 14px;
+            flex-shrink: 0;
+        }
+
+        /* three description sections */
+        .desc-block {
+            margin-bottom: 6px;
+            flex-shrink: 0;
+        }
+
+        .desc-block-title {
+            font-size: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.2em;
+            opacity: 0.45;
+            margin-bottom: 4px;
+        }
+
+        .desc-block-text {
+            font-size: 7px;
+            line-height: 1.7;
+            text-transform: uppercase;
+            letter-spacing: 0.07em;
+            opacity: 0.65;
+        }
+
+        /* view capture grows to fill remaining space */
+        .capture-wrap {
+            flex: 4;
+            min-height: 0;
+            display: flex;
+            flex-direction: column;
+            margin-top: 10px;
+        }
+
+        .view-capture-label {
+            font-size: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.22em;
+            opacity: 0.35;
+            margin-bottom: 8px;
+            flex-shrink: 0;
+        }
+
+        #view-capture-img {
+            flex: 4;
+            min-height: 0;
+            width: 100%;
+            object-fit: cover;
+            object-position: center top;
+            display: block;
+            filter: grayscale(1);
+        }
+
+        /* ── TOP HUD ─────────────────────────── */
+        #hud-top {
+            position: fixed;
+            top: 22px; left: 50%;
+            transform: translateX(-50%);
+            font-size: 7px;
+            text-transform: uppercase;
+            letter-spacing: 0.22em;
+            opacity: 0.25;
+            pointer-events: none;
+            z-index: 100;
+        }
+    </style>
+</head>
+<body>
+
+<div id="hud-top">HYPEROBJECT — 2GBX SS26 — STRUCTURAL SYSTEM</div>
+
+<div id="layout">
+
+    <!-- LEFT -->
+    <div id="panel-left">
+        <span class="panel-label">STRUCTURAL DETAIL</span>
+        <img id="detail-img" src="./structure_detail.png" alt="Structure Detail" draggable="false">
+    </div>
+
+    <!-- CENTER -->
+    <div id="panel-center">
+        <div id="viewer">
+            <canvas id="frame-canvas"></canvas>
+        </div>
+        <div id="mode-switch">
+            <button class="mode-btn active" data-mode="material">MATERIAL</button>
+            <button class="mode-btn" data-mode="sketch">SKETCH</button>
+        </div>
+        <div id="drag-hint">← DRAG TO ROTATE →</div>
+        <div id="zoom-hint">SCROLL TO ZOOM</div>
+        <div id="frame-counter">0001 / 0360</div>
+        <div id="loading-bar"></div>
+    </div>
+
+    <!-- RIGHT -->
+    <div id="panel-right">
+        <a class="back-btn" href="../index.html">← BACK</a>
+
+        <div class="node-label">NODE — STRUCTURE</div>
+        <div class="structure-title">STRUCTURAL<br>SYSTEM</div>
+
+        <div class="divider"></div>
+
+        <div class="desc-block">
+            <div class="desc-block-title">STRUCTURAL CONCEPT</div>
+            <div class="desc-block-text">
+                Hybrid steel–concrete system. Faceted steel space frame forms the primary skin and lateral load path. Three RC cores ensure torsional rigidity and act as vertical stability elements.
+            </div>
+        </div>
+
+        <div class="desc-block">
+            <div class="desc-block-title">STEEL SKIN FRAME</div>
+            <div class="desc-block-text">
+                IPE 800 (cyan): perimeter macro-structure spanning large distances. IPE 600 (red/blue): secondary grid for floor and facade loads. SHS 200×200: buckling bracing and torsion resistance.
+            </div>
+        </div>
+
+        <div class="desc-block">
+            <div class="desc-block-title">RC CORES &amp; SLABS</div>
+            <div class="desc-block-text">
+                Three C35/45 cores provide shear walls in both principal directions. 500 mm flat slabs span between cores and steel perimeter; max displacement at cantilevered lower-level slabs.
+            </div>
+        </div>
+
+        <div class="capture-wrap">
+            <div class="view-capture-label">VIEW CAPTURE — 26.03.30</div>
+            <img id="view-capture-img" src="./ViewCapture20260330_165412.png" alt="View Capture" draggable="false">
+        </div>
+    </div>
+
+</div>
+
+<script>
+    const TOTAL_FRAMES = 360;
+    const SENSITIVITY  = 2.2;
+    const ZOOM_MIN = 1.0, ZOOM_MAX = 3.0, ZOOM_STEP = 0.12;
+
+    const MODES = {
+        material: { folder: './chunk_2bgx_360loop/',    prefix: 'str_chunk_',    ext: '.png' },
+        sketch:   { folder: './chunk_2gbx_360loop_2D/', prefix: 'str_chunk_2d_', ext: '.png' }
+    };
+
+    let activeMode   = 'material';
+    let currentFrame = 0;
+    let isDragging   = false;
+    let dragStartX   = 0;
+    let dragStartFrame = 0;
+    let interacted   = false;
+    let rafPending   = false;
+    let zoom         = 1.0;
+    let fitW = 0, fitH = 0;
+
+    const caches = { material: new Array(TOTAL_FRAMES).fill(null), sketch: new Array(TOTAL_FRAMES).fill(null) };
+    const loadCounts = { material: 0, sketch: 0 };
+
+    const canvas  = document.getElementById('frame-canvas');
+    const ctx     = canvas.getContext('2d');
+    const counter = document.getElementById('frame-counter');
+    const hint    = document.getElementById('drag-hint');
+    const loadBar = document.getElementById('loading-bar');
+    const viewer  = document.getElementById('viewer');
+
+    function pad(n) { return String(n + 1).padStart(4, '0'); }
+
+    function framePath(mode, i) {
+        const m = MODES[mode];
+        return m.folder + m.prefix + pad(i) + m.ext;
+    }
+
+    // ── CANVAS SIZING ────────────────────────
+    function computeFit(img) {
+        const vw = viewer.clientWidth, vh = viewer.clientHeight;
+        const aspect = img.naturalWidth / img.naturalHeight;
+        let w = vw, h = vw / aspect;
+        if (h > vh) { h = vh; w = vh * aspect; }
+        fitW = w; fitH = h;
+    }
+
+    function applyZoom() {
+        canvas.style.width  = Math.round(fitW * zoom) + 'px';
+        canvas.style.height = Math.round(fitH * zoom) + 'px';
+    }
+
+    function resizeCanvas(img) {
+        canvas.width  = img.naturalWidth;
+        canvas.height = img.naturalHeight;
+        computeFit(img); applyZoom();
+    }
+
+    // ── DRAW ─────────────────────────────────
+    function drawFrame(i) {
+        const img = caches[activeMode][i];
+        if (!img) return;
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(img, 0, 0);
+        counter.textContent = pad(i) + ' / 0360';
+    }
+
+    function scheduleFrame(i) {
+        i = ((i % TOTAL_FRAMES) + TOTAL_FRAMES) % TOTAL_FRAMES;
+        currentFrame = i;
+        if (rafPending) return;
+        rafPending = true;
+        requestAnimationFrame(() => { rafPending = false; drawFrame(currentFrame); });
+    }
+
+    // ── PRELOAD ──────────────────────────────
+    let firstReady = false;
+
+    function preloadMode(mode, onComplete) {
+        for (let i = 0; i < TOTAL_FRAMES; i++) {
+            const img = new Image();
+            img.onload = () => {
+                caches[mode][i] = img;
+                loadCounts[mode]++;
+                if (mode === activeMode) {
+                    const pct = loadCounts[mode] / TOTAL_FRAMES * 100;
+                    loadBar.style.width = pct + '%';
+                    if (!firstReady && i === 0) {
+                        firstReady = true;
+                        resizeCanvas(img);
+                        drawFrame(0);
+                    }
+                    if (loadCounts[mode] === TOTAL_FRAMES) {
+                        loadBar.style.transition = 'opacity 0.5s ease';
+                        loadBar.style.opacity = '0';
+                    }
+                }
+                if (loadCounts[mode] === TOTAL_FRAMES && onComplete) onComplete();
+            };
+            img.src = framePath(mode, i);
+        }
+    }
+
+    // ── MODE SWITCH ──────────────────────────
+    function setMode(mode) {
+        if (mode === activeMode) return;
+        activeMode = mode;
+
+        document.querySelectorAll('.mode-btn').forEach(b => {
+            b.classList.toggle('active', b.dataset.mode === mode);
+        });
+
+        // reset load bar for new mode if not yet complete
+        if (loadCounts[mode] < TOTAL_FRAMES) {
+            loadBar.style.transition = 'none';
+            loadBar.style.opacity = '1';
+            loadBar.style.width = (loadCounts[mode] / TOTAL_FRAMES * 100) + '%';
+        }
+
+        // show current frame from new cache (or first available)
+        const img = caches[mode][currentFrame] || caches[mode].find(Boolean);
+        if (img) { resizeCanvas(img); drawFrame(currentFrame); }
+    }
+
+    document.querySelectorAll('.mode-btn').forEach(btn => {
+        btn.addEventListener('click', () => setMode(btn.dataset.mode));
+    });
+
+    // ── DRAG ─────────────────────────────────
+    viewer.addEventListener('mousedown', (e) => {
+        if (e.button !== 0) return;
+        isDragging = true;
+        dragStartX = e.clientX;
+        dragStartFrame = currentFrame;
+        viewer.style.cursor = 'ew-resize';
+        if (!interacted) { interacted = true; hint.classList.add('hidden'); }
+        e.preventDefault();
+    });
+
+    window.addEventListener('mousemove', (e) => {
+        if (!isDragging) return;
+        const delta = e.clientX - dragStartX;
+        const newFrame = ((dragStartFrame + Math.round(delta / SENSITIVITY)) % TOTAL_FRAMES + TOTAL_FRAMES) % TOTAL_FRAMES;
+        if (newFrame !== currentFrame) scheduleFrame(newFrame);
+    });
+
+    window.addEventListener('mouseup', () => { isDragging = false; viewer.style.cursor = ''; });
+
+    viewer.addEventListener('touchstart', (e) => {
+        dragStartX = e.touches[0].clientX;
+        dragStartFrame = currentFrame;
+        if (!interacted) { interacted = true; hint.classList.add('hidden'); }
+    }, { passive: true });
+
+    viewer.addEventListener('touchmove', (e) => {
+        const delta = e.touches[0].clientX - dragStartX;
+        const newFrame = ((dragStartFrame + Math.round(delta / SENSITIVITY)) % TOTAL_FRAMES + TOTAL_FRAMES) % TOTAL_FRAMES;
+        if (newFrame !== currentFrame) scheduleFrame(newFrame);
+    }, { passive: true });
+
+    // ── SCROLL ZOOM ──────────────────────────
+    viewer.addEventListener('wheel', (e) => {
+        e.preventDefault();
+        zoom -= Math.sign(e.deltaY) * ZOOM_STEP;
+        zoom = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, zoom));
+        applyZoom();
+    }, { passive: false });
+
+    window.addEventListener('resize', () => {
+        const img = caches[activeMode][currentFrame];
+        if (img) { computeFit(img); applyZoom(); }
+        drawFrame(currentFrame);
+    });
+
+    // ── INIT ─────────────────────────────────
+    // Load sketch only after material is complete to avoid 720 concurrent requests
+    preloadMode('material', () => preloadMode('sketch'));
+</script>
+</body>
+</html>
