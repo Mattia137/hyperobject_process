@@ -233,6 +233,11 @@ const FILES = [
 
     // ── STRUCTURE ────────────────────────────
     F('260303_exploded-structure', 'glb', 'STRUCTURE'),
+    F('structure/index', 'html', 'STRUCTURE'),
+    F('structure/structure_detail', 'png', 'STRUCTURE'),
+    F('structure/ViewCapture20260330_165412', 'png', 'STRUCTURE'),
+    F('structure/chunk_2bgx_360loop', 'png', 'STRUCTURE'),
+    F('structure/chunk_2gbx_360loop_2D', 'png', 'STRUCTURE'),
 
     // ── MEDIA M. CONCEPT ─────────────────────
     F('HYPEROBJECT_midterm/blueprint', 'html', 'MEDIA M. CONCEPT'),
@@ -270,6 +275,34 @@ const FILES = [
     ...Array.from({ length: 17 }, (_, i) =>
         F(i === 0 ? 'fix_app' : `fix_app_${i + 1}`, 'js', 'WEB INTERACTIVE MODEL')
     ),
+
+    // ── DRAWINGS + DETAILS ───────────────────
+    F('drawings/index', 'html', 'DRAWINGS + DETAILS'),
+    F('drawings/app', 'js', 'DRAWINGS + DETAILS'),
+    F('drawings/styles', 'css', 'DRAWINGS + DETAILS'),
+    F('drawings/keyplan', 'glb', 'DRAWINGS + DETAILS'),
+    F('drawings/P0_groundfloor', 'pdf', 'DRAWINGS + DETAILS'),
+    F('drawings/P3_theater', 'pdf', 'DRAWINGS + DETAILS'),
+    F('drawings/S1_short-section', 'pdf', 'DRAWINGS + DETAILS'),
+
+    // ── UE ENVIRONMENT ───────────────────────
+    F('ue-360/index', 'html', 'UE ENVIRONMENT'),
+    F('ue-360/app', 'js', 'UE ENVIRONMENT'),
+    F('ue-360/styles', 'css', 'UE ENVIRONMENT'),
+    F('ue-360/map', 'png', 'UE ENVIRONMENT'),
+    F('ue-360/CineCameraActor4.0001', 'jpeg', 'UE ENVIRONMENT'),
+    F('ue-360/CineCameraActor10.0002', 'jpeg', 'UE ENVIRONMENT'),
+    F('ue-360/CineCameraActor11.0000', 'jpeg', 'UE ENVIRONMENT'),
+    F('ue-360/CineCameraActor16.0001', 'jpeg', 'UE ENVIRONMENT'),
+    F('ue-360/CineCameraActor20.0000', 'jpeg', 'UE ENVIRONMENT'),
+    F('ue-360/CineCameraActor21.0003', 'jpeg', 'UE ENVIRONMENT'),
+
+    // ── SITE MODEL (page) ────────────────────
+    F('site_model/index', 'html', 'SITE MODEL'),
+
+    // ── STONES RESEARCH (extra renders) ──────
+    F('stone_research/Meteor_Facade_v7_Workflow', 'png', 'STONES RESEARCH'),
+    F('stone_research/Meteor_Facade_v7_Workflow1', 'png', 'STONES RESEARCH'),
 ];
 
 // ==========================================
