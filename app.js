@@ -284,17 +284,6 @@ const FILES = [
     F('2GBX_Hyperobject/blueprint', 'html', 'MOON ENVIRONMENT'),
     F('2GBX_Hyperobject/diagnostic_ui', 'html', 'MOON ENVIRONMENT'),
     F('2GBX_Hyperobject/contorller', 'html', 'MOON ENVIRONMENT'),
-    F('2GBX_Hyperobject/space', 'glb', 'MOON ENVIRONMENT'),
-    F('2GBX_Hyperobject/mass', 'glb', 'MOON ENVIRONMENT'),
-    F('2GBX_Hyperobject/program', 'glb', 'MOON ENVIRONMENT'),
-    F('2GBX_Hyperobject/site', 'glb', 'MOON ENVIRONMENT'),
-    F('2GBX_Hyperobject/streets', 'glb', 'MOON ENVIRONMENT'),
-    F('2GBX_Hyperobject/260303_3dmod_exploded-circulation', 'glb', 'MOON ENVIRONMENT'),
-    F('2GBX_Hyperobject/260303_3dmod_exploded-interiors', 'glb', 'MOON ENVIRONMENT'),
-    F('2GBX_Hyperobject/260303_3dmod_exploded-machinary', 'glb', 'MOON ENVIRONMENT'),
-    F('2GBX_Hyperobject/260303_3dmod_exploded-media', 'glb', 'MOON ENVIRONMENT'),
-    F('2GBX_Hyperobject/260303_3dmod_exploded-skin', 'glb', 'MOON ENVIRONMENT'),
-    F('2GBX_Hyperobject/260303_3dmod_exploded-structure', 'glb', 'MOON ENVIRONMENT'),
 
     // ── DRAWINGS + DETAILS ───────────────────
     F('drawings/index', 'html', 'DRAWINGS + DETAILS'),
