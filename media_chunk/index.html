@@ -344,6 +344,8 @@
         });
 
         sizeCanvas();
+        ready = true; // allow interaction immediately
+
         const dur = video.duration;
         totalFrames = Math.ceil(dur * FPS);
         frames = new Array(totalFrames);
@@ -360,11 +362,15 @@
             frames[i] = await createImageBitmap(offscreen);
 
             extractFill.style.width = ((i + 1) / totalFrames * 100) + '%';
+
+            // Visual feedback while loading
+            if (!loopActive && !isDragging) {
+                frameIndex = i;
+                drawFrame(i);
+            }
         }
 
         extractLabel.classList.add('done');
-        ready = true;
-        drawFrame(0);
     }
 
     // ── DRAW ─────────────────────────────────

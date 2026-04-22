@@ -4,6 +4,15 @@
     <meta charset="UTF-8">
     <title>HYPEROBJECT — STRUCTURE</title>
     <link href="https://fonts.googleapis.com/css2?family=Fragment+Mono&display=swap" rel="stylesheet">
+    <script async src="https://unpkg.com/es-module-shims@1.8.0/dist/es-module-shims.js"></script>
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+                "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+            }
+        }
+    </script>
     <style>
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -11,7 +20,7 @@
             width: 100%; height: 100%; overflow: hidden;
             background: #ffffff;
             font-family: 'Fragment Mono', monospace;
-            cursor: crosshair;
+            cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16"><line x1="8" y1="3" x2="8" y2="13" stroke="black" stroke-width="1"/><line x1="3" y1="8" x2="13" y2="8" stroke="black" stroke-width="1"/></svg>') 8 8, crosshair;
             color: #0a0a0a;
         }
 
@@ -52,7 +61,6 @@
             margin: 48px auto 16px;
         }
 
-        /* ── CENTER PANEL ───────────────────── */
         #panel-center {
             position: relative;
             display: flex;
@@ -62,97 +70,211 @@
             overflow: hidden;
         }
 
+        #three-container {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            display: none;
+            cursor: move;
+        }
+        #three-container.active { display: block; }
+
         #viewer {
-            width: 100%;
-            height: 100%;
+            width: 100%; height: 100%;
             display: flex;
             align-items: center;
             justify-content: center;
-            user-select: none;
             overflow: hidden;
+            user-select: none;
         }
+        #viewer.hidden { display: none; }
+
+        #video-wrap {
+            position: relative;
+            flex-shrink: 0;
+            transform-origin: center center;
+        }
+
+        #media-video { display: none; } /* hidden — used only for extraction */
 
         #frame-canvas {
             display: block;
             pointer-events: none;
-            image-rendering: auto;
-            flex-shrink: 0;
         }
 
-        #frame-counter {
+        /* ── CENTER HUD ─────────────────────── */
+        #hud-bc {
             position: absolute;
-            bottom: 22px;
-            left: 50%;
+            bottom: 22px; left: 50%;
             transform: translateX(-50%);
-            font-size: 7px;
-            text-transform: uppercase;
-            letter-spacing: 0.18em;
-            opacity: 0.3;
-            white-space: nowrap;
-        }
-
-        #zoom-hint {
-            position: absolute;
-            bottom: 38px;
-            left: 50%;
-            transform: translateX(-50%);
-            font-size: 6px;
-            text-transform: uppercase;
-            letter-spacing: 0.2em;
-            opacity: 0.2;
-            white-space: nowrap;
-        }
-
-        #drag-hint {
-            position: absolute;
-            bottom: 54px;
-            left: 50%;
-            transform: translateX(-50%);
-            font-size: 6px;
-            text-transform: uppercase;
-            letter-spacing: 0.2em;
-            opacity: 0.22;
-            white-space: nowrap;
-            transition: opacity 0.4s ease;
-        }
-
-        #drag-hint.hidden { opacity: 0; }
-
-        #loading-bar {
-            position: absolute;
-            bottom: 0; left: 0;
-            height: 1px;
-            background: #0a0a0a;
-            width: 0%;
-            transition: width 0.08s linear;
-        }
-
-        #mode-switch {
-            position: absolute;
-            top: 24px; right: 24px;
+            text-align: center;
             display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            pointer-events: none;
             z-index: 10;
         }
 
+        #time-display {
+            font-size: 7px;
+            letter-spacing: 0.2em;
+            opacity: 0.4;
+            color: #000;
+        }
+
+        #scrub-bar {
+            width: 180px; height: 1px;
+            background: rgba(0,0,0,0.06);
+            position: relative;
+        }
+        #scrub-fill  { height: 100%; background: rgba(0,0,0,0.4); width: 0%; }
+
+        #extract-bar {
+            position: absolute;
+            bottom: 0; left: 0;
+            width: 180px; height: 1px;
+            background: rgba(0,0,0,0.04);
+        }
+        #extract-fill {
+            height: 100%;
+            background: rgba(0,0,0,0.25);
+            width: 0%;
+            transition: width 0.1s linear;
+        }
+        #extract-label {
+            font-size: 6px; letter-spacing: 0.2em;
+            opacity: 0.35; margin-top: 4px;
+            transition: opacity 0.4s ease;
+            color: #000;
+        }
+        #extract-label.done { opacity: 0; }
+
+        #drag-hint {
+            font-size: 6px; letter-spacing: 0.2em;
+            opacity: 0.25; transition: opacity 0.4s ease;
+            color: #000;
+        }
+        #drag-hint.hidden { opacity: 0; }
+
+        #zoom-badge {
+            position: absolute;
+            top: 22px; right: 24px;
+            font-size: 6px;
+            letter-spacing: 0.18em;
+            opacity: 0.3;
+            pointer-events: none;
+            z-index: 10;
+            text-transform: uppercase;
+            color: #000;
+        }
+
+        /* ── MODE SWITCH ─────────────────────── */
+        #mode-switch-hud {
+            position: absolute;
+            top: 24px; left: 24px;
+            display: flex;
+            z-index: 100;
+            border: 1px solid rgba(0,0,0,0.1);
+        }
         .mode-btn {
             font-family: 'Fragment Mono', monospace;
             font-size: 7px;
-            text-transform: uppercase;
-            letter-spacing: 0.18em;
-            color: #0a0a0a;
-            background: #ffffff;
-            border: 1px solid #0a0a0a;
-            padding: 5px 11px;
+            padding: 6px 12px;
+            background: #fff;
+            color: rgba(0,0,0,0.4);
+            border: none;
             cursor: pointer;
-            transition: background 0.15s ease, color 0.15s ease;
-            user-select: none;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            transition: all 0.2s ease;
+        }
+        .mode-btn:first-child { border-right: 1px solid rgba(0,0,0,0.1); }
+        .mode-btn.active {
+            background: #000;
+            color: #fff;
         }
 
-        .mode-btn:first-child { border-right: none; }
+        /* ── LEGEND ──────────────────────────── */
+        #legend-container {
+            display: none;
+            flex-direction: column;
+            padding: 64px 20px 20px 20px;
+            height: 100%;
+            overflow-y: auto;
+        }
+        #legend-container.active { display: flex; }
 
-        .mode-btn.active {
-            background: #0a0a0a;
-            color: #ffffff;
+        .legend-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+            flex-shrink: 0;
+        }
+        .legend-title {
+            font-size: 7px;
+            text-transform: uppercase;
+            letter-spacing: 0.2em;
+            opacity: 0.4;
+        }
+        .skin-toggle-wrap {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+        }
+        .skin-toggle-wrap input { display: none; }
+        .toggle-track {
+            width: 18px; height: 8px;
+            border: 1px solid rgba(0,0,0,0.2);
+            position: relative;
+            background: #fff;
+        }
+        .toggle-thumb {
+            position: absolute;
+            top: 1px; left: 1px;
+            width: 4px; height: 4px;
+            background: #000;
+            transition: transform 0.2s ease;
+        }
+        input:checked + .toggle-track .toggle-thumb {
+            transform: translateX(10px);
+        }
+        .toggle-label {
+            font-size: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            opacity: 0.6;
+        }
+
+        .legend-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .legend-item {
+            display: grid;
+            grid-template-columns: 8px 1fr auto;
+            align-items: center;
+            gap: 12px;
+        }
+        .color-box {
+            width: 8px; height: 8px;
+            border: 1px solid rgba(0,0,0,0.05);
+        }
+        .mesh-name {
+            font-size: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            opacity: 0.7;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .mesh-count {
+            font-size: 8px;
+            opacity: 0.4;
         }
 
         /* ── RIGHT PANEL ────────────────────── */
@@ -278,23 +400,53 @@
 
     <!-- LEFT -->
     <div id="panel-left">
-        <span class="panel-label">STRUCTURAL DETAIL</span>
-        <img id="detail-img" src="./structure_detail.png" alt="Structure Detail" draggable="false">
+        <div id="detail-static-wrap">
+            <span class="panel-label">STRUCTURAL DETAIL</span>
+            <img id="detail-img" src="./structure_detail.png" alt="Structure Detail" draggable="false">
+        </div>
+
+        <div id="legend-container">
+            <div class="legend-header">
+                <div class="legend-title">GEOMETRY DATABASE</div>
+                <label class="skin-toggle-wrap">
+                    <span class="toggle-label">SKIN</span>
+                    <input type="checkbox" id="skin-chk" checked>
+                    <div class="toggle-track"><div class="toggle-thumb"></div></div>
+                </label>
+            </div>
+            <div class="legend-list" id="legend-list">
+                <!-- Injected via JS -->
+            </div>
+        </div>
     </div>
 
     <!-- CENTER -->
     <div id="panel-center">
+        <div id="mode-switch-hud">
+            <button class="mode-btn active" id="btn-detail">DETAIL</button>
+            <button class="mode-btn" id="btn-general">GENERAL</button>
+        </div>
+
+        <div id="zoom-badge">1.00×</div>
+
         <div id="viewer">
-            <canvas id="frame-canvas"></canvas>
+            <div id="video-wrap">
+                <video id="media-video" preload="auto" muted>
+                    <source src="./str_chunk_0001.mp4" type="video/mp4">
+                </video>
+                <canvas id="frame-canvas"></canvas>
+            </div>
         </div>
-        <div id="mode-switch">
-            <button class="mode-btn active" data-mode="material">MATERIAL</button>
-            <button class="mode-btn" data-mode="sketch">SKETCH</button>
+
+        <div id="three-container"></div>
+
+        <div id="hud-bc">
+            <div id="time-display">00:00:000 / 00:00:000</div>
+            <div id="scrub-bar"><div id="scrub-fill"></div></div>
+            <div id="extract-bar"><div id="extract-fill"></div></div>
+            <div id="extract-label">EXTRACTING FRAMES…</div>
+            <div id="drag-hint">← DRAG TO ROTATE →</div>
         </div>
-        <div id="drag-hint">← DRAG TO ROTATE →</div>
-        <div id="zoom-hint">SCROLL TO ZOOM</div>
-        <div id="frame-counter">0001 / 0360</div>
-        <div id="loading-bar"></div>
     </div>
 
     <!-- RIGHT -->
@@ -335,182 +487,305 @@
 
 </div>
 
-<script>
-    const TOTAL_FRAMES = 360;
-    const SENSITIVITY  = 2.2;
-    const ZOOM_MIN = 1.0, ZOOM_MAX = 3.0, ZOOM_STEP = 0.12;
+<script type="module">
+    import * as THREE from 'three';
+    import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+    import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
-    const MODES = {
-        material: { folder: './chunk_2bgx_360loop/',    prefix: 'str_chunk_',    ext: '.png' },
-        sketch:   { folder: './chunk_2gbx_360loop_2D/', prefix: 'str_chunk_2d_', ext: '.png' }
-    };
+    // ── DOM ELEMENTS ──────────────────────────
+    const video        = document.getElementById('media-video');
+    const canvas       = document.getElementById('frame-canvas');
+    const ctx          = canvas.getContext('2d');
+    const wrap         = document.getElementById('video-wrap');
+    const viewer       = document.getElementById('viewer');
+    const threeCont    = document.getElementById('three-container');
+    const timeDsp      = document.getElementById('time-display');
+    const scrubFill    = document.getElementById('scrub-fill');
+    const dragHint     = document.getElementById('drag-hint');
+    const zoomBadge    = document.getElementById('zoom-badge');
+    const extractFill  = document.getElementById('extract-fill');
+    const extractLabel = document.getElementById('extract-label');
+    const btnDetail    = document.getElementById('btn-detail');
+    const btnGeneral   = document.getElementById('btn-general');
+    const detailLeft   = document.getElementById('detail-static-wrap');
+    const legendLeft   = document.getElementById('legend-container');
+    const legendList   = document.getElementById('legend-list');
+    const skinChk      = document.getElementById('skin-chk');
 
-    let activeMode   = 'material';
-    let currentFrame = 0;
-    let isDragging   = false;
-    let dragStartX   = 0;
-    let dragStartFrame = 0;
-    let interacted   = false;
-    let rafPending   = false;
-    let zoom         = 1.0;
-    let fitW = 0, fitH = 0;
+    // ── STATE ─────────────────────────────────
+    let currentMode = ''; // Initialized as empty to force the first switchMode call
+    let ready = false;
+    let totalFrames = 0;
+    let frames = [];
+    let frameIndex = 0;
+    let velocity = 0;
+    let isDragging = false;
+    let lastX = 0;
+    let interacted = false;
+    let loopActive = false;
+    let zoom = 1.0;
 
-    const caches = { material: new Array(TOTAL_FRAMES).fill(null), sketch: new Array(TOTAL_FRAMES).fill(null) };
-    const loadCounts = { material: 0, sketch: 0 };
+    const FPS = 24;
+    const SENSITIVITY = 0.6;
+    const DAMPING = 0.88;
+    const MIN_VEL = 0.02;
+    const ZOOM_MIN = 1.0, ZOOM_MAX = 4.0, ZOOM_STEP = 0.12;
 
-    const canvas  = document.getElementById('frame-canvas');
-    const ctx     = canvas.getContext('2d');
-    const counter = document.getElementById('frame-counter');
-    const hint    = document.getElementById('drag-hint');
-    const loadBar = document.getElementById('loading-bar');
-    const viewer  = document.getElementById('viewer');
+    // ── MODE SWITCH ───────────────────────────
+    function switchMode(mode) {
+        if (mode === currentMode) return;
+        currentMode = mode;
 
-    function pad(n) { return String(n + 1).padStart(4, '0'); }
+        btnDetail.classList.toggle('active', mode === 'detail');
+        btnGeneral.classList.toggle('active', mode === 'general');
+        viewer.classList.toggle('hidden', mode === 'general');
+        threeCont.classList.toggle('active', mode === 'general');
+        detailLeft.style.display = mode === 'detail' ? 'block' : 'none';
+        legendLeft.classList.toggle('active', mode === 'general');
+        
+        // HUD adjustments
+        const bc = document.getElementById('hud-bc');
+        bc.style.display = mode === 'detail' ? 'flex' : 'none';
 
-    function framePath(mode, i) {
-        const m = MODES[mode];
-        return m.folder + m.prefix + pad(i) + m.ext;
+        if (mode === 'general') {
+            if (!threeInited) {
+                initThree();
+            } else {
+                animate(); // Resume the rendering loop
+            }
+            onWindowResize();
+        } else {
+            // detail mode - refresh canvas
+            requestAnimationFrame(() => {
+                sizeCanvas();
+                drawFrame(frameIndex);
+            });
+        }
     }
 
-    // ── CANVAS SIZING ────────────────────────
-    function computeFit(img) {
+    btnDetail.addEventListener('click', () => switchMode('detail'));
+    btnGeneral.addEventListener('click', () => switchMode('general'));
+
+    // ── VIDEO DETAIL LOGIC ────────────────────
+    function sizeCanvas() {
+        if (!video.videoWidth) return;
         const vw = viewer.clientWidth, vh = viewer.clientHeight;
-        const aspect = img.naturalWidth / img.naturalHeight;
+        const aspect = video.videoWidth / video.videoHeight;
         let w = vw, h = vw / aspect;
         if (h > vh) { h = vh; w = vh * aspect; }
-        fitW = w; fitH = h;
+        canvas.style.width  = Math.round(w) + 'px';
+        canvas.style.height = Math.round(h) + 'px';
+        canvas.width  = video.videoWidth;
+        canvas.height = video.videoHeight;
     }
 
-    function applyZoom() {
-        canvas.style.width  = Math.round(fitW * zoom) + 'px';
-        canvas.style.height = Math.round(fitH * zoom) + 'px';
-    }
-
-    function resizeCanvas(img) {
-        canvas.width  = img.naturalWidth;
-        canvas.height = img.naturalHeight;
-        computeFit(img); applyZoom();
-    }
-
-    // ── DRAW ─────────────────────────────────
-    function drawFrame(i) {
-        const img = caches[activeMode][i];
-        if (!img) return;
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.drawImage(img, 0, 0);
-        counter.textContent = pad(i) + ' / 0360';
-    }
-
-    function scheduleFrame(i) {
-        i = ((i % TOTAL_FRAMES) + TOTAL_FRAMES) % TOTAL_FRAMES;
-        currentFrame = i;
-        if (rafPending) return;
-        rafPending = true;
-        requestAnimationFrame(() => { rafPending = false; drawFrame(currentFrame); });
-    }
-
-    // ── PRELOAD ──────────────────────────────
-    let firstReady = false;
-
-    function preloadMode(mode, onComplete) {
-        for (let i = 0; i < TOTAL_FRAMES; i++) {
-            const img = new Image();
-            img.onload = () => {
-                caches[mode][i] = img;
-                loadCounts[mode]++;
-                if (mode === activeMode) {
-                    const pct = loadCounts[mode] / TOTAL_FRAMES * 100;
-                    loadBar.style.width = pct + '%';
-                    if (!firstReady && i === 0) {
-                        firstReady = true;
-                        resizeCanvas(img);
-                        drawFrame(0);
-                    }
-                    if (loadCounts[mode] === TOTAL_FRAMES) {
-                        loadBar.style.transition = 'opacity 0.5s ease';
-                        loadBar.style.opacity = '0';
-                    }
-                }
-                if (loadCounts[mode] === TOTAL_FRAMES && onComplete) onComplete();
-            };
-            img.src = framePath(mode, i);
-        }
-    }
-
-    // ── MODE SWITCH ──────────────────────────
-    function setMode(mode) {
-        if (mode === activeMode) return;
-        activeMode = mode;
-
-        document.querySelectorAll('.mode-btn').forEach(b => {
-            b.classList.toggle('active', b.dataset.mode === mode);
+    async function extractFrames() {
+        await new Promise(r => {
+            if (video.readyState >= 1) return r();
+            video.addEventListener('loadedmetadata', r, { once: true });
         });
-
-        // reset load bar for new mode if not yet complete
-        if (loadCounts[mode] < TOTAL_FRAMES) {
-            loadBar.style.transition = 'none';
-            loadBar.style.opacity = '1';
-            loadBar.style.width = (loadCounts[mode] / TOTAL_FRAMES * 100) + '%';
+        sizeCanvas();
+        ready = true;
+        totalFrames = Math.ceil(video.duration * FPS);
+        frames = new Array(totalFrames);
+        const off = document.createElement('canvas');
+        off.width = video.videoWidth; off.height = video.videoHeight;
+        const offCtx = off.getContext('2d');
+        for (let i = 0; i < totalFrames; i++) {
+            video.currentTime = i / FPS;
+            await new Promise(r => video.addEventListener('seeked', r, { once: true }));
+            offCtx.drawImage(video, 0, 0);
+            frames[i] = await createImageBitmap(off);
+            extractFill.style.width = ((i + 1) / totalFrames * 100) + '%';
+            if (!loopActive && !isDragging) { frameIndex = i; drawFrame(i); }
         }
-
-        // show current frame from new cache (or first available)
-        const img = caches[mode][currentFrame] || caches[mode].find(Boolean);
-        if (img) { resizeCanvas(img); drawFrame(currentFrame); }
+        extractLabel.classList.add('done');
     }
 
-    document.querySelectorAll('.mode-btn').forEach(btn => {
-        btn.addEventListener('click', () => setMode(btn.dataset.mode));
-    });
+    function drawFrame(idx) {
+        const i = ((Math.round(idx) % totalFrames) + totalFrames) % totalFrames;
+        const bmp = frames[i]; if (!bmp) return;
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(bmp, 0, 0);
+        const t = i / FPS, d = totalFrames / FPS;
+        timeDsp.textContent = `${fmt(t)} / ${fmt(d)}`;
+        scrubFill.style.width = (i / totalFrames * 100) + '%';
+    }
+    function fmt(s) { 
+        const m=Math.floor(s/60), sc=Math.floor(s%60), ms=Math.floor((s%1)*1000);
+        return `${String(m).padStart(2,'0')}:${String(sc).padStart(2,'0')}:${String(ms).padStart(3,'0')}`;
+    }
 
-    // ── DRAG ─────────────────────────────────
+    function tick() {
+        if (!isDragging) { velocity *= DAMPING; if (Math.abs(velocity) < MIN_VEL) { loopActive = false; return; } }
+        frameIndex = ((frameIndex + velocity) % totalFrames + totalFrames) % totalFrames;
+        drawFrame(frameIndex);
+        requestAnimationFrame(tick);
+    }
+    function startLoop() { if (!loopActive) { loopActive = true; requestAnimationFrame(tick); } }
+
     viewer.addEventListener('mousedown', (e) => {
-        if (e.button !== 0) return;
-        isDragging = true;
-        dragStartX = e.clientX;
-        dragStartFrame = currentFrame;
+        if (e.button !== 0 || !ready) return;
+        isDragging = true; lastX = e.clientX; velocity = 0;
         viewer.style.cursor = 'ew-resize';
-        if (!interacted) { interacted = true; hint.classList.add('hidden'); }
-        e.preventDefault();
+        if (!interacted) { interacted = true; dragHint.classList.add('hidden'); }
+        startLoop(); e.preventDefault();
     });
+    window.addEventListener('mousemove', (e) => { if (isDragging) { velocity=(e.clientX-lastX)*SENSITIVITY; lastX=e.clientX; } });
+    window.addEventListener('mouseup', () => { if (isDragging) { isDragging=false; viewer.style.cursor=''; } });
 
-    window.addEventListener('mousemove', (e) => {
-        if (!isDragging) return;
-        const delta = e.clientX - dragStartX;
-        const newFrame = ((dragStartFrame + Math.round(delta / SENSITIVITY)) % TOTAL_FRAMES + TOTAL_FRAMES) % TOTAL_FRAMES;
-        if (newFrame !== currentFrame) scheduleFrame(newFrame);
-    });
-
-    window.addEventListener('mouseup', () => { isDragging = false; viewer.style.cursor = ''; });
-
-    viewer.addEventListener('touchstart', (e) => {
-        dragStartX = e.touches[0].clientX;
-        dragStartFrame = currentFrame;
-        if (!interacted) { interacted = true; hint.classList.add('hidden'); }
-    }, { passive: true });
-
-    viewer.addEventListener('touchmove', (e) => {
-        const delta = e.touches[0].clientX - dragStartX;
-        const newFrame = ((dragStartFrame + Math.round(delta / SENSITIVITY)) % TOTAL_FRAMES + TOTAL_FRAMES) % TOTAL_FRAMES;
-        if (newFrame !== currentFrame) scheduleFrame(newFrame);
-    }, { passive: true });
-
-    // ── SCROLL ZOOM ──────────────────────────
     viewer.addEventListener('wheel', (e) => {
+        if (currentMode !== 'detail') return;
         e.preventDefault();
-        zoom -= Math.sign(e.deltaY) * ZOOM_STEP;
-        zoom = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, zoom));
-        applyZoom();
+        zoom -= Math.sign(e.deltaY) * ZOOM_STEP; zoom = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, zoom));
+        wrap.style.transform = `scale(${zoom})`; zoomBadge.textContent = zoom.toFixed(2) + '×';
     }, { passive: false });
 
-    window.addEventListener('resize', () => {
-        const img = caches[activeMode][currentFrame];
-        if (img) { computeFit(img); applyZoom(); }
-        drawFrame(currentFrame);
+
+    // ── THREE.JS GENERAL LOGIC ────────────────
+    let scene, camera, renderer, controls, model;
+    let threeInited = false;
+    let meshesMap = new Map();
+
+    function initThree() {
+        threeInited = true;
+        scene = new THREE.Scene();
+        scene.background = new THREE.Color(0xffffff);
+
+        camera = new THREE.PerspectiveCamera(45, threeCont.clientWidth / threeCont.clientHeight, 0.1, 2000);
+        camera.setFocalLength(50); // Set focal length to 50mm
+        camera.position.set(100, 100, 100);
+
+        renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        renderer.setPixelRatio(window.devicePixelRatio);
+        renderer.setSize(threeCont.clientWidth, threeCont.clientHeight);
+        renderer.shadowMap.enabled = true;
+        threeCont.appendChild(renderer.domElement);
+
+        controls = new OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.05;
+
+        const ambient = new THREE.AmbientLight(0xffffff, 1.2);
+        scene.add(ambient);
+
+        const directional = new THREE.DirectionalLight(0xffffff, 1.5);
+        directional.position.set(50, 100, 50);
+        scene.add(directional);
+
+        const loader = new GLTFLoader();
+        loader.load('./skin_struct_def.glb', (gltf) => {
+            model = gltf.scene;
+            scene.add(model);
+
+            // Center model
+            const box = new THREE.Box3().setFromObject(model);
+            const center = box.getCenter(new THREE.Vector3());
+            const size = box.getSize(new THREE.Vector3());
+            model.position.sub(center);
+            
+            camera.position.set(size.x * 1.5, size.y * 1.5, size.z * 1.5);
+            controls.target.set(0,0,0);
+            controls.update();
+
+            // Process meshes for legend
+            model.traverse(node => {
+                if (node.isMesh) {
+                    const name = node.name || "UNNAMED";
+                    const color = node.material.color ? node.material.color.getStyle() : "rgba(100,100,100,0.5)";
+                    
+                    if (!meshesMap.has(name)) {
+                        meshesMap.set(name, { count: 0, color: color, nodes: [] });
+                    }
+                    meshesMap.get(name).count++;
+                    meshesMap.get(name).nodes.push(node);
+                }
+            });
+
+            buildLegend();
+            animate();
+        });
+    }
+
+    const LEGEND_DATA = {
+        "tile_stone_01": 3891,
+        "tile_stone_02": 3605,
+        "tile_stone_03": 4090,
+        "tile_stone_04": 3858,
+        "tile_metal_01": 1279,
+        "tile_metal_02": 5152,
+        "tubular_100x100": 80406,
+        "tubolar_200x200": 249,
+        "IPE_ver_600": 326,
+        "IPE_hor_600": 281,
+        "IPE_800": 81
+    };
+
+    function buildLegend() {
+        legendList.innerHTML = '';
+        meshesMap.forEach((data, name) => {
+            const count = LEGEND_DATA[name] || data.count;
+            const item = document.createElement('div');
+            item.className = 'legend-item';
+            item.innerHTML = `
+                <div class="color-box" style="background: ${data.color}"></div>
+                <div class="mesh-name">${name}</div>
+                <div class="mesh-count">${count}</div>
+            `;
+            legendList.appendChild(item);
+        });
+
+        // Add total tiles entry
+        const totalTiles = LEGEND_DATA["tile_stone_01"] + LEGEND_DATA["tile_stone_02"] + LEGEND_DATA["tile_stone_03"] + LEGEND_DATA["tile_stone_04"] + LEGEND_DATA["tile_metal_01"] + LEGEND_DATA["tile_metal_02"];
+        const totalItem = document.createElement('div');
+        totalItem.className = 'legend-item';
+        totalItem.style.marginTop = '16px';
+        totalItem.style.paddingTop = '12px';
+        totalItem.style.borderTop = '1px solid rgba(0,0,0,0.05)';
+        totalItem.innerHTML = `
+            <div class="color-box" style="background: transparent"></div>
+            <div class="mesh-name" style="opacity: 0.9; font-weight: bold;">TOTAL TILES</div>
+            <div class="mesh-count" style="opacity: 0.8; font-weight: bold;">${totalTiles}</div>
+        `;
+        legendList.appendChild(totalItem);
+    }
+
+    skinChk.addEventListener('change', () => {
+        if (!model) return;
+        const hideSkin = !skinChk.checked;
+        model.traverse(node => {
+            if (node.isMesh && node.name.toLowerCase().includes('tile')) {
+                node.visible = !hideSkin;
+            }
+        });
     });
 
-    // ── INIT ─────────────────────────────────
-    // Load sketch only after material is complete to avoid 720 concurrent requests
-    preloadMode('material', () => preloadMode('sketch'));
+    function animate() {
+        if (currentMode !== 'general') return;
+        requestAnimationFrame(animate);
+        controls.update();
+        renderer.render(scene, camera);
+        
+        // Update zoom badge for 3D
+        const d = camera.position.length();
+        // zoomBadge.textContent = '3D MODE';
+    }
+
+    function onWindowResize() {
+        if (!threeInited) return;
+        camera.aspect = threeCont.clientWidth / threeCont.clientHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(threeCont.clientWidth, threeCont.clientHeight);
+        sizeCanvas();
+    }
+    window.addEventListener('resize', onWindowResize);
+
+    // ── INIT ──
+    video.load();
+    extractFrames();
+    
+    // Initial mode state
+    switchMode('general');
 </script>
 </body>
 </html>

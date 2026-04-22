@@ -857,6 +857,7 @@ function performNav(id) {
         "SITE": "./site_model/index.html",
         "UE ENVIRONMENT": "./ue-360/index.html",
         "STRUCTURE": "./structure/index.html",
+        "SKIN": "./structure/index.html",
         "MOON ENVIRONMENT": "./2GBX_Hyperobject/index.html",
         "MEDIA PROJECT": "./media_chunk/index.html"
     };
