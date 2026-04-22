@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>HYPEROBJECT — MEDIA PROJECT</title>
+    <link href="https://fonts.googleapis.com/css2?family=Fragment+Mono&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body, html {
+            width: 100%; height: 100%; overflow: hidden;
+            background: #000000;
+            font-family: 'Fragment Mono', monospace;
+            cursor: crosshair;
+            color: rgba(255,255,255,0.85);
+        }
+
+        /* ── LAYOUT ─────────────────────────── */
+        #layout {
+            display: grid;
+            grid-template-columns: 16% 1fr 18%;
+            grid-template-rows: 100vh;
+            width: 100%; height: 100%;
+        }
+
+        /* ── LEFT PANEL ─────────────────────── */
+        #panel-left {
+            border-right: 1px solid #1a1a1a;
+            display: flex;
+            flex-direction: column;
+            padding: 28px 20px 28px 24px;
+            overflow: hidden;
+        }
+
+        .back-btn {
+            display: inline-block;
+            font-size: 7px;
+            text-transform: uppercase;
+            letter-spacing: 0.18em;
+            color: rgba(255,255,255,0.7);
+            text-decoration: none;
+            border: 1px solid rgba(255,255,255,0.2);
+            padding: 5px 10px;
+            margin-bottom: 32px;
+            transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+            width: fit-content;
+            flex-shrink: 0;
+        }
+        .back-btn:hover { background: #ffffff; color: #000000; border-color: #ffffff; }
+
+        .node-label {
+            font-size: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.22em;
+            opacity: 0.3;
+            margin-bottom: 8px;
+            flex-shrink: 0;
+        }
+
+        .page-title {
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            line-height: 1.3;
+            margin-bottom: 20px;
+            flex-shrink: 0;
+        }
+
+        .divider {
+            width: 100%;
+            height: 1px;
+            background: #1a1a1a;
+            margin-bottom: 16px;
+            flex-shrink: 0;
+        }
+
+        .desc-block { flex-shrink: 0; margin-bottom: 10px; }
+
+        .desc-block-title {
+            font-size: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.2em;
+            opacity: 0.35;
+            margin-bottom: 5px;
+        }
+
+        .desc-block-text {
+            font-size: 7px;
+            line-height: 1.75;
+            text-transform: uppercase;
+            letter-spacing: 0.07em;
+            opacity: 0.55;
+        }
+
+        /* ── CENTER PANEL ───────────────────── */
+        #panel-center {
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            background: #000;
+        }
+
+        #viewer {
+            width: 100%; height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            user-select: none;
+        }
+
+        #video-wrap {
+            position: relative;
+            flex-shrink: 0;
+            transform-origin: center center;
+        }
+
+        #media-video { display: none; } /* hidden — used only for extraction */
+
+        #frame-canvas {
+            display: block;
+            pointer-events: none;
+        }
+
+
+        /* ── CENTER HUD ─────────────────────── */
+        #hud-bc {
+            position: absolute;
+            bottom: 22px; left: 50%;
+            transform: translateX(-50%);
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        #time-display {
+            font-size: 7px;
+            letter-spacing: 0.2em;
+            opacity: 0.3;
+        }
+
+        #scrub-bar {
+            width: 180px; height: 1px;
+            background: rgba(255,255,255,0.1);
+            position: relative;
+        }
+        #scrub-fill  { height: 100%; background: rgba(255,255,255,0.5); width: 0%; }
+
+        #extract-bar {
+            position: absolute;
+            bottom: 0; left: 0;
+            width: 180px; height: 1px;
+            background: rgba(255,255,255,0.08);
+        }
+        #extract-fill {
+            height: 100%;
+            background: rgba(255,255,255,0.35);
+            width: 0%;
+            transition: width 0.1s linear;
+        }
+        #extract-label {
+            font-size: 6px; letter-spacing: 0.2em;
+            opacity: 0.25; margin-top: 4px;
+            transition: opacity 0.4s ease;
+        }
+        #extract-label.done { opacity: 0; }
+
+        #drag-hint {
+            font-size: 6px; letter-spacing: 0.2em;
+            opacity: 0.15; transition: opacity 0.4s ease;
+        }
+        #drag-hint.hidden { opacity: 0; }
+
+        #hud-top {
+            position: absolute;
+            top: 22px; left: 50%;
+            transform: translateX(-50%);
+            font-size: 7px;
+            text-transform: uppercase;
+            letter-spacing: 0.22em;
+            opacity: 0.2;
+            pointer-events: none;
+            z-index: 10;
+            white-space: nowrap;
+        }
+
+        #zoom-badge {
+            position: absolute;
+            top: 22px; right: 18px;
+            font-size: 6px;
+            letter-spacing: 0.18em;
+            opacity: 0.25;
+            pointer-events: none;
+            z-index: 10;
+            text-transform: uppercase;
+        }
+
+        /* ── RIGHT PANEL ────────────────────── */
+        #panel-right {
+            border-left: 1px solid #1a1a1a;
+            display: flex;
+            flex-direction: column;
+            padding: 28px 20px 20px 20px;
+            overflow: hidden;
+        }
+
+        .keyplan-label {
+            font-size: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.22em;
+            opacity: 0.3;
+            margin-bottom: 10px;
+            flex-shrink: 0;
+        }
+
+        #keyplan-img {
+            width: 100%;
+            display: block;
+            object-fit: contain;
+            object-position: top center;
+            flex-shrink: 0;
+        }
+    </style>
+</head>
+<body>
+
+<div id="layout">
+
+    <!-- LEFT -->
+    <div id="panel-left">
+        <a class="back-btn" href="../index.html">← BACK</a>
+
+        <div class="node-label">NODE — MEDIA PROJECT</div>
+        <div class="page-title">MEDIA<br>PROJECT</div>
+
+        <div class="divider"></div>
+
+        <div class="desc-block">
+            <div class="desc-block-title">IMMERSIVE MEDIA SPACE</div>
+            <div class="desc-block-text">
+                The media project integrates three LED wall systems within the building's primary public volume. The theater space anchors the ground level, with vertical LED surfaces cascading through the atrium to create a continuous immersive environment linking all program levels.
+            </div>
+        </div>
+
+        <div class="desc-block" style="margin-top:14px;">
+            <div class="desc-block-title">LED SYSTEMS</div>
+            <div class="desc-block-text">
+                LEDWALL 01 — Theater space, ground level<br>
+                LEDWALL 02 — Atrium facade, mid level<br>
+                LEDWALL 03 — Upper canopy surface
+            </div>
+        </div>
+    </div>
+
+    <!-- CENTER -->
+    <div id="panel-center">
+        <div id="hud-top">HYPEROBJECT — 2GBX SS26 — MEDIA PROJECT</div>
+        <div id="zoom-badge" id="zoom-val">1.00×</div>
+
+        <div id="viewer">
+            <div id="video-wrap">
+                <video id="media-video" preload="auto" muted>
+                    <source src="./media_chunk_0001.mp4" type="video/mp4">
+                </video>
+                <canvas id="frame-canvas"></canvas>
+            </div>
+        </div>
+
+        <div id="hud-bc">
+            <div id="time-display">00:00:000 / 00:00:000</div>
+            <div id="scrub-bar"><div id="scrub-fill"></div></div>
+            <div id="extract-bar"><div id="extract-fill"></div></div>
+            <div id="extract-label">EXTRACTING FRAMES…</div>
+            <div id="drag-hint">← DRAG TO ROTATE →</div>
+        </div>
+    </div>
+
+    <!-- RIGHT -->
+    <div id="panel-right">
+        <div class="keyplan-label">KEY PLAN</div>
+        <img id="keyplan-img" src="./media_keyplan.png" alt="Media Key Plan" draggable="false">
+    </div>
+
+</div>
+
+<script>
+    const video        = document.getElementById('media-video');
+    const canvas       = document.getElementById('frame-canvas');
+    const ctx          = canvas.getContext('2d');
+    const wrap         = document.getElementById('video-wrap');
+    const viewer       = document.getElementById('viewer');
+    const timeDsp      = document.getElementById('time-display');
+    const scrubFill    = document.getElementById('scrub-fill');
+    const dragHint     = document.getElementById('drag-hint');
+    const zoomBadge    = document.getElementById('zoom-badge');
+    const extractFill  = document.getElementById('extract-fill');
+    const extractLabel = document.getElementById('extract-label');
+
+    const ZOOM_MIN    = 1.0;
+    const ZOOM_MAX    = 4.0;
+    const ZOOM_STEP   = 0.12;
+    const FPS         = 24;       // extraction frame rate
+    const SENSITIVITY = 0.6;      // frames per pixel dragged
+    const DAMPING     = 0.88;
+    const MIN_VEL     = 0.02;     // frames/frame threshold
+
+    let zoom       = 1.0;
+    let frames     = [];          // ImageBitmap cache
+    let totalFrames = 0;
+    let frameIndex  = 0;          // current displayed frame (float)
+    let velocity    = 0;          // frames/tick momentum
+    let isDragging  = false;
+    let lastX       = 0;
+    let interacted  = false;
+    let loopActive  = false;
+    let ready       = false;
+
+    // ── CANVAS SIZE ───────────────────────────
+    function sizeCanvas() {
+        if (!video.videoWidth) return;
+        const vw = viewer.clientWidth, vh = viewer.clientHeight;
+        const aspect = video.videoWidth / video.videoHeight;
+        let w = vw, h = vw / aspect;
+        if (h > vh) { h = vh; w = vh * aspect; }
+        canvas.style.width  = Math.round(w) + 'px';
+        canvas.style.height = Math.round(h) + 'px';
+        canvas.width  = video.videoWidth;
+        canvas.height = video.videoHeight;
+    }
+    window.addEventListener('resize', sizeCanvas);
+
+    // ── FRAME EXTRACTION ─────────────────────
+    // Seeks the hidden video to every 1/FPS interval and captures an ImageBitmap.
+    async function extractFrames() {
+        await new Promise(r => {
+            if (video.readyState >= 1) return r();
+            video.addEventListener('loadedmetadata', r, { once: true });
+        });
+
+        sizeCanvas();
+        const dur = video.duration;
+        totalFrames = Math.ceil(dur * FPS);
+        frames = new Array(totalFrames);
+
+        const offscreen = document.createElement('canvas');
+        offscreen.width  = video.videoWidth;
+        offscreen.height = video.videoHeight;
+        const offCtx = offscreen.getContext('2d');
+
+        for (let i = 0; i < totalFrames; i++) {
+            video.currentTime = i / FPS;
+            await new Promise(r => video.addEventListener('seeked', r, { once: true }));
+            offCtx.drawImage(video, 0, 0);
+            frames[i] = await createImageBitmap(offscreen);
+
+            extractFill.style.width = ((i + 1) / totalFrames * 100) + '%';
+        }
+
+        extractLabel.classList.add('done');
+        ready = true;
+        drawFrame(0);
+    }
+
+    // ── DRAW ─────────────────────────────────
+    function drawFrame(idx) {
+        const i = ((Math.round(idx) % totalFrames) + totalFrames) % totalFrames;
+        const bmp = frames[i];
+        if (!bmp) return;
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(bmp, 0, 0);
+        // HUD
+        const t = i / FPS;
+        const d = totalFrames / FPS;
+        timeDsp.textContent   = `${fmt(t)} / ${fmt(d)}`;
+        scrubFill.style.width = (i / totalFrames * 100) + '%';
+    }
+
+    function fmt(s) {
+        if (!isFinite(s)) s = 0;
+        const m  = Math.floor(s / 60);
+        const sc = Math.floor(s % 60);
+        const ms = Math.floor((s % 1) * 1000);
+        return `${String(m).padStart(2,'0')}:${String(sc).padStart(2,'0')}:${String(ms).padStart(3,'0')}`;
+    }
+
+    // ── MOMENTUM LOOP ─────────────────────────
+    function tick() {
+        if (!isDragging) {
+            velocity *= DAMPING;
+            if (Math.abs(velocity) < MIN_VEL) { loopActive = false; return; }
+        }
+        frameIndex = ((frameIndex + velocity) % totalFrames + totalFrames) % totalFrames;
+        drawFrame(frameIndex);
+        requestAnimationFrame(tick);
+    }
+
+    function startLoop() {
+        if (!loopActive) { loopActive = true; requestAnimationFrame(tick); }
+    }
+
+    // ── DRAG ─────────────────────────────────
+    viewer.addEventListener('mousedown', (e) => {
+        if (e.button !== 0 || !ready) return;
+        isDragging = true;
+        lastX      = e.clientX;
+        velocity   = 0;
+        viewer.style.cursor = 'ew-resize';
+        if (!interacted) { interacted = true; dragHint.classList.add('hidden'); }
+        startLoop();
+        e.preventDefault();
+    });
+
+    window.addEventListener('mousemove', (e) => {
+        if (!isDragging) return;
+        velocity = (e.clientX - lastX) * SENSITIVITY;
+        lastX    = e.clientX;
+    });
+
+    window.addEventListener('mouseup', () => {
+        if (!isDragging) return;
+        isDragging = false;
+        viewer.style.cursor = '';
+    });
+
+    viewer.addEventListener('touchstart', (e) => {
+        if (!ready) return;
+        isDragging = true; lastX = e.touches[0].clientX; velocity = 0;
+        if (!interacted) { interacted = true; dragHint.classList.add('hidden'); }
+        startLoop();
+    }, { passive: true });
+
+    viewer.addEventListener('touchmove', (e) => {
+        if (!isDragging) return;
+        velocity = (e.touches[0].clientX - lastX) * SENSITIVITY;
+        lastX    = e.touches[0].clientX;
+    }, { passive: true });
+
+    viewer.addEventListener('touchend', () => { isDragging = false; });
+
+    // ── SCROLL ZOOM ───────────────────────────
+    viewer.addEventListener('wheel', (e) => {
+        e.preventDefault();
+        zoom -= Math.sign(e.deltaY) * ZOOM_STEP;
+        zoom = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, zoom));
+        wrap.style.transform  = `scale(${zoom})`;
+        zoomBadge.textContent = zoom.toFixed(2) + '×';
+    }, { passive: false });
+
+    // ── INIT ──────────────────────────────────
+    video.load();
+    extractFrames();
+</script>
+</body>
+</html>

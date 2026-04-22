@@ -252,6 +252,9 @@ const FILES = [
 
     // ── MEDIA PROJECT ────────────────────────
     F('260303_exploded-media', 'glb', 'MEDIA PROJECT'),
+    F('media_chunk/index', 'html', 'MEDIA PROJECT'),
+    F('media_chunk/media_chunk_0001', 'mp4', 'MEDIA PROJECT'),
+    F('media_chunk/media_keyplan', 'png', 'MEDIA PROJECT'),
 
     // ── PROJECT MODEL ────────────────────────
     F('HYPEROBJECT_midterm/exploded_diagram', 'html', 'PROJECT MODEL'),
@@ -854,7 +857,8 @@ function performNav(id) {
         "SITE": "./site_model/index.html",
         "UE ENVIRONMENT": "./ue-360/index.html",
         "STRUCTURE": "./structure/index.html",
-        "MOON ENVIRONMENT": "./2GBX_Hyperobject/index.html"
+        "MOON ENVIRONMENT": "./2GBX_Hyperobject/index.html",
+        "MEDIA PROJECT": "./media_chunk/index.html"
     };
     window.location.href = nav[id] || ('.' + id.toLowerCase().replace(/\s+/g, '_') + '/');
 }
