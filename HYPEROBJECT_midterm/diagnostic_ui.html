@@ -66,15 +66,14 @@
 
         // --- 1. FUNCTION MAP ---
         const FUNCTION_MAP = [
-            { r: 1.0, g: 0.14, b: 0.0, label: "CIRCULATION", desc: "Primary transit arteries connecting core structural nodes." },
-            { r: 0.5, g: 0.0, b: 0.5, label: "RESEARCH MODULES", desc: "Laboratories for quantum biological studies and planetary transition." },
-            { r: 0.0, g: 0.6, b: 1.0, label: "SYNTHETIC LANDSCAPE", desc: "Bio-domes preserving Terran DNA for Martian colonization." },
-            { r: 0.0, g: 1.0, b: 0.39, label: "DATA_CENTER", desc: "Hub for bridge stability monitoring and inter-planetary data sync." },
-            { r: 0.92, g: 0.0, b: 1.0, label: "IMMERSIVE_EXHIBITION", desc: "Virtual modules documenting the bridge history." },
-            { r: 1.0, g: 0.88, b: 0.0, label: "PUBLIC_SPACES", desc: "Facilitating personnel well-being during bridge residence." },
-            { r: 1.0, g: 0.4, b: 0.0, label: "SERVICES_FOOD AREA", desc: "Automated nutrient processing for bridge staff." },
-            { r: 1.0, g: 0.73, b: 0.8, label: "EXHIBITION_SPACES", desc: "Galleries showcasing Martian architectural artifacts." },
-            { r: -1, g: -1, b: -1, label: "TRANSITION_ZONE", desc: "Unspecified sector currently under diagnostic review." }
+            { r: 1.0, g: 0.14, b: 0.0, label: "View 01", desc: "Data can be pulled from ordinary life and used to study how we interact and why this immersive view of the city adds a missing layer of information to our perspective" },
+            { r: 0.5, g: 0.0, b: 0.5, label: "Labs/Offices", desc: "Research and experimentation with the dark matter is vital to our mission of understanding how complex systems influence and coexists on earth... utilizing the synthetic AI and the raw material to produce a new understanding" },
+            { r: 0.0, g: 0.6, b: 1.0, label: "Mega Fields", desc: "Immersive environment depicting the fields of influence that are invisible to us because of their large scale they can feel irreverent but might be impacting us more than we believe think space clouds, mega asteroids, black holes, galaxies" },
+            { r: 0.0, g: 1.0, b: 0.39, label: "Data Center", desc: "Infrastructure as a open source public amenity aimed at understanding how to interact with emerging entities and methods of utility which do not deplete our raw resources" },
+            { r: 0.92, g: 0.0, b: 1.0, label: "Invisible Entities", desc: "Immersive environment dedicated to micro scale force entities that can have global impact like viruses, parasites, termites, physarum polycephalum" },
+            { r: 1.0, g: 0.88, b: 0.0, label: "Conference", desc: "Space for dedicated panels, lectures, and the hard discourse necessary for inspiration and discovery" },
+            { r: 1.0, g: 0.4, b: 0.0, label: "Collided Human", desc: "Immersive environment dedicated to the everyday objects that we see and touch but don't realize the level of complexity that it takes to bring them into reality like artificially intelligent machines, artificial landscapes, plastic, raw material" },
+            { r: 1.0, g: 0.73, b: 0.8, label: "Theatre", desc: "Films and media often persuade and guide culture more than we can understand studying and understanding how to produce them is integral to the museums mission of understanding these fields of influence" }
         ];
 
         // --- 2. LENS EFFECT PARAMETERS ---
@@ -243,7 +242,7 @@
                         let label = "", desc = "", color = "#fff";
                         
                         if (!isProgramMode && (m.name === "MASS_GEOM" || m.name === "MASS_WIRE")) {
-                            label = "BLACKROCK_SKIN"; desc = "A bridge between saving Earth and conquering Mars.";
+                            label = "BLACKROCK_SKIN"; desc = "";
                             customCursor.classList.add('pulsing');
                         } else if (isProgramMode && (m.name === "PROG_GEOM" || m.name === "PROG_WIRE")) {
                             const col = m.material.albedoColor || m.material.emissiveColor;
