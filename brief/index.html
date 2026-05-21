@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DS1201 2GBX - Studio Brief</title>
+    <style>
+        /* ==========================================
+           HYPEROBJECT PROJECT — STYLESHEET
+           ========================================== */
+        @import url('https://fonts.googleapis.com/css2?family=Fragment+Mono:ital@0;1&display=swap');
+
+        :root {
+            --bg: #000000;
+            --fg: rgba(255,255,255,0.85);
+            --fg-dim: rgb(61, 61, 61);
+            --accent: #CA8A04;
+            --font: 'Fragment Mono', monospace;
+        }
+
+        *, *::before, *::after {
+            margin: 0; padding: 0; box-sizing: border-box;
+        }
+
+        body, html {
+            width: 100%; height: 100%;
+            overflow: hidden;
+            font-family: var(--font);
+            background: var(--bg);
+            color: var(--fg);
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        #diagram-container {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            background: #000;
+            background-size: 40px 40px;
+            background-image: 
+                linear-gradient(to right, rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+            cursor: grab;
+        }
+
+        #diagram-container:active {
+            cursor: grabbing;
+        }
+
+        #diagram-content {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            transform-origin: 0 0;
+        }
+
+        .fixed-title {
+            position: absolute;
+            top: 28px;
+            left: 28px;
+            z-index: 10;
+            pointer-events: none;
+        }
+
+        .fixed-title h1 {
+            font-size: 16px;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            color: #ffffff;
+            font-weight: normal;
+        }
+
+        .title-description {
+            font-family: var(--font);
+            font-size: 10px;
+            opacity: 0.7;
+            color: #ffffff;
+            letter-spacing: 0.05em;
+            line-height: 1.4;
+            margin-top: 10px;
+        }
+
+        /* ==========================================
+           MIRO BOARD NODES (SLIDES)
+           ========================================== */
+        .node-dom {
+            position: absolute;
+            width: 380px;
+            display: flex;
+            flex-direction: column;
+            transform: translate(-50%, -50%);
+            padding: 24px;
+            box-sizing: border-box;
+            cursor: default;
+        }
+
+        .node-dom.primary {
+            background: #ffffff;
+            border: 2px solid #ffffff;
+            color: #000000;
+        }
+
+        .node-dom.secondary {
+            background: #000000;
+            border: 2px solid #ffffff;
+            color: #ffffff;
+        }
+
+        .node-dom.tertiary {
+            background: #000000;
+            border: 2px dashed #ffffff;
+            color: #ffffff;
+        }
+
+        .node-dom-header {
+            font-size: 14px;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 16px;
+            border-bottom: 1px solid currentColor;
+            padding-bottom: 8px;
+        }
+
+        .node-dom-body {
+            font-size: 11px;
+            line-height: 1.6;
+        }
+
+        .node-dom-body p {
+            margin-bottom: 12px;
+            white-space: pre-wrap;
+        }
+        
+        .node-dom-body p:last-child {
+            margin-bottom: 0;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="fixed-title">
+        <h1>DS1201 2GBX</h1>
+        <div class="title-description">Project Brief Mapping</div>
+    </div>
+
+    <div id="diagram-container">
+        <div id="diagram-content">
+            
+            <div class="node-dom primary" style="left: -480px; top: -250px;">
+                <div class="node-dom-header">01. Studio Concept</div>
+                <div class="node-dom-body">
+                    <p>The studio approaches architecture through the convergence of typology, technology, and ecology[cite: 27]. These are not treated as fixed categories but as interrelated architectural questions that shape how buildings are conceived, organized, and realized[cite: 28].</p>
+                    <p>Underlying the 2GBX studio is an interest in transforming environmental challenges into opportunities for innovation and creative response[cite: 23]. The studio aims to reconceptualize the relationship between humans and the natural world, with the goal of contributing to a more resilient built environment[cite: 25].</p>
+                </div>
+            </div>
+
+            <div class="node-dom secondary" style="left: 0px; top: -250px;">
+                <div class="node-dom-header">02. What Are We Designing?</div>
+                <div class="node-dom-body">
+                    <p>Students will design a Media Museum[cite: 31]. The project is an open-ended typology rather than a fixed institutional model[cite: 91].</p>
+                    <p>The building type is formulated through architectural decisions about new user patterns, spatial/functional hybrids, and the project's typo-morphological relationship to its urban context[cite: 31]. The Media Museum is approached as a framework that can accommodate evolving forms of media production, exhibition, storage, and public engagement, rather than as a singular or static container[cite: 92].</p>
+                </div>
+            </div>
+
+            <div class="node-dom tertiary" style="left: 480px; top: -250px;">
+                <div class="node-dom-header">03. Where Are We Designing?</div>
+                <div class="node-dom-body">
+                    <p>The project is sited on a 173,000 sf surface parking lot within Hudson Yards, New York City[cite: 36, 76]. Students will work with the full site while developing a building with a maximum total area of approximately 300,000 sf[cite: 77]. This ends up allowing for a majority of the site to be open space[cite: 78].</p>
+                    <p>Hudson Yards represents a highly mediated urban environment - one shaped by coordinated planning, privatized public space, infrastructural concentration, and image management at the scale of the district[cite: 37].</p>
+                </div>
+            </div>
+
+            <div class="node-dom primary" style="left: -240px; top: 250px;">
+                <div class="node-dom-header">04. Studio Aims</div>
+                <div class="node-dom-body">
+                    <p>The course introduces students to tools at the forefront of digital design to develop formal techniques, aesthetic sensibilities, and new modes of digital project representation that advance architectural thinking[cite: 20].</p>
+                    <p>Students will develop a comprehensive understanding of principles central to architectural practice and will have the opportunity to engage deeply with disciplinary issues[cite: 22].</p>
+                    <p>Students develop architecture that operates within this entanglement, with massing, envelope, and spatial organization responding to urban, climatic, and infrastructural forces[cite: 40].</p>
+                </div>
+            </div>
+
+            <div class="node-dom secondary" style="left: 240px; top: 250px;">
+                <div class="node-dom-header">05. Theoretical Discourse</div>
+                <div class="node-dom-body">
+                    <p><strong>Typology</strong> is understood as provisional and open-ended, particularly in contemporary cultural buildings where program, use, and spatial organization are actively being re-defined[cite: 30].</p>
+                    <p><strong>Technology</strong> is instrumental, not a background system. Students will engage media installation systems, building structure, and representational tools (including Unreal Engine) as active components of architectural authorship, shaping how the building is assembled, organized, and perceived[cite: 32].</p>
+                    <p><strong>Ecology</strong> is framed as an unavoidable condition of architectural production, not as an ethical overlay[cite: 33]. The studio positions architectural form, envelope, and organization as ways of acting deliberately within those conditions, not to resolve them but rather to entangle with these conditions in new ways[cite: 34].</p>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        // Parameter block for adjusting material properties, camera settings, and post-process effects
+        const CONFIG = {
+            cameraSettings: {
+                initialZoom: 1.0,
+                minZoom: 0.25,
+                maxZoom: 3.0,
+                panSensitivity: 1.0,
+                zoomSensitivity: 0.001
+            },
+            materialProperties: {
+                backgroundColor: '#000000',
+                gridColor: 'rgba(255, 255, 255, 0.04)',
+                primaryNodeBg: '#ffffff',
+                secondaryNodeBg: '#000000'
+            },
+            postProcessEffects: {
+                contrast: 1.0,
+                brightness: 1.0,
+                filterEnabled: false
+            }
+        };
+
+        // Pan and Zoom Logic
+        const container = document.getElementById('diagram-container');
+        const content = document.getElementById('diagram-content');
+        
+        let isDragging = false;
+        let startX, startY;
+        let translateX = 0;
+        let translateY = 0;
+        let scale = CONFIG.cameraSettings.initialZoom;
+
+        function updateTransform() {
+            content.style.transform = `translate(${translateX}px, ${translateY}px) scale(${scale})`;
+        }
+
+        container.addEventListener('mousedown', (e) => {
+            isDragging = true;
+            startX = e.clientX - translateX;
+            startY = e.clientY - translateY;
+        });
+
+        window.addEventListener('mousemove', (e) => {
+            if (!isDragging) return;
+            translateX = (e.clientX - startX) * CONFIG.cameraSettings.panSensitivity;
+            translateY = (e.clientY - startY) * CONFIG.cameraSettings.panSensitivity;
+            updateTransform();
+        });
+
+        window.addEventListener('mouseup', () => {
+            isDragging = false;
+        });
+
+        container.addEventListener('wheel', (e) => {
+            e.preventDefault();
+            
+            // Calculate zoom
+            const zoomDelta = -e.deltaY * CONFIG.cameraSettings.zoomSensitivity;
+            const newScale = Math.min(Math.max(scale + zoomDelta, CONFIG.cameraSettings.minZoom), CONFIG.cameraSettings.maxZoom);
+            
+            // Adjust translation to zoom towards the mouse cursor
+            const rect = container.getBoundingClientRect();
+            const mouseX = e.clientX - rect.left;
+            const mouseY = e.clientY - rect.top;
+
+            // Offset relative to center point
+            const centerX = rect.width / 2;
+            const centerY = rect.height / 2;
+
+            translateX -= (mouseX - centerX) * (newScale - scale);
+            translateY -= (mouseY - centerY) * (newScale - scale);
+            
+            scale = newScale;
+            updateTransform();
+        }, { passive: false });
+
+        // Apply post-process effects if enabled in CONFIG
+        if (CONFIG.postProcessEffects.filterEnabled) {
+            document.body.style.filter = `contrast(${CONFIG.postProcessEffects.contrast}) brightness(${CONFIG.postProcessEffects.brightness})`;
+        }
+
+        // Initial setup
+        updateTransform();
+    </script>
+</body>
+</html>

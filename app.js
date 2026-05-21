@@ -57,7 +57,6 @@ const RAW_NODES = [
     { id: "MEDIA PROJECT", cl: "output", type: "primary" },
     { id: "PROJECT MODEL", cl: "output", type: "primary" },
     { id: "DRAWINGS + DETAILS", cl: "output", type: "primary" },
-    { id: "PROJECT DATA", cl: "output", type: "primary" },
     { id: "OPEN SOURCE", cl: "output", type: "primary" },
     { id: "WEB INTERACTIVE MODEL", cl: "output", type: "primary" },
     { id: "UE ENVIRONMENT", cl: "output", type: "primary" },
@@ -79,9 +78,8 @@ const EDGES = [
     ["STRUCTURE", "PROJECT MODEL"],
     ["MEDIA PROJECT", "PROJECT MODEL"],
     ["MEDIA PROJECT", "MOON ENVIRONMENT"], ["MOON ENVIRONMENT", "PROJECT MODEL"],
-    ["PROJECT MODEL", "DRAWINGS + DETAILS"], ["PROJECT MODEL", "PROJECT DATA"], ["PROJECT MODEL", "UE ANIMATION"],
-    ["DRAWINGS + DETAILS", "PROJECT DATA"],
-    ["PROJECT DATA", "OPEN SOURCE"],
+    ["PROJECT MODEL", "DRAWINGS + DETAILS"], ["PROJECT MODEL", "UE ANIMATION"],
+    ["DRAWINGS + DETAILS", "OPEN SOURCE"],
     ["UE ENVIRONMENT", "UE ANIMATION"],
     ["STONES RESEARCH", "PATTERNS"],
     ["PATTERNS", "PY SKIN GENERATOR"],
@@ -101,6 +99,7 @@ const FILES = [
     F('workflow_bw', 'pdf', 'BRIEF'),
 
     // ── TECHNOLOGIES ─────────────────────────
+    F('technologies/index', 'html', 'TECHNOLOGIES'),
     F('test_click', 'py', 'TECHNOLOGIES'),
 
     // ── ARTISTS ──────────────────────────────
@@ -212,6 +211,8 @@ const FILES = [
     F('260303_exploded-skin', 'glb', 'SKIN'),
 
     // ── PY SKIN GENERATOR ────────────────────
+    F('py_skin_gen/index', 'html', 'PY SKIN GENERATOR'),
+    F('py_skin_gen/skin_gen-shell', 'glb', 'PY SKIN GENERATOR'),
     F('postprocess', 'py', 'PY SKIN GENERATOR'),
     F('open_source/Meteor_facade_v7', 'py', 'PY SKIN GENERATOR'),
     F('open_source/srf_analysis', 'gh', 'PY SKIN GENERATOR'),
@@ -374,7 +375,6 @@ function compute2DPos() {
         
         "UE ANIMATION": [7, -1],
         "DRAWINGS + DETAILS": [7, 0],
-        "PROJECT DATA": [7, 1],
         
         "OPEN SOURCE": [8, 0]
     };
@@ -476,9 +476,14 @@ function updateDomTransform() {
 }
 
 function onDomMouseDown(e) {
-    if (e.button === 2) { // Right click
+    if (e.button === 2) {
         isPanning = true;
         startPan = { x: e.clientX - domTransform.x, y: e.clientY - domTransform.y };
+    }
+    if (e.button === 0 && !e.target.closest('.node-dom')) {
+        isPanning = true;
+        startPan = { x: e.clientX - domTransform.x, y: e.clientY - domTransform.y };
+        e.preventDefault();
     }
 }
 function onDomMouseMove(e) {
@@ -489,7 +494,7 @@ function onDomMouseMove(e) {
     }
 }
 function onDomMouseUp(e) {
-    if (e.button === 2) {
+    if (e.button === 2 || e.button === 0) {
         isPanning = false;
     }
 }
@@ -842,6 +847,7 @@ function onThreeClick(e) {
 
 function performNav(id) {
     const nav = {
+        "BRIEF": "./brief/index.html",
         "DRAWINGS + DETAILS": "./drawings/index.html",
         "PROJECT MODEL": "./HYPEROBJECT_midterm/exploded_diagram.html",
         "MEDIA M. CONCEPT": "./HYPEROBJECT_midterm/blueprint.html",
@@ -853,7 +859,9 @@ function performNav(id) {
         "STONES RESEARCH": "./stone_research/index.html",
         "OPEN SOURCE": "./open_source/index.html",
         "PATTERN": "./stone_research/index.html",
-        "PY SKIN GENERATOR": "./stone_research/index.html",
+        "PATTERNS": "./stone_research/index.html",
+        "PY SKIN GENERATOR": "./py_skin_gen/index.html",
+        "TECHNOLOGIES": "./technologies/index.html",
         "SITE": "./site_model/index.html",
         "UE ENVIRONMENT": "./ue-360/index.html",
         "STRUCTURE": "./structure/index.html",
