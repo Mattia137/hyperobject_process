@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Site Analysis - Research Board</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Fragment+Mono:ital@0;1&display=swap');
+
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body, html {
+            width: 100%; height: 100%;
+            overflow: hidden;
+            font-family: 'Fragment Mono', monospace;
+            background: #f0f0f0;
+            color: rgba(0,0,0,0.85);
+            user-select: none;
+            -webkit-user-select: none;
+            cursor: crosshair;
+        }
+
+        #diagram-container {
+            width: 100%; height: 100%;
+            position: relative;
+            background: #f0f0f0;
+            background-size: 40px 40px;
+            background-image:
+                linear-gradient(to right, rgba(0,0,0,0.06) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(0,0,0,0.06) 1px, transparent 1px);
+            cursor: grab;
+        }
+        #diagram-container:active { cursor: grabbing; }
+
+        #diagram-content {
+            position: absolute;
+            top: 0; left: 0;
+            display: grid;
+            grid-template-columns: repeat(4, 460px);
+            grid-auto-rows: 340px;
+            gap: 40px;
+            transform-origin: 0 0;
+        }
+
+        .fixed-title {
+            position: absolute;
+            top: 28px; left: 28px;
+            z-index: 10;
+            pointer-events: none;
+        }
+        .back-btn {
+            display: inline-block;
+            font-family: 'Fragment Mono', monospace;
+            font-size: 7px;
+            text-transform: uppercase;
+            letter-spacing: 0.18em;
+            color: rgba(0,0,0,0.7);
+            text-decoration: none;
+            border: 1px solid rgba(0,0,0,0.25);
+            padding: 5px 10px;
+            margin-bottom: 20px;
+            pointer-events: auto;
+            cursor: pointer;
+            transition: background 0.15s, color 0.15s, border-color 0.15s;
+        }
+        .back-btn:hover { background: #000; color: #fff; border-color: #000; }
+        .fixed-title h1 {
+            font-size: 14px;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            color: #000;
+            font-weight: normal;
+        }
+        .title-description {
+            font-size: 7px;
+            opacity: 0.4;
+            color: #000;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            margin-top: 6px;
+        }
+
+        .pdf-card {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            border: 1px solid rgba(0,0,0,0.15);
+            background: #fff;
+            overflow: hidden;
+        }
+
+        .pdf-viewport {
+            flex: 1;
+            overflow: hidden;
+            background: #fff;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .pdf-canvas {
+            display: block;
+            pointer-events: none;
+            background: #fff;
+        }
+
+        .pdf-placeholder {
+            position: absolute;
+            font-size: 7px;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            color: rgba(0,0,0,0.2);
+            pointer-events: none;
+        }
+
+        .pdf-label {
+            flex-shrink: 0;
+            font-size: 7px;
+            text-transform: uppercase;
+            letter-spacing: 0.18em;
+            padding: 5px 10px;
+            border-top: 1px solid rgba(0,0,0,0.08);
+            color: rgba(0,0,0,0.35);
+            background: #fff;
+        }
+    </style>
+</head>
+<body>
+
+<div class="fixed-title">
+    <a class="back-btn" href="../index.html">← BACK</a>
+    <h1>SITE ANALYSIS</h1>
+    <div class="title-description">2GBX SS26</div>
+</div>
+
+<div id="diagram-container">
+    <div id="diagram-content">
+
+        <div class="pdf-card"><div class="pdf-viewport"><span class="pdf-placeholder">Loading…</span><canvas class="pdf-canvas" data-src="./pdf_pages/2GBX_BloomJovanovicManferdini_SP26_Herrera_Jaroslav_Galbusera_Mattia_DS_01_compressed-2.pdf"></canvas></div><div class="pdf-label">P. 02</div></div>
+
+        <div class="pdf-card"><div class="pdf-viewport"><span class="pdf-placeholder">Loading…</span><canvas class="pdf-canvas" data-src="./pdf_pages/2GBX_BloomJovanovicManferdini_SP26_Herrera_Jaroslav_Galbusera_Mattia_DS_01_compressed-3.pdf"></canvas></div><div class="pdf-label">P. 03</div></div>
+
+        <div class="pdf-card"><div class="pdf-viewport"><span class="pdf-placeholder">Loading…</span><canvas class="pdf-canvas" data-src="./pdf_pages/2GBX_BloomJovanovicManferdini_SP26_Herrera_Jaroslav_Galbusera_Mattia_DS_01_compressed-4.pdf"></canvas></div><div class="pdf-label">P. 04</div></div>
+
+        <div class="pdf-card"><div class="pdf-viewport"><span class="pdf-placeholder">Loading…</span><canvas class="pdf-canvas" data-src="./pdf_pages/2GBX_BloomJovanovicManferdini_SP26_Herrera_Jaroslav_Galbusera_Mattia_DS_01_compressed-5.pdf"></canvas></div><div class="pdf-label">P. 05</div></div>
+
+        <div class="pdf-card"><div class="pdf-viewport"><span class="pdf-placeholder">Loading…</span><canvas class="pdf-canvas" data-src="./pdf_pages/2GBX_BloomJovanovicManferdini_SP26_Herrera_Jaroslav_Galbusera_Mattia_DS_01_compressed-6.pdf"></canvas></div><div class="pdf-label">P. 06</div></div>
+
+        <div class="pdf-card"><div class="pdf-viewport"><span class="pdf-placeholder">Loading…</span><canvas class="pdf-canvas" data-src="./pdf_pages/2GBX_BloomJovanovicManferdini_SP26_Herrera_Jaroslav_Galbusera_Mattia_DS_01_compressed-8.pdf"></canvas></div><div class="pdf-label">P. 08</div></div>
+
+        <div class="pdf-card"><div class="pdf-viewport"><span class="pdf-placeholder">Loading…</span><canvas class="pdf-canvas" data-src="./pdf_pages/2GBX_BloomJovanovicManferdini_SP26_Herrera_Jaroslav_Galbusera_Mattia_DS_01_compressed-9.pdf"></canvas></div><div class="pdf-label">P. 09</div></div>
+
+        <div class="pdf-card"><div class="pdf-viewport"><span class="pdf-placeholder">Loading…</span><canvas class="pdf-canvas" data-src="./pdf_pages/2GBX_BloomJovanovicManferdini_SP26_Herrera_Jaroslav_Galbusera_Mattia_DS_01_compressed-10.pdf"></canvas></div><div class="pdf-label">P. 10</div></div>
+
+        <div class="pdf-card"><div class="pdf-viewport"><span class="pdf-placeholder">Loading…</span><canvas class="pdf-canvas" data-src="./pdf_pages/2GBX_BloomJovanovicManferdini_SP26_Herrera_Jaroslav_Galbusera_Mattia_DS_01_compressed-11.pdf"></canvas></div><div class="pdf-label">P. 11</div></div>
+
+        <div class="pdf-card"><div class="pdf-viewport"><span class="pdf-placeholder">Loading…</span><canvas class="pdf-canvas" data-src="./pdf_pages/2GBX_BloomJovanovicManferdini_SP26_Herrera_Jaroslav_Galbusera_Mattia_DS_01_compressed-12.pdf"></canvas></div><div class="pdf-label">P. 12</div></div>
+
+        <div class="pdf-card"><div class="pdf-viewport"><span class="pdf-placeholder">Loading…</span><canvas class="pdf-canvas" data-src="./pdf_pages/2GBX_BloomJovanovicManferdini_SP26_Herrera_Jaroslav_Galbusera_Mattia_DS_01_compressed-14.pdf"></canvas></div><div class="pdf-label">P. 14</div></div>
+
+        <div class="pdf-card"><div class="pdf-viewport"><span class="pdf-placeholder">Loading…</span><canvas class="pdf-canvas" data-src="./pdf_pages/2GBX_BloomJovanovicManferdini_SP26_Herrera_Jaroslav_Galbusera_Mattia_DS_01_compressed-15.pdf"></canvas></div><div class="pdf-label">P. 15</div></div>
+
+        <div class="pdf-card"><div class="pdf-viewport"><span class="pdf-placeholder">Loading…</span><canvas class="pdf-canvas" data-src="./pdf_pages/2GBX_BloomJovanovicManferdini_SP26_Herrera_Jaroslav_Galbusera_Mattia_DS_01_compressed-16.pdf"></canvas></div><div class="pdf-label">P. 16</div></div>
+
+        <div class="pdf-card"><div class="pdf-viewport"><span class="pdf-placeholder">Loading…</span><canvas class="pdf-canvas" data-src="./pdf_pages/2GBX_BloomJovanovicManferdini_SP26_Herrera_Jaroslav_Galbusera_Mattia_DS_01_compressed-17.pdf"></canvas></div><div class="pdf-label">P. 17</div></div>
+
+        <div class="pdf-card"><div class="pdf-viewport"><span class="pdf-placeholder">Loading…</span><canvas class="pdf-canvas" data-src="./pdf_pages/2GBX_BloomJovanovicManferdini_SP26_Herrera_Jaroslav_Galbusera_Mattia_DS_01_compressed-18.pdf"></canvas></div><div class="pdf-label">P. 18</div></div>
+
+        <div class="pdf-card"><div class="pdf-viewport"><span class="pdf-placeholder">Loading…</span><canvas class="pdf-canvas" data-src="./pdf_pages/2GBX_BloomJovanovicManferdini_SP26_Herrera_Jaroslav_Galbusera_Mattia_DS_01_compressed-20.pdf"></canvas></div><div class="pdf-label">P. 20</div></div>
+
+        <div class="pdf-card"><div class="pdf-viewport"><span class="pdf-placeholder">Loading…</span><canvas class="pdf-canvas" data-src="./pdf_pages/2GBX_BloomJovanovicManferdini_SP26_Herrera_Jaroslav_Galbusera_Mattia_DS_01_compressed-21.pdf"></canvas></div><div class="pdf-label">P. 21</div></div>
+
+        <div class="pdf-card"><div class="pdf-viewport"><span class="pdf-placeholder">Loading…</span><canvas class="pdf-canvas" data-src="./pdf_pages/2GBX_BloomJovanovicManferdini_SP26_Herrera_Jaroslav_Galbusera_Mattia_DS_01_compressed-22.pdf"></canvas></div><div class="pdf-label">P. 22</div></div>
+
+        <div class="pdf-card"><div class="pdf-viewport"><span class="pdf-placeholder">Loading…</span><canvas class="pdf-canvas" data-src="./pdf_pages/2GBX_BloomJovanovicManferdini_SP26_Herrera_Jaroslav_Galbusera_Mattia_DS_01_compressed-23.pdf"></canvas></div><div class="pdf-label">P. 23</div></div>
+
+        <div class="pdf-card"><div class="pdf-viewport"><span class="pdf-placeholder">Loading…</span><canvas class="pdf-canvas" data-src="./pdf_pages/2GBX_BloomJovanovicManferdini_SP26_Herrera_Jaroslav_Galbusera_Mattia_DS_01_compressed-25.pdf"></canvas></div><div class="pdf-label">P. 25</div></div>
+
+        <div class="pdf-card"><div class="pdf-viewport"><span class="pdf-placeholder">Loading…</span><canvas class="pdf-canvas" data-src="./pdf_pages/2GBX_BloomJovanovicManferdini_SP26_Herrera_Jaroslav_Galbusera_Mattia_DS_01_compressed-26.pdf"></canvas></div><div class="pdf-label">P. 26</div></div>
+
+        <div class="pdf-card"><div class="pdf-viewport"><span class="pdf-placeholder">Loading…</span><canvas class="pdf-canvas" data-src="./pdf_pages/2GBX_BloomJovanovicManferdini_SP26_Herrera_Jaroslav_Galbusera_Mattia_DS_01_compressed-27.pdf"></canvas></div><div class="pdf-label">P. 27</div></div>
+
+        <div class="pdf-card"><div class="pdf-viewport"><span class="pdf-placeholder">Loading…</span><canvas class="pdf-canvas" data-src="./pdf_pages/2GBX_BloomJovanovicManferdini_SP26_Herrera_Jaroslav_Galbusera_Mattia_DS_01_compressed-28.pdf"></canvas></div><div class="pdf-label">P. 28</div></div>
+
+        <div class="pdf-card"><div class="pdf-viewport"><span class="pdf-placeholder">Loading…</span><canvas class="pdf-canvas" data-src="./pdf_pages/2GBX_BloomJovanovicManferdini_SP26_Herrera_Jaroslav_Galbusera_Mattia_DS_01_compressed-29.pdf"></canvas></div><div class="pdf-label">P. 29</div></div>
+
+    </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script>
+(function () {
+    // ── PDF.js setup ─────────────────────────────────────────────
+    const WORKER = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    pdfjsLib.GlobalWorkerOptions.workerSrc = WORKER;
+
+    // render at Q× the card size so it stays sharp when zoomed in
+    const Q = 3 * (window.devicePixelRatio || 1);
+
+    async function renderCanvas(canvas) {
+        const vp = canvas.parentElement;
+        const ph = vp.querySelector('.pdf-placeholder');
+        try {
+            const pdf  = await pdfjsLib.getDocument(canvas.dataset.src).promise;
+            const page = await pdf.getPage(1);
+
+            const natural = page.getViewport({ scale: 1 });
+            const dw = vp.clientWidth  || 460;
+            const dh = vp.clientHeight || 315;
+            const scale = Math.min((dw * Q) / natural.width, (dh * Q) / natural.height);
+            const viewport = page.getViewport({ scale });
+
+            canvas.width  = viewport.width;
+            canvas.height = viewport.height;
+            canvas.style.width  = (viewport.width  / Q) + 'px';
+            canvas.style.height = (viewport.height / Q) + 'px';
+
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            await page.render({ canvasContext: ctx, viewport }).promise;
+
+            if (ph) ph.remove();
+        } catch (err) {
+            if (ph) ph.textContent = 'Error loading PDF';
+            console.error(canvas.dataset.src, err);
+        }
+    }
+
+    // wait for layout so clientWidth is accurate, then render 4 at a time
+    const canvases = [...document.querySelectorAll('.pdf-canvas')];
+    let idx = 0;
+    async function worker() {
+        while (idx < canvases.length) {
+            await renderCanvas(canvases[idx++]);
+        }
+    }
+    const CONCURRENCY = 4;
+    requestAnimationFrame(() => {
+        for (let i = 0; i < CONCURRENCY; i++) worker();
+    });
+
+    // ── pan & zoom ───────────────────────────────────────────────
+    const container = document.getElementById('diagram-container');
+    const content   = document.getElementById('diagram-content');
+
+    let dragging = false, sx, sy;
+    let tx = 80, ty = 100, scale = 0.7;
+    const MIN = 0.3, MAX = 3.0;
+
+    function applyTransform() {
+        content.style.transform = `translate(${tx}px,${ty}px) scale(${scale})`;
+    }
+
+    // mousedown on container captures everything (canvas has pointer-events:none)
+    container.addEventListener('mousedown', e => {
+        dragging = true;
+        sx = e.clientX - tx;
+        sy = e.clientY - ty;
+        e.preventDefault();
+    });
+    window.addEventListener('mousemove', e => {
+        if (!dragging) return;
+        tx = e.clientX - sx;
+        ty = e.clientY - sy;
+        applyTransform();
+    });
+    window.addEventListener('mouseup',      () => { dragging = false; });
+    window.addEventListener('mouseleave',   () => { dragging = false; });
+
+    container.addEventListener('wheel', e => {
+        e.preventDefault();
+        const ns = Math.min(Math.max(scale - e.deltaY * 0.001, MIN), MAX);
+        const r  = container.getBoundingClientRect();
+        const mx = e.clientX - r.left;
+        const my = e.clientY - r.top;
+        tx -= (mx - tx) * (ns / scale - 1);
+        ty -= (my - ty) * (ns / scale - 1);
+        scale = ns;
+        applyTransform();
+    }, { passive: false });
+
+    applyTransform();
+})();
+</script>
+</body>
+</html>

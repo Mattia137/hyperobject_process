@@ -5,22 +5,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Media Technologies - Research Board</title>
     <style>
-        /* ==========================================
-           HYPEROBJECT PROJECT — STYLESHEET
-           ========================================== */
         @import url('https://fonts.googleapis.com/css2?family=Fragment+Mono:ital@0;1&display=swap');
 
         :root {
             --bg: #000000;
             --fg: rgba(255,255,255,0.85);
-            --fg-dim: rgb(61, 61, 61);
-            --accent: #CA8A04;
+            --fg-dim: rgb(61,61,61);
             --font: 'Fragment Mono', monospace;
         }
 
-        *, *::before, *::after {
-            margin: 0; padding: 0; box-sizing: border-box;
-        }
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
         body, html {
             width: 100%; height: 100%;
@@ -30,402 +24,333 @@
             color: var(--fg);
             user-select: none;
             -webkit-user-select: none;
+            cursor: crosshair;
         }
 
         #diagram-container {
-            width: 100%;
-            height: 100%;
+            width: 100%; height: 100%;
             position: relative;
             background: #000;
             background-size: 40px 40px;
-            background-image: 
-                linear-gradient(to right, rgba(255, 255, 255, 0.04) 1px, transparent 1px),
-                linear-gradient(to bottom, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+            background-image:
+                linear-gradient(to right, rgba(255,255,255,0.04) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(255,255,255,0.04) 1px, transparent 1px);
             cursor: grab;
         }
-
-        #diagram-container:active {
-            cursor: grabbing;
-        }
+        #diagram-container:active { cursor: grabbing; }
 
         #diagram-content {
             position: absolute;
-            top: 0;
-            left: 0;
+            top: 0; left: 0;
             display: grid;
-            grid-template-columns: repeat(4, 380px);
-            gap: 60px;
+            grid-template-columns: repeat(4, 340px);
+            grid-auto-rows: 460px;
+            gap: 48px;
             transform-origin: 0 0;
         }
 
+        /* ── fixed title ── */
         .fixed-title {
             position: absolute;
-            top: 28px;
-            left: 28px;
+            top: 28px; left: 28px;
             z-index: 10;
             pointer-events: none;
         }
-        
+
         .back-btn {
             display: inline-block;
             font-family: var(--font);
-            font-size: 9px;
-            color: var(--fg);
+            font-size: 7px;
             text-transform: uppercase;
-            letter-spacing: 0.15em;
-            border: 1px solid var(--fg-dim);
-            padding: 6px 12px;
-            margin-bottom: 24px;
+            letter-spacing: 0.18em;
+            color: rgba(255,255,255,0.7);
+            text-decoration: none;
+            border: 1px solid rgba(255,255,255,0.2);
+            padding: 5px 10px;
+            margin-bottom: 20px;
             pointer-events: auto;
             cursor: pointer;
-            transition: background 0.2s, color 0.2s;
+            transition: background 0.15s, color 0.15s, border-color 0.15s;
         }
-        
-        .back-btn:hover {
-            background: var(--fg);
-            color: var(--bg);
-        }
+        .back-btn:hover { background: #fff; color: #000; border-color: #fff; }
 
         .fixed-title h1 {
-            font-size: 16px;
+            font-size: 14px;
             letter-spacing: 0.15em;
             text-transform: uppercase;
-            color: #ffffff;
+            color: #fff;
             font-weight: normal;
         }
 
         .title-description {
-            font-family: var(--font);
-            font-size: 10px;
-            opacity: 0.7;
-            color: #ffffff;
-            letter-spacing: 0.05em;
-            line-height: 1.4;
-            margin-top: 10px;
+            font-size: 7px;
+            opacity: 0.35;
+            color: #fff;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            margin-top: 6px;
         }
 
-        /* ==========================================
-           MIRO BOARD NODES
-           ========================================== */
+        /* ── cards ── */
         .node-dom {
-            position: relative; 
             display: flex;
             flex-direction: column;
-            padding: 24px;
+            padding: 20px;
             box-sizing: border-box;
+            overflow: hidden;
             cursor: default;
+            height: 100%;
         }
 
-        .node-dom.primary {
-            background: #ffffff;
-            border: 2px solid #ffffff;
-            color: #000000;
-        }
-
-        .node-dom.secondary {
-            background: #000000;
-            border: 2px solid #ffffff;
-            color: #ffffff;
-        }
-
-        .node-dom.tertiary {
-            background: #000000;
-            border: 2px dashed #ffffff;
-            color: #ffffff;
-        }
+        .node-dom.primary  { background: #000; border: 2px solid #fff;  color: #fff; }
+        .node-dom.secondary{ background: #000; border: 2px solid #fff;  color: #fff; }
+        .node-dom.tertiary { background: #000; border: 2px dashed #fff; color: #fff; }
 
         .node-dom img {
             width: 100%;
-            height: 180px;
-            object-fit: cover;
-            margin-bottom: 16px;
+            height: 160px;
+            object-fit: contain;
+            background: #000;
+            flex-shrink: 0;
+            margin-bottom: 14px;
             border: 1px solid var(--fg-dim);
-            filter: grayscale(100%) contrast(1.2); 
-            
-            /* --- THE FIX --- */
-            -webkit-user-drag: none; /* Prevents native image dragging */
-            pointer-events: none;    /* Passes clicks through to the panning board */
-        }
-        
-        .node-dom.primary img {
-            border-color: #000000;
+            filter: grayscale(100%) contrast(1.1);
+            -webkit-user-drag: none;
+            pointer-events: none;
         }
 
         .node-dom-header {
-            font-size: 14px;
+            font-size: 11px;
             font-weight: bold;
             text-transform: uppercase;
             letter-spacing: 0.1em;
-            margin-bottom: 16px;
+            margin-bottom: 10px;
             border-bottom: 1px solid currentColor;
-            padding-bottom: 8px;
+            padding-bottom: 7px;
+            flex-shrink: 0;
         }
 
         .node-dom-body {
-            font-size: 11px;
-            line-height: 1.6;
+            font-size: 9px;
+            line-height: 1.65;
+            overflow: hidden;
+            flex: 1;
         }
 
-        .node-dom-body p {
-            margin-bottom: 12px;
-            white-space: pre-wrap;
-        }
-        
-        .node-dom-body p:last-child {
-            margin-bottom: 0;
-        }
+        .node-dom-body p { margin-bottom: 9px; }
+        .node-dom-body p:last-child { margin-bottom: 0; }
     </style>
 </head>
 <body>
 
-    <div class="fixed-title">
-        <div class="back-btn">&lt; BACK TO TYPOLOGY</div>
-        <h1>Media Technologies</h1>
-        <div class="title-description">Spatial, Emissive & Acoustic Systems</div>
-    </div>
+<div class="fixed-title">
+    <a class="back-btn" href="../index.html">← BACK</a>
+    <h1>MEDIA TECHNOLOGIES</h1>
+    <div class="title-description">Spatial, Emissive &amp; Immersive Systems</div>
+</div>
 
-    <div id="diagram-container">
-        <div id="diagram-content">
-            
-            <div class="node-dom primary">
-                <img src="https://images.unsplash.com/photo-1517420879524-86d64ac2f339?auto=format&fit=crop&w=400&q=80" alt="LED Display">
-                <div class="node-dom-header">01. Direct-View LED</div>
-                <div class="node-dom-body">
-                    <p>Modular emissive panels composed of individual Light Emitting Diodes grouped into pixels. Unlike traditional LCDs which use a backlight, each LED produces its own light and color.</p>
-                    <p>Originating in the late 20th century for stadium Jumbotrons and outdoor advertising, high-resolution direct-view LEDs surged in the 2010s, becoming the standard for virtual production volumes (like "The Mandalorian") due to their intense brightness and scalability.</p>
-                </div>
+<div id="diagram-container">
+    <div id="diagram-content">
+
+        <div class="node-dom primary">
+            <img src="./direct_led_screen.png" alt="Direct LED">
+            <div class="node-dom-header">01. Direct-View LED</div>
+            <div class="node-dom-body">
+                <p>Modular emissive panels composed of individual LEDs grouped into pixels. Each LED produces its own light and color — no backlight required.</p>
+                <p>Standard for virtual production volumes (e.g. "The Mandalorian") due to intense brightness, real-time reflections, and seamless scalability.</p>
             </div>
-
-            <div class="node-dom secondary">
-                <img src="https://images.unsplash.com/photo-1611162617474-5b21e879e113?auto=format&fit=crop&w=400&q=80" alt="Micro LED">
-                <div class="node-dom-header">02. Micro-LED</div>
-                <div class="node-dom-body">
-                    <p>Displays utilizing ultra-fine, microscopic LEDs to form individual sub-pixels. They offer the infinite contrast of OLEDs without the risk of organic material degradation or burn-in.</p>
-                    <p>Transitioning from R&D in the 2010s to ultra-premium consumer and commercial markets in the 2020s, Micro-LED represents the current apex of flat-panel display technology, combining extreme longevity with unparalleled brightness.</p>
-                </div>
-            </div>
-
-            <div class="node-dom tertiary">
-                <img src="https://images.unsplash.com/photo-1593640408182-31c70c8268f5?auto=format&fit=crop&w=400&q=80" alt="OLED Panel">
-                <div class="node-dom-header">03. OLED Displays</div>
-                <div class="node-dom-body">
-                    <p>Organic Light Emitting Diodes are self-emissive organic films that glow when an electrical current is applied. Because pixels can be completely turned off, they achieve true black levels and infinite contrast.</p>
-                    <p>Following early commercialization in the 2000s, OLEDs dominated the 2010s smartphone and premium television markets. Their thin, flexible nature has also enabled rollable and bendable architectural display concepts.</p>
-                </div>
-            </div>
-
-            <div class="node-dom primary">
-                <img src="https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&w=400&q=80" alt="Transparent Display">
-                <div class="node-dom-header">04. Transparent Emissive</div>
-                <div class="node-dom-body">
-                    <p>OLED or LED arrays manufactured on transparent substrates. When pixels are turned off, the panel functions like clear glass; when activated, digital imagery appears suspended in mid-air.</p>
-                    <p>Long relegated to science fiction, transparent displays became commercially viable in the mid-2010s. They are increasingly used in retail, museums, and augmented architectural partitions where sightlines must be maintained.</p>
-                </div>
-            </div>
-
-            <div class="node-dom secondary">
-                <img src="https://images.unsplash.com/photo-1524661135-423995f22d0b?auto=format&fit=crop&w=400&q=80" alt="Laser Projection">
-                <div class="node-dom-header">05. Laser Projection</div>
-                <div class="node-dom-body">
-                    <p>Single-channel, high-lumen projectors that replace traditional xenon or mercury lamps with solid-state laser light sources, routing light through DLP or LCD imaging chips.</p>
-                    <p>Widely adopted in the 2010s, laser phosphor technology revolutionized projection by eliminating lamp replacements, vastly expanding color gamuts, and allowing projectors to be mounted at any angle without thermal failure.</p>
-                </div>
-            </div>
-
-            <div class="node-dom tertiary">
-                <img src="https://images.unsplash.com/photo-1534447677768-be436bb09401?auto=format&fit=crop&w=400&q=80" alt="Edge Blended Projection">
-                <div class="node-dom-header">06. Edge-Blended Systems</div>
-                <div class="node-dom-body">
-                    <p>The practice of overlapping multiple projectors to create a single, continuous ultra-widescreen image. Software gradients feather the overlapping edges to hide the seams.</p>
-                    <p>Originating in the late 1990s as a solution to resolution and brightness limits, edge-blending is the foundational technique for large-scale immersive environments and panoramic theatrical backdrops.</p>
-                </div>
-            </div>
-
-            <div class="node-dom primary">
-                <img src="https://images.unsplash.com/photo-1505909182942-e2f09aee3e89?auto=format&fit=crop&w=400&q=80" alt="Projection Mapping">
-                <div class="node-dom-header">07. Projection Mapping</div>
-                <div class="node-dom-body">
-                    <p>A technique that turns physical 3D objects—often complex building facades—into display surfaces. Specialized software warps and masks the projected image to perfectly align with the object's geometry.</p>
-                    <p>Emerging as an underground VJ technique in the early 2000s, it exploded into mainstream architectural spectacle by the 2010s, fundamentally altering how we perceive static urban environments at night.</p>
-                </div>
-            </div>
-
-            <div class="node-dom secondary">
-                <img src="https://images.unsplash.com/photo-1542204165-65bf26472b9b?auto=format&fit=crop&w=400&q=80" alt="Immersive Projection">
-                <div class="node-dom-header">08. Immersive Environments</div>
-                <div class="node-dom-body">
-                    <p>Continuous wall, floor, and sometimes ceiling projection fields that physically enclose the viewer, creating an illusion of spatial presence without headsets.</p>
-                    <p>Rooted in the CAVE (Cave Automatic Virtual Environment) systems of the 1990s academic research labs, these spaces entered the cultural mainstream in the late 2010s via widespread "immersive art" exhibitions.</p>
-                </div>
-            </div>
-
-            <div class="node-dom tertiary">
-                <img src="https://images.unsplash.com/photo-1536697246787-1f7ae568d89a?auto=format&fit=crop&w=400&q=80" alt="Dome Projection">
-                <div class="node-dom-header">09. Dome-Based Systems</div>
-                <div class="node-dom-body">
-                    <p>Projection onto hemispherical surfaces utilizing fisheye lenses or multi-projector blends to create a fully enveloping, ceiling-bound image field.</p>
-                    <p>Stemming from mid-20th-century analog planetariums and OMNIMAX theaters, the transition to digital "fulldome" projection in the 2000s opened the format to experimental media art and abstract spatial narrative.</p>
-                </div>
-            </div>
-
-            <div class="node-dom primary">
-                <img src="https://images.unsplash.com/photo-1620641788421-7a1c342ea42e?auto=format&fit=crop&w=400&q=80" alt="Light Field Display">
-                <div class="node-dom-header">10. Light-Field Displays</div>
-                <div class="node-dom-body">
-                    <p>Displays that emit multiple light rays per pixel in different directions. This creates a multi-view, parallax-correct volume of light, allowing users to move their heads and see around 3D objects without wearing glasses.</p>
-                    <p>A highly complex optical challenge, light-field arrays transitioned from theoretical physics to functional prototypes in the late 2010s, pushing toward the "holographic" screens of science fiction.</p>
-                </div>
-            </div>
-
-            <div class="node-dom secondary">
-                <img src="https://images.unsplash.com/photo-1558346490-a72e53ae2d4f?auto=format&fit=crop&w=400&q=80" alt="Volumetric Display">
-                <div class="node-dom-header">11. Volumetric Displays</div>
-                <div class="node-dom-body">
-                    <p>Systems that construct 3D imagery using voxels (volumetric pixels) within a physical space, often via rapidly spinning screens (swept-volume) or lasers intersecting in specialized gases.</p>
-                    <p>Explored since the mid-20th century for radar and medical imaging, true volumetric displays remain largely experimental, limited by physical mechanics and immense data rendering requirements.</p>
-                </div>
-            </div>
-
-            <div class="node-dom tertiary">
-                <img src="https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&w=400&q=80" alt="True Holographic">
-                <div class="node-dom-header">12. True Holographic</div>
-                <div class="node-dom-body">
-                    <p>Displays based on wavefront reconstruction, utilizing laser interference patterns to recreate the exact physical light waves that would bounce off a real object.</p>
-                    <p>Invented conceptually in the 1940s and practically with lasers in the 1960s, static holograms are common. However, real-time, dynamic digital holography remains one of the ultimate, unresolved frontiers of display technology.</p>
-                </div>
-            </div>
-
-            <div class="node-dom primary">
-                <img src="https://images.unsplash.com/photo-1593508512255-86ab42a8e620?auto=format&fit=crop&w=400&q=80" alt="VR Headset">
-                <div class="node-dom-header">13. Head-Mounted VR</div>
-                <div class="node-dom-body">
-                    <p>Opaque stereoscopic headsets that completely block out the physical world, replacing it with a digitally rendered environment tracked to the user's head movements.</p>
-                    <p>Following the "Sword of Damocles" in the 1960s and a failed commercial push in the 1990s, VR finally achieved critical consumer viability in the 2010s, reshaping gaming and architectural pre-visualization.</p>
-                </div>
-            </div>
-
-            <div class="node-dom secondary">
-                <img src="https://images.unsplash.com/photo-1617802690992-15d93263d3a9?auto=format&fit=crop&w=400&q=80" alt="AR Display">
-                <div class="node-dom-header">14. Optical AR Displays</div>
-                <div class="node-dom-body">
-                    <p>See-through systems (like Microsoft HoloLens) utilizing transparent glass waveguides. Small projectors shoot light into the edge of the lens, which bounces into the user's eye, overlaying digital data onto real-world views.</p>
-                    <p>Pioneered for enterprise and military applications in the 2010s, these displays represent the purest form of Augmented Reality, though field-of-view limits have slowed widespread consumer adoption.</p>
-                </div>
-            </div>
-
-            <div class="node-dom tertiary">
-                <img src="https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?auto=format&fit=crop&w=400&q=80" alt="Mixed Reality Headset">
-                <div class="node-dom-header">15. Video Pass-Through MR</div>
-                <div class="node-dom-body">
-                    <p>Closed-view headsets that use high-resolution exterior cameras to feed real-time video of the outside world to interior screens, digitally inserting 3D elements into the video feed.</p>
-                    <p>Gaining massive traction in the 2020s (e.g., Apple Vision Pro, Meta Quest 3), pass-through MR bypasses the optical limits of transparent glass, offering highly controlled, high-contrast mixed realities.</p>
-                </div>
-            </div>
-
-            <div class="node-dom primary">
-                <img src="https://images.unsplash.com/photo-1535223289827-42f1e9919769?auto=format&fit=crop&w=400&q=80" alt="Smart Glasses">
-                <div class="node-dom-header">16. Wearable Spatial Computing</div>
-                <div class="node-dom-body">
-                    <p>Lightweight, glasses-form-factor devices providing standalone AR or MR capabilities without bulky tethered computing, effectively merging digital interfaces with daily spatial perception.</p>
-                    <p>Currently the holy grail of tech hardware for the mid-to-late 2020s, the ambition is to eventually replace the smartphone by dissolving the 2D screen into the physical environment.</p>
-                </div>
-            </div>
-
-            <div class="node-dom secondary">
-                <img src="https://images.unsplash.com/photo-1558403194-611308249627?auto=format&fit=crop&w=400&q=80" alt="Spatial Audio">
-                <div class="node-dom-header">17. Spatial Audio</div>
-                <div class="node-dom-body">
-                    <p>Acoustic processing that localizes sound sources in full 3D space, taking height, distance, and direction into account relative to the listener's head position.</p>
-                    <p>Stemming from 1970s ambisonics and theatrical surround formats, real-time object-based audio (like Dolby Atmos) became the invisible half of the VR revolution in the 2010s, creating necessary acoustic realism for immersive media.</p>
-                </div>
-            </div>
-
         </div>
+
+        <div class="node-dom secondary">
+            <img src="./micro_led.png" alt="Micro LED">
+            <div class="node-dom-header">02. Micro-LED</div>
+            <div class="node-dom-body">
+                <p>Ultra-fine, microscopic LEDs forming individual sub-pixels. Offers infinite contrast of OLEDs without organic degradation or burn-in risk.</p>
+                <p>Current apex of flat-panel technology: extreme longevity combined with unparalleled brightness for premium commercial and architectural use.</p>
+            </div>
+        </div>
+
+        <div class="node-dom tertiary">
+            <img src="./oled.png" alt="OLED">
+            <div class="node-dom-header">03. OLED Displays</div>
+            <div class="node-dom-body">
+                <p>Self-emissive organic films that glow on electrical current. Pixels can be completely turned off, achieving true black and infinite contrast.</p>
+                <p>Thin, flexible nature enables rollable and bendable architectural display concepts beyond traditional flat panel applications.</p>
+            </div>
+        </div>
+
+        <div class="node-dom primary">
+            <img src="./transparent%20_emissive.png" alt="Transparent Emissive">
+            <div class="node-dom-header">04. Transparent Emissive</div>
+            <div class="node-dom-body">
+                <p>OLED or LED arrays on transparent substrates. Off pixels function as clear glass; activated pixels make imagery appear suspended in mid-air.</p>
+                <p>Used in retail, museums, and architectural partitions where sightlines and spatial continuity must be maintained.</p>
+            </div>
+        </div>
+
+        <div class="node-dom secondary">
+            <img src="./laser_projection.png" alt="Laser Projection">
+            <div class="node-dom-header">05. Laser Projection</div>
+            <div class="node-dom-body">
+                <p>High-lumen projectors replacing xenon lamps with solid-state laser sources routed through DLP or LCD imaging chips.</p>
+                <p>Eliminates lamp replacements, expands color gamuts, and allows projectors to be mounted at any angle without thermal failure.</p>
+            </div>
+        </div>
+
+        <div class="node-dom tertiary">
+            <img src="./edge_blended_system.png" alt="Edge Blended">
+            <div class="node-dom-header">06. Edge-Blended Systems</div>
+            <div class="node-dom-body">
+                <p>Multiple overlapping projectors combined into a single continuous widescreen image. Software feathers overlapping edges to hide seams.</p>
+                <p>Foundational technique for large-scale immersive environments and panoramic theatrical backdrops.</p>
+            </div>
+        </div>
+
+        <div class="node-dom primary">
+            <img src="./projection_mapping.png" alt="Projection Mapping">
+            <div class="node-dom-header">07. Projection Mapping</div>
+            <div class="node-dom-body">
+                <p>Physical 3D objects turned into display surfaces. Software warps and masks projected imagery to align perfectly with complex geometry.</p>
+                <p>Exploded into architectural spectacle in the 2010s, transforming how static urban facades are perceived at night.</p>
+            </div>
+        </div>
+
+        <div class="node-dom secondary">
+            <img src="./immersive_environment.png" alt="Immersive Environments">
+            <div class="node-dom-header">08. Immersive Environments</div>
+            <div class="node-dom-body">
+                <p>Continuous wall, floor, and ceiling projection fields that physically enclose the viewer, creating spatial presence without headsets.</p>
+                <p>Entered cultural mainstream in the late 2010s via widespread immersive art exhibitions, rooted in 1990s CAVE research systems.</p>
+            </div>
+        </div>
+
+        <div class="node-dom tertiary">
+            <img src="./dome_based_systems.png" alt="Dome Projection">
+            <div class="node-dom-header">09. Dome-Based Systems</div>
+            <div class="node-dom-body">
+                <p>Projection onto hemispherical surfaces using fisheye lenses or multi-projector blends, creating fully enveloping ceiling-bound image fields.</p>
+                <p>Transitioned from analog planetariums to digital fulldome in the 2000s, opening to experimental media art and spatial narrative.</p>
+            </div>
+        </div>
+
+        <div class="node-dom primary">
+            <img src="./light_field_displays.png" alt="Light Field">
+            <div class="node-dom-header">10. Light-Field Displays</div>
+            <div class="node-dom-body">
+                <p>Displays emitting multiple light rays per pixel in different directions — parallax-correct volume allows head movement to reveal 3D depth without glasses.</p>
+                <p>Functional prototypes emerged in the late 2010s, pushing toward the holographic screens of science fiction.</p>
+            </div>
+        </div>
+
+        <div class="node-dom secondary">
+            <img src="./volumetric_displays.png" alt="Volumetric">
+            <div class="node-dom-header">11. Volumetric Displays</div>
+            <div class="node-dom-body">
+                <p>3D imagery via voxels within physical space — often via rapidly spinning screens (swept-volume) or lasers intersecting in specialized gases.</p>
+                <p>Largely experimental, limited by physical mechanics and immense real-time data rendering requirements.</p>
+            </div>
+        </div>
+
+        <div class="node-dom tertiary">
+            <img src="./true_holographic.png" alt="True Holographic">
+            <div class="node-dom-header">12. True Holographic</div>
+            <div class="node-dom-body">
+                <p>Wavefront reconstruction using laser interference patterns to recreate exact physical light waves bouncing off real objects.</p>
+                <p>Real-time dynamic digital holography remains one of the ultimate unresolved frontiers of display technology.</p>
+            </div>
+        </div>
+
+        <div class="node-dom primary">
+            <img src="./head_mounted_vr.png" alt="VR Headset">
+            <div class="node-dom-header">13. Head-Mounted VR</div>
+            <div class="node-dom-body">
+                <p>Opaque stereoscopic headsets blocking the physical world entirely, replacing it with a digitally rendered environment tracked to head movements.</p>
+                <p>Achieved critical consumer viability in the 2010s, reshaping gaming and architectural pre-visualisation.</p>
+            </div>
+        </div>
+
+        <div class="node-dom secondary">
+            <img src="./optical_ar_displays.png" alt="Optical AR">
+            <div class="node-dom-header">14. Optical AR Displays</div>
+            <div class="node-dom-body">
+                <p>See-through systems using transparent glass waveguides. Projectors shoot light into lens edges, bouncing into the eye and overlaying digital data on real views.</p>
+                <p>Pioneered for enterprise and military in the 2010s; field-of-view limits have slowed wider consumer adoption.</p>
+            </div>
+        </div>
+
+        <div class="node-dom tertiary">
+            <img src="./video_pass_through.png" alt="Video Pass-Through">
+            <div class="node-dom-header">15. Video Pass-Through MR</div>
+            <div class="node-dom-body">
+                <p>Closed-view headsets with high-resolution exterior cameras feeding real-time video to interior screens with 3D elements inserted digitally.</p>
+                <p>Gained major traction in the 2020s (Apple Vision Pro, Meta Quest 3) — bypasses optical limits of transparent glass for high-contrast mixed reality.</p>
+            </div>
+        </div>
+
+        <div class="node-dom primary">
+            <img src="./wearable_spatial_computing.png" alt="Wearable Spatial Computing">
+            <div class="node-dom-header">16. Wearable Spatial Computing</div>
+            <div class="node-dom-body">
+                <p>Lightweight glasses-form-factor devices providing standalone AR or MR without bulky tethered computing — merging digital interfaces with daily spatial perception.</p>
+                <p>The ambition: replace the smartphone by dissolving the 2D screen entirely into the physical environment.</p>
+            </div>
+        </div>
+
     </div>
+</div>
 
-    <script>
-        // Parameter block for adjusting material properties, camera settings, and post-process effects
-        const CONFIG = {
-            cameraSettings: {
-                initialZoom: 0.7,
-                minZoom: 0.15,
-                maxZoom: 3.0,
-                panSensitivity: 1.0,
-                zoomSensitivity: 0.001
-            },
-            materialProperties: {
-                backgroundColor: '#000000',
-                gridColor: 'rgba(255, 255, 255, 0.04)',
-                primaryNodeBg: '#ffffff',
-                secondaryNodeBg: '#000000'
-            },
-            postProcessEffects: {
-                contrast: 1.0,
-                brightness: 1.0,
-                filterEnabled: false
-            }
-        };
-
-        const container = document.getElementById('diagram-container');
-        const content = document.getElementById('diagram-content');
-        
-        let isDragging = false;
-        let startX, startY;
-        
-        let translateX = 310;
-        let translateY = 80; 
-        let scale = CONFIG.cameraSettings.initialZoom; 
-
-        function updateTransform() {
-            content.style.transform = `translate(${translateX}px, ${translateY}px) scale(${scale})`;
+<script>
+    const CONFIG = {
+        cameraSettings: {
+            initialZoom: 0.65,
+            minZoom: 0.65,
+            maxZoom: 3.0,
+            panSensitivity: 1.0,
+            zoomSensitivity: 0.001
         }
+    };
 
-        container.addEventListener('mousedown', (e) => {
-            isDragging = true;
-            startX = e.clientX - translateX;
-            startY = e.clientY - translateY;
-        });
+    const container = document.getElementById('diagram-container');
+    const content   = document.getElementById('diagram-content');
 
-        window.addEventListener('mousemove', (e) => {
-            if (!isDragging) return;
-            translateX = (e.clientX - startX) * CONFIG.cameraSettings.panSensitivity;
-            translateY = (e.clientY - startY) * CONFIG.cameraSettings.panSensitivity;
-            updateTransform();
-        });
+    let isDragging = false;
+    let startX, startY;
+    let translateX = 80, translateY = 100;
+    let scale = CONFIG.cameraSettings.initialZoom;
 
-        window.addEventListener('mouseup', () => {
-            isDragging = false;
-        });
-        
-        container.addEventListener('mouseleave', () => {
-            isDragging = false;
-        });
+    function updateTransform() {
+        content.style.transform = `translate(${translateX}px, ${translateY}px) scale(${scale})`;
+    }
 
-        container.addEventListener('wheel', (e) => {
-            e.preventDefault();
-            
-            const zoomDelta = -e.deltaY * CONFIG.cameraSettings.zoomSensitivity;
-            const newScale = Math.min(Math.max(scale + zoomDelta, CONFIG.cameraSettings.minZoom), CONFIG.cameraSettings.maxZoom);
-            
-            const rect = container.getBoundingClientRect();
-            const mouseX = e.clientX - rect.left;
-            const mouseY = e.clientY - rect.top;
+    container.addEventListener('mousedown', (e) => {
+        isDragging = true;
+        startX = e.clientX - translateX;
+        startY = e.clientY - translateY;
+    });
 
-            const centerX = rect.width / 2;
-            const centerY = rect.height / 2;
-
-            translateX -= (mouseX - centerX) * (newScale - scale);
-            translateY -= (mouseY - centerY) * (newScale - scale);
-            
-            scale = newScale;
-            updateTransform();
-        }, { passive: false });
-
-        if (CONFIG.postProcessEffects.filterEnabled) {
-            document.body.style.filter = `contrast(${CONFIG.postProcessEffects.contrast}) brightness(${CONFIG.postProcessEffects.brightness})`;
-        }
-
+    window.addEventListener('mousemove', (e) => {
+        if (!isDragging) return;
+        translateX = e.clientX - startX;
+        translateY = e.clientY - startY;
         updateTransform();
-    </script>
+    });
+
+    window.addEventListener('mouseup', () => { isDragging = false; });
+    container.addEventListener('mouseleave', () => { isDragging = false; });
+
+    container.addEventListener('wheel', (e) => {
+        e.preventDefault();
+        const delta = -e.deltaY * CONFIG.cameraSettings.zoomSensitivity;
+        const newScale = Math.min(Math.max(scale + delta, CONFIG.cameraSettings.minZoom), CONFIG.cameraSettings.maxZoom);
+        const rect = container.getBoundingClientRect();
+        const mx = e.clientX - rect.left, my = e.clientY - rect.top;
+        translateX -= (mx - translateX) * (newScale / scale - 1);
+        translateY -= (my - translateY) * (newScale / scale - 1);
+        scale = newScale;
+        updateTransform();
+    }, { passive: false });
+
+    updateTransform();
+</script>
 </body>
 </html>

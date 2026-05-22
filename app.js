@@ -53,7 +53,6 @@ const RAW_NODES = [
     { id: "SKIN", cl: "analysis", type: "secondary" },
     { id: "PY SKIN GENERATOR", cl: "analysis", type: "secondary" },
 
-    { id: "SITE MODEL", cl: "output", type: "primary" },
     { id: "MEDIA PROJECT", cl: "output", type: "primary" },
     { id: "PROJECT MODEL", cl: "output", type: "primary" },
     { id: "DRAWINGS + DETAILS", cl: "output", type: "primary" },
@@ -69,9 +68,8 @@ const EDGES = [
     ["MEDIA", "TECHNOLOGIES"], ["MEDIA", "ARTISTS"], ["MEDIA", "PROGRAM"],
     ["TECHNOLOGIES", "MEDIA M. CONCEPT"],
     ["MEDIA M. CONCEPT", "MEDIA PROJECT"], ["MEDIA M. CONCEPT", "PROGRAM"],
-    ["SITE", "SITE ANALYSIS"], ["SITE", "SITE MODEL"],
+    ["SITE", "SITE ANALYSIS"], ["SITE", "WEB INTERACTIVE MODEL"],
     ["SITE ANALYSIS", "MASSING"],
-    ["SITE MODEL", "SITE ANALYSIS"], ["SITE MODEL", "WEB INTERACTIVE MODEL"], ["SITE MODEL", "UE ENVIRONMENT"],
     ["PROGRAM", "MASSING"], ["PROGRAM", "STRUCTURE"], ["PROGRAM", "PROJECT MODEL"], ["PROGRAM", "MEDIA PROJECT"],
     ["MASSING", "SKIN"], ["MASSING", "STRUCTURE"],
     ["SKIN", "PROJECT MODEL"],
@@ -97,6 +95,15 @@ const FILES = [
     F('agents.md', 'md', 'BRIEF'),
     F('Meteor Facade v7 Workflow', 'pdf', 'BRIEF'),
     F('workflow_bw', 'pdf', 'BRIEF'),
+
+    // ── MEDIA ────────────────────────────────
+    F('media/index', 'html', 'MEDIA'),
+
+    // ── SITE ANALYSIS ────────────────────────
+    F('site_analysis/index', 'html', 'SITE ANALYSIS'),
+    ...[2,3,4,5,6,8,9,10,11,12,14,15,16,17,18,20,21,22,23,25,26,27,28,29].map(n =>
+        F(`site_analysis/pdf_pages/2GBX_BloomJovanovicManferdini_SP26_Herrera_Jaroslav_Galbusera_Mattia_DS_01_compressed-${n}`, 'pdf', 'SITE ANALYSIS')
+    ),
 
     // ── TECHNOLOGIES ─────────────────────────
     F('technologies/index', 'html', 'TECHNOLOGIES'),
@@ -217,22 +224,6 @@ const FILES = [
     F('open_source/Meteor_facade_v7', 'py', 'PY SKIN GENERATOR'),
     F('open_source/srf_analysis', 'gh', 'PY SKIN GENERATOR'),
 
-    // ── SITE MODEL ───────────────────────────
-    F('G11_hyperobject', 'glb', 'SITE MODEL'),
-    F('buildings', 'glb', 'SITE MODEL'),
-    F('cold_storage', 'glb', 'SITE MODEL'),
-    F('dsr', 'glb', 'SITE MODEL'),
-    F('highline', 'glb', 'SITE MODEL'),
-    F('hy_new_dev', 'glb', 'SITE MODEL'),
-    F('mn04_building', 'glb', 'SITE MODEL'),
-    F('railroads', 'glb', 'SITE MODEL'),
-    F('site_building', 'glb', 'SITE MODEL'),
-    F('street', 'glb', 'SITE MODEL'),
-    F('street_props', 'glb', 'SITE MODEL'),
-    F('subway_system', 'glb', 'SITE MODEL'),
-    F('terrain', 'glb', 'SITE MODEL'),
-    F('HYPEROBJECT_midterm/site', 'glb', 'SITE MODEL'),
-    F('HYPEROBJECT_midterm/streets', 'glb', 'SITE MODEL'),
 
     // ── STRUCTURE ────────────────────────────
     F('260303_exploded-structure', 'glb', 'STRUCTURE'),
@@ -310,8 +301,6 @@ const FILES = [
     F('ue-360/CineCameraActor20.0000', 'jpeg', 'UE ENVIRONMENT'),
     F('ue-360/CineCameraActor21.0003', 'jpeg', 'UE ENVIRONMENT'),
 
-    // ── SITE MODEL (page) ────────────────────
-    F('site_model/index', 'html', 'SITE MODEL'),
 
     // ── STONES RESEARCH (extra renders) ──────
     F('stone_research/Meteor_Facade_v7_Workflow', 'png', 'STONES RESEARCH'),
@@ -354,7 +343,6 @@ function compute2DPos() {
         "TECHNOLOGIES": [1, 2],
         
         "PATTERNS": [2, -2],
-        "SITE MODEL": [2, -1],
         "SITE ANALYSIS": [2, 0],
         "ARTISTS": [2, 1],
         
@@ -605,13 +593,18 @@ function buildGraph() {
         const ty = -t.pos2D.y + 4000 - 17; // top bounds
         
         let pathStr = "";
-        if (Math.abs(sx - tx) < 5 && Math.abs(sy - ty) <= 120) {
-            // Straight vertical line for direct adjacent tracks
+        const STRAIGHT_PAIRS = [
+            ["SITE", "WEB INTERACTIVE MODEL"],
+        ];
+        const isStraight = STRAIGHT_PAIRS.some(([a, b]) => sid === a && tid === b);
+
+        if (isStraight || (Math.abs(sx - tx) < 5 && Math.abs(sy - ty) <= 120)) {
+            // Straight line
             pathStr = `M ${sx} ${sy} L ${tx} ${ty}`;
         } else {
             // Gap router to strictly avoid passing through other nodes vertically
             let gapX = sx === tx ? sx + 70 : (sx < tx ? tx - 70 : tx + 70);
-            
+
             // Generate orthogonal S-shape routing via clear vertical channels
             pathStr = `M ${sx} ${sy} L ${sx} ${sy+12} L ${gapX} ${sy+12} L ${gapX} ${ty-12} L ${tx} ${ty-12} L ${tx} ${ty}`;
         }
@@ -867,7 +860,9 @@ function performNav(id) {
         "STRUCTURE": "./structure/index.html",
         "SKIN": "./structure/index.html",
         "MOON ENVIRONMENT": "./2GBX_Hyperobject/index.html",
-        "MEDIA PROJECT": "./media_chunk/index.html"
+        "MEDIA PROJECT": "./media_chunk/index.html",
+        "MEDIA": "./media/index.html",
+        "SITE ANALYSIS": "./site_analysis/index.html"
     };
     window.location.href = nav[id] || ('.' + id.toLowerCase().replace(/\s+/g, '_') + '/');
 }

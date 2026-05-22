@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Media Art - Research Board</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Fragment+Mono:ital@0;1&display=swap');
+
+        :root {
+            --bg: #000000;
+            --fg: rgba(255,255,255,0.85);
+            --fg-dim: rgb(61,61,61);
+            --font: 'Fragment Mono', monospace;
+        }
+
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body, html {
+            width: 100%; height: 100%;
+            overflow: hidden;
+            font-family: var(--font);
+            background: var(--bg);
+            color: var(--fg);
+            user-select: none;
+            -webkit-user-select: none;
+            cursor: crosshair;
+        }
+
+        #diagram-container {
+            width: 100%; height: 100%;
+            position: relative;
+            background: #000;
+            background-size: 40px 40px;
+            background-image:
+                linear-gradient(to right, rgba(255,255,255,0.04) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(255,255,255,0.04) 1px, transparent 1px);
+            cursor: grab;
+        }
+        #diagram-container:active { cursor: grabbing; }
+
+        #diagram-content {
+            position: absolute;
+            top: 0; left: 0;
+            display: grid;
+            grid-template-columns: repeat(4, 340px);
+            grid-auto-rows: 500px;
+            gap: 48px;
+            transform-origin: 0 0;
+        }
+
+        .fixed-title {
+            position: absolute;
+            top: 28px; left: 28px;
+            z-index: 10;
+            pointer-events: none;
+        }
+
+        .back-btn {
+            display: inline-block;
+            font-family: var(--font);
+            font-size: 7px;
+            text-transform: uppercase;
+            letter-spacing: 0.18em;
+            color: rgba(255,255,255,0.7);
+            text-decoration: none;
+            border: 1px solid rgba(255,255,255,0.2);
+            padding: 5px 10px;
+            margin-bottom: 20px;
+            pointer-events: auto;
+            cursor: pointer;
+            transition: background 0.15s, color 0.15s, border-color 0.15s;
+        }
+        .back-btn:hover { background: #fff; color: #000; border-color: #fff; }
+
+        .fixed-title h1 {
+            font-size: 14px;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            color: #fff;
+            font-weight: normal;
+        }
+
+        .title-description {
+            font-size: 7px;
+            opacity: 0.35;
+            color: #fff;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            margin-top: 6px;
+        }
+
+        .node-dom {
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+            box-sizing: border-box;
+            overflow: hidden;
+            cursor: default;
+            height: 100%;
+        }
+
+        .node-dom.primary   { background: #000; border: 2px solid #fff;  color: #fff; }
+        .node-dom.secondary { background: #000; border: 2px solid #fff;  color: #fff; }
+        .node-dom.tertiary  { background: #000; border: 2px dashed #fff; color: #fff; }
+
+        /* SVG illustration area replacing img */
+        .node-dom .art-area {
+            width: 100%;
+            height: 160px;
+            flex-shrink: 0;
+            margin-bottom: 14px;
+            border: 1px solid var(--fg-dim);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            background: #000;
+        }
+
+        .node-dom .art-area svg {
+            width: 100%;
+            height: 100%;
+        }
+
+        .node-dom-header {
+            font-size: 11px;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 10px;
+            border-bottom: 1px solid currentColor;
+            padding-bottom: 7px;
+            flex-shrink: 0;
+        }
+
+        .node-dom-artists {
+            font-size: 7.5px;
+            letter-spacing: 0.08em;
+            opacity: 0.45;
+            text-transform: uppercase;
+            margin-bottom: 10px;
+            flex-shrink: 0;
+            line-height: 1.6;
+        }
+
+        .node-dom-body {
+            font-size: 9px;
+            line-height: 1.65;
+            overflow: hidden;
+            flex: 1;
+        }
+
+        .node-dom-body p { margin-bottom: 9px; }
+        .node-dom-body p:last-child { margin-bottom: 0; }
+    </style>
+</head>
+<body>
+
+<div class="fixed-title">
+    <a class="back-btn" href="../index.html">← BACK</a>
+    <h1>MEDIA ART CATEGORIES</h1>
+    <div class="title-description">Case Study — Typology Research Board</div>
+</div>
+
+<div id="diagram-container">
+    <div id="diagram-content">
+
+        <!-- 01 VIDEO & FILM ART -->
+        <div class="node-dom primary">
+            <div class="art-area">
+                <svg viewBox="0 0 340 160" xmlns="http://www.w3.org/2000/svg">
+                    <!-- film strip left -->
+                    <rect x="10" y="20" width="18" height="120" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="1"/>
+                    <rect x="13" y="28" width="12" height="10" fill="rgba(255,255,255,0.08)" stroke="rgba(255,255,255,0.2)" stroke-width="0.5"/>
+                    <rect x="13" y="44" width="12" height="10" fill="rgba(255,255,255,0.08)" stroke="rgba(255,255,255,0.2)" stroke-width="0.5"/>
+                    <rect x="13" y="60" width="12" height="10" fill="rgba(255,255,255,0.08)" stroke="rgba(255,255,255,0.2)" stroke-width="0.5"/>
+                    <rect x="13" y="76" width="12" height="10" fill="rgba(255,255,255,0.08)" stroke="rgba(255,255,255,0.2)" stroke-width="0.5"/>
+                    <rect x="13" y="92" width="12" height="10" fill="rgba(255,255,255,0.08)" stroke="rgba(255,255,255,0.2)" stroke-width="0.5"/>
+                    <rect x="13" y="108" width="12" height="10" fill="rgba(255,255,255,0.08)" stroke="rgba(255,255,255,0.2)" stroke-width="0.5"/>
+                    <!-- main screen -->
+                    <rect x="40" y="25" width="200" height="110" fill="none" stroke="rgba(255,255,255,0.6)" stroke-width="1.5"/>
+                    <!-- scan lines -->
+                    <line x1="40" y1="47" x2="240" y2="47" stroke="rgba(255,255,255,0.04)" stroke-width="1"/>
+                    <line x1="40" y1="69" x2="240" y2="69" stroke="rgba(255,255,255,0.04)" stroke-width="1"/>
+                    <line x1="40" y1="91" x2="240" y2="91" stroke="rgba(255,255,255,0.04)" stroke-width="1"/>
+                    <line x1="40" y1="113" x2="240" y2="113" stroke="rgba(255,255,255,0.04)" stroke-width="1"/>
+                    <!-- play triangle -->
+                    <polygon points="125,65 125,95 155,80" fill="rgba(255,255,255,0.7)"/>
+                    <!-- film strip right -->
+                    <rect x="252" y="20" width="18" height="120" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="1"/>
+                    <rect x="255" y="28" width="12" height="10" fill="rgba(255,255,255,0.08)" stroke="rgba(255,255,255,0.2)" stroke-width="0.5"/>
+                    <rect x="255" y="44" width="12" height="10" fill="rgba(255,255,255,0.08)" stroke="rgba(255,255,255,0.2)" stroke-width="0.5"/>
+                    <rect x="255" y="60" width="12" height="10" fill="rgba(255,255,255,0.08)" stroke="rgba(255,255,255,0.2)" stroke-width="0.5"/>
+                    <rect x="255" y="76" width="12" height="10" fill="rgba(255,255,255,0.08)" stroke="rgba(255,255,255,0.2)" stroke-width="0.5"/>
+                    <rect x="255" y="92" width="12" height="10" fill="rgba(255,255,255,0.08)" stroke="rgba(255,255,255,0.2)" stroke-width="0.5"/>
+                    <rect x="255" y="108" width="12" height="10" fill="rgba(255,255,255,0.08)" stroke="rgba(255,255,255,0.2)" stroke-width="0.5"/>
+                    <!-- label -->
+                    <text x="290" y="84" font-family="'Fragment Mono', monospace" font-size="7" fill="rgba(255,255,255,0.2)" text-anchor="middle" transform="rotate(90,290,80)">VIDEO / FILM</text>
+                </svg>
+            </div>
+            <div class="node-dom-header">01. Video &amp; Film Art</div>
+            <div class="node-dom-artists">Bill Viola · Pipilotti Rist · Nam June Paik · Hannah Weinberger</div>
+            <div class="node-dom-body">
+                <p>Video art emerged in the 1960s as artists seized the camera as a sculptural and narrative tool. From Nam June Paik's pioneering television assemblages to Bill Viola's slow, immersive meditations on mortality, and Pipilotti Rist's lush psychedelic video environments, this category treats moving image not as entertainment but as a material to bend, loop, and layer.</p>
+                <p>The monitor and projection screen become canvases for consciousness. Hannah Weinberger extends this into multichannel sound-video installations that collapse the boundary between film, music, and lived space.</p>
+            </div>
+        </div>
+
+        <!-- 02 IMMERSIVE & LIGHT -->
+        <div class="node-dom secondary">
+            <div class="art-area">
+                <svg viewBox="0 0 340 160" xmlns="http://www.w3.org/2000/svg">
+                    <!-- radial glow rings -->
+                    <circle cx="170" cy="80" r="70" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+                    <circle cx="170" cy="80" r="55" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="1"/>
+                    <circle cx="170" cy="80" r="40" fill="none" stroke="rgba(255,255,255,0.12)" stroke-width="1"/>
+                    <circle cx="170" cy="80" r="25" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="1"/>
+                    <circle cx="170" cy="80" r="10" fill="rgba(255,255,255,0.5)" stroke="none"/>
+                    <!-- light rays -->
+                    <line x1="170" y1="80" x2="100" y2="20" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
+                    <line x1="170" y1="80" x2="240" y2="20" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
+                    <line x1="170" y1="80" x2="170" y2="10" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
+                    <line x1="170" y1="80" x2="90" y2="80" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
+                    <line x1="170" y1="80" x2="250" y2="80" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
+                    <line x1="170" y1="80" x2="100" y2="140" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
+                    <line x1="170" y1="80" x2="240" y2="140" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
+                    <line x1="170" y1="80" x2="170" y2="150" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
+                    <!-- observer silhouette -->
+                    <ellipse cx="170" cy="148" rx="12" ry="5" fill="rgba(255,255,255,0.15)"/>
+                    <line x1="170" y1="125" x2="170" y2="143" stroke="rgba(255,255,255,0.3)" stroke-width="1.5"/>
+                    <circle cx="170" cy="121" r="5" fill="none" stroke="rgba(255,255,255,0.3)" stroke-width="1.2"/>
+                    <text x="20" y="155" font-family="'Fragment Mono', monospace" font-size="6" fill="rgba(255,255,255,0.18)" letter-spacing="0.1em">LIGHT / SPACE</text>
+                </svg>
+            </div>
+            <div class="node-dom-header">02. Immersive &amp; Light Installation</div>
+            <div class="node-dom-artists">James Turrell · Olafur Eliasson · Ryoji Ikeda</div>
+            <div class="node-dom-body">
+                <p>Light itself is the medium here — not as illumination but as phenomenological event. James Turrell carves pure light into architectural chambers where the eye loses its anchor. Olafur Eliasson scales natural phenomena — fog, rainbows, the sun — into museum-sized experiences that make perception conscious.</p>
+                <p>Ryoji Ikeda works at the intersection of pure data and light, translating binary information into overwhelming white projections and precise sound. Together they share an interest in how spatial light restructures the observer's relationship to scale, time, and sensory threshold.</p>
+            </div>
+        </div>
+
+        <!-- 03 AI & GENERATIVE ART -->
+        <div class="node-dom tertiary">
+            <div class="art-area">
+                <svg viewBox="0 0 340 160" xmlns="http://www.w3.org/2000/svg">
+                    <!-- neural network nodes -->
+                    <!-- layer 1 -->
+                    <circle cx="50" cy="40" r="6" fill="none" stroke="rgba(255,255,255,0.5)" stroke-width="1"/>
+                    <circle cx="50" cy="80" r="6" fill="none" stroke="rgba(255,255,255,0.5)" stroke-width="1"/>
+                    <circle cx="50" cy="120" r="6" fill="none" stroke="rgba(255,255,255,0.5)" stroke-width="1"/>
+                    <!-- layer 2 -->
+                    <circle cx="130" cy="28" r="6" fill="none" stroke="rgba(255,255,255,0.4)" stroke-width="1"/>
+                    <circle cx="130" cy="60" r="6" fill="none" stroke="rgba(255,255,255,0.4)" stroke-width="1"/>
+                    <circle cx="130" cy="92" r="6" fill="rgba(255,255,255,0.12)" stroke="rgba(255,255,255,0.5)" stroke-width="1"/>
+                    <circle cx="130" cy="124" r="6" fill="none" stroke="rgba(255,255,255,0.4)" stroke-width="1"/>
+                    <!-- layer 3 -->
+                    <circle cx="210" cy="50" r="6" fill="none" stroke="rgba(255,255,255,0.4)" stroke-width="1"/>
+                    <circle cx="210" cy="80" r="6" fill="rgba(255,255,255,0.2)" stroke="rgba(255,255,255,0.7)" stroke-width="1"/>
+                    <circle cx="210" cy="110" r="6" fill="none" stroke="rgba(255,255,255,0.4)" stroke-width="1"/>
+                    <!-- output -->
+                    <circle cx="290" cy="80" r="9" fill="rgba(255,255,255,0.8)" stroke="none"/>
+                    <!-- connections l1->l2 -->
+                    <line x1="56" y1="40" x2="124" y2="28" stroke="rgba(255,255,255,0.08)" stroke-width="0.8"/>
+                    <line x1="56" y1="40" x2="124" y2="60" stroke="rgba(255,255,255,0.08)" stroke-width="0.8"/>
+                    <line x1="56" y1="40" x2="124" y2="92" stroke="rgba(255,255,255,0.06)" stroke-width="0.8"/>
+                    <line x1="56" y1="80" x2="124" y2="60" stroke="rgba(255,255,255,0.1)" stroke-width="0.8"/>
+                    <line x1="56" y1="80" x2="124" y2="92" stroke="rgba(255,255,255,0.12)" stroke-width="0.8"/>
+                    <line x1="56" y1="120" x2="124" y2="92" stroke="rgba(255,255,255,0.08)" stroke-width="0.8"/>
+                    <line x1="56" y1="120" x2="124" y2="124" stroke="rgba(255,255,255,0.08)" stroke-width="0.8"/>
+                    <!-- connections l2->l3 -->
+                    <line x1="136" y1="28" x2="204" y2="50" stroke="rgba(255,255,255,0.08)" stroke-width="0.8"/>
+                    <line x1="136" y1="60" x2="204" y2="50" stroke="rgba(255,255,255,0.08)" stroke-width="0.8"/>
+                    <line x1="136" y1="60" x2="204" y2="80" stroke="rgba(255,255,255,0.12)" stroke-width="0.8"/>
+                    <line x1="136" y1="92" x2="204" y2="80" stroke="rgba(255,255,255,0.15)" stroke-width="0.8"/>
+                    <line x1="136" y1="92" x2="204" y2="110" stroke="rgba(255,255,255,0.1)" stroke-width="0.8"/>
+                    <line x1="136" y1="124" x2="204" y2="110" stroke="rgba(255,255,255,0.08)" stroke-width="0.8"/>
+                    <!-- connections l3->out -->
+                    <line x1="216" y1="50" x2="281" y2="80" stroke="rgba(255,255,255,0.1)" stroke-width="0.8"/>
+                    <line x1="216" y1="80" x2="281" y2="80" stroke="rgba(255,255,255,0.3)" stroke-width="1"/>
+                    <line x1="216" y1="110" x2="281" y2="80" stroke="rgba(255,255,255,0.1)" stroke-width="0.8"/>
+                    <text x="20" y="155" font-family="'Fragment Mono', monospace" font-size="6" fill="rgba(255,255,255,0.18)" letter-spacing="0.1em">AI / GENERATIVE</text>
+                </svg>
+            </div>
+            <div class="node-dom-header">03. AI &amp; Generative Art</div>
+            <div class="node-dom-artists">Refik Anadol · Mario Klingemann · Ian Cheng</div>
+            <div class="node-dom-body">
+                <p>This category encompasses artists who use machine learning and generative systems as primary creative partners. Refik Anadol feeds vast datasets — architectural history, nature, human memory — into neural networks and renders the output as fluid, monumental projections that redefine what data visualization can look like.</p>
+                <p>Mario Klingemann trains models on cultural archives to produce uncanny, glitchy imagery probing the aesthetics of algorithmic thought. Ian Cheng builds self-evolving simulations — living game-like worlds — that run continuously without authorial control, producing emergent narratives no human scripted.</p>
+            </div>
+        </div>
+
+        <!-- 04 PERFORMANCE & BODY -->
+        <div class="node-dom primary">
+            <div class="art-area">
+                <svg viewBox="0 0 340 160" xmlns="http://www.w3.org/2000/svg">
+                    <!-- stage floor line -->
+                    <line x1="30" y1="135" x2="310" y2="135" stroke="rgba(255,255,255,0.2)" stroke-width="1"/>
+                    <!-- figure -->
+                    <circle cx="170" cy="52" r="10" fill="none" stroke="rgba(255,255,255,0.7)" stroke-width="1.5"/>
+                    <line x1="170" y1="62" x2="170" y2="100" stroke="rgba(255,255,255,0.7)" stroke-width="1.5"/>
+                    <line x1="170" y1="72" x2="145" y2="88" stroke="rgba(255,255,255,0.7)" stroke-width="1.5"/>
+                    <line x1="170" y1="72" x2="195" y2="88" stroke="rgba(255,255,255,0.7)" stroke-width="1.5"/>
+                    <line x1="170" y1="100" x2="150" y2="135" stroke="rgba(255,255,255,0.7)" stroke-width="1.5"/>
+                    <line x1="170" y1="100" x2="190" y2="135" stroke="rgba(255,255,255,0.7)" stroke-width="1.5"/>
+                    <!-- spotlights -->
+                    <polygon points="80,10 50,135 110,135" fill="rgba(255,255,255,0.03)" stroke="rgba(255,255,255,0.12)" stroke-width="0.8"/>
+                    <polygon points="260,10 230,135 290,135" fill="rgba(255,255,255,0.03)" stroke="rgba(255,255,255,0.12)" stroke-width="0.8"/>
+                    <!-- microphone stand hint -->
+                    <line x1="140" y1="75" x2="140" y2="135" stroke="rgba(255,255,255,0.2)" stroke-width="1"/>
+                    <ellipse cx="140" cy="72" rx="5" ry="7" fill="none" stroke="rgba(255,255,255,0.25)" stroke-width="0.8"/>
+                    <!-- waveform from mouth area -->
+                    <polyline points="155,60 160,54 164,65 168,48 172,66 176,55 180,60" fill="none" stroke="rgba(255,255,255,0.4)" stroke-width="1"/>
+                    <text x="20" y="155" font-family="'Fragment Mono', monospace" font-size="6" fill="rgba(255,255,255,0.18)" letter-spacing="0.1em">PERFORMANCE / BODY</text>
+                </svg>
+            </div>
+            <div class="node-dom-header">04. Performance &amp; Body Art</div>
+            <div class="node-dom-artists">Laurie Anderson · Sougwen Chung · Yayoi Kusama</div>
+            <div class="node-dom-body">
+                <p>Here the body — human or hybrid — is both instrument and subject. Laurie Anderson has spent decades using electronic voice manipulation, storytelling, and multimedia performance to examine language, identity, and technology. Sougwen Chung performs alongside robotic arms she trained on her own drawing behavior, staging a live negotiation between biological and artificial mark-making.</p>
+                <p>Yayoi Kusama's obsessive dot-pattern performances and infinity mirror rooms stem from a deeply personal visual language, turning self-obliteration into an aesthetic system of radical repetition.</p>
+            </div>
+        </div>
+
+        <!-- 05 SOUND ART -->
+        <div class="node-dom secondary">
+            <div class="art-area">
+                <svg viewBox="0 0 340 160" xmlns="http://www.w3.org/2000/svg">
+                    <!-- waveform bars -->
+                    <rect x="30"  y="75" width="6" height="10" fill="rgba(255,255,255,0.3)"/>
+                    <rect x="42"  y="60" width="6" height="40" fill="rgba(255,255,255,0.4)"/>
+                    <rect x="54"  y="45" width="6" height="70" fill="rgba(255,255,255,0.5)"/>
+                    <rect x="66"  y="35" width="6" height="90" fill="rgba(255,255,255,0.65)"/>
+                    <rect x="78"  y="50" width="6" height="60" fill="rgba(255,255,255,0.5)"/>
+                    <rect x="90"  y="68" width="6" height="24" fill="rgba(255,255,255,0.35)"/>
+                    <rect x="102" y="55" width="6" height="50" fill="rgba(255,255,255,0.45)"/>
+                    <rect x="114" y="40" width="6" height="80" fill="rgba(255,255,255,0.6)"/>
+                    <rect x="126" y="30" width="6" height="100" fill="rgba(255,255,255,0.75)"/>
+                    <rect x="138" y="20" width="6" height="120" fill="rgba(255,255,255,0.9)"/>
+                    <rect x="150" y="30" width="6" height="100" fill="rgba(255,255,255,0.75)"/>
+                    <rect x="162" y="40" width="6" height="80" fill="rgba(255,255,255,0.6)"/>
+                    <rect x="174" y="55" width="6" height="50" fill="rgba(255,255,255,0.45)"/>
+                    <rect x="186" y="65" width="6" height="30" fill="rgba(255,255,255,0.35)"/>
+                    <rect x="198" y="52" width="6" height="56" fill="rgba(255,255,255,0.45)"/>
+                    <rect x="210" y="38" width="6" height="84" fill="rgba(255,255,255,0.55)"/>
+                    <rect x="222" y="48" width="6" height="64" fill="rgba(255,255,255,0.45)"/>
+                    <rect x="234" y="62" width="6" height="36" fill="rgba(255,255,255,0.3)"/>
+                    <rect x="246" y="70" width="6" height="20" fill="rgba(255,255,255,0.25)"/>
+                    <rect x="258" y="75" width="6" height="10" fill="rgba(255,255,255,0.2)"/>
+                    <!-- center line -->
+                    <line x1="20" y1="80" x2="320" y2="80" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
+                    <text x="20" y="155" font-family="'Fragment Mono', monospace" font-size="6" fill="rgba(255,255,255,0.18)" letter-spacing="0.1em">SOUND ART</text>
+                </svg>
+            </div>
+            <div class="node-dom-header">05. Sound Art</div>
+            <div class="node-dom-artists">Janet Cardiff · Ryoji Ikeda · Hannah Weinberger · Laurie Anderson</div>
+            <div class="node-dom-body">
+                <p>Sound art decouples audio from performance or playback, treating it as spatial, architectural, or sculptural material. Janet Cardiff's binaural audio walks embed fictional narratives into real environments, collapsing memory and place. Ryoji Ikeda uses sine waves and noise at extreme frequencies as structural elements.</p>
+                <p>Hannah Weinberger fills rooms with layered multichannel sound that behaves more like weather than music. Laurie Anderson's voice — electronically altered, looped, stretched — becomes an instrument for dissecting language itself. What unites them: sound is the primary structural fact, not decoration.</p>
+            </div>
+        </div>
+
+        <!-- 06 NEW MEDIA & NET ART -->
+        <div class="node-dom tertiary">
+            <div class="art-area">
+                <svg viewBox="0 0 340 160" xmlns="http://www.w3.org/2000/svg">
+                    <!-- network nodes -->
+                    <circle cx="170" cy="80" r="8" fill="rgba(255,255,255,0.8)" stroke="none"/>
+                    <circle cx="80"  cy="40" r="5" fill="none" stroke="rgba(255,255,255,0.5)" stroke-width="1"/>
+                    <circle cx="260" cy="40" r="5" fill="none" stroke="rgba(255,255,255,0.5)" stroke-width="1"/>
+                    <circle cx="60"  cy="115" r="5" fill="none" stroke="rgba(255,255,255,0.5)" stroke-width="1"/>
+                    <circle cx="280" cy="115" r="5" fill="none" stroke="rgba(255,255,255,0.5)" stroke-width="1"/>
+                    <circle cx="170" cy="20" r="4" fill="none" stroke="rgba(255,255,255,0.35)" stroke-width="1"/>
+                    <circle cx="170" cy="140" r="4" fill="none" stroke="rgba(255,255,255,0.35)" stroke-width="1"/>
+                    <circle cx="110" cy="140" r="3" fill="none" stroke="rgba(255,255,255,0.25)" stroke-width="1"/>
+                    <circle cx="230" cy="20" r="3" fill="none" stroke="rgba(255,255,255,0.25)" stroke-width="1"/>
+                    <!-- connections from center -->
+                    <line x1="162" y1="74" x2="85" y2="43" stroke="rgba(255,255,255,0.3)" stroke-width="1"/>
+                    <line x1="178" y1="74" x2="255" y2="43" stroke="rgba(255,255,255,0.3)" stroke-width="1"/>
+                    <line x1="162" y1="86" x2="65" y2="112" stroke="rgba(255,255,255,0.3)" stroke-width="1"/>
+                    <line x1="178" y1="86" x2="275" y2="112" stroke="rgba(255,255,255,0.3)" stroke-width="1"/>
+                    <line x1="170" y1="72" x2="170" y2="24" stroke="rgba(255,255,255,0.25)" stroke-width="1"/>
+                    <line x1="170" y1="88" x2="170" y2="136" stroke="rgba(255,255,255,0.25)" stroke-width="1"/>
+                    <!-- secondary connections -->
+                    <line x1="80" y1="43" x2="170" y2="20" stroke="rgba(255,255,255,0.12)" stroke-width="0.8"/>
+                    <line x1="260" y1="43" x2="230" y2="22" stroke="rgba(255,255,255,0.12)" stroke-width="0.8"/>
+                    <line x1="60" y1="113" x2="110" y2="138" stroke="rgba(255,255,255,0.12)" stroke-width="0.8"/>
+                    <!-- data pulse dots -->
+                    <circle cx="126" cy="57" r="2" fill="rgba(255,255,255,0.6)"/>
+                    <circle cx="214" cy="105" r="2" fill="rgba(255,255,255,0.6)"/>
+                    <text x="20" y="155" font-family="'Fragment Mono', monospace" font-size="6" fill="rgba(255,255,255,0.18)" letter-spacing="0.1em">NEW MEDIA / NET ART</text>
+                </svg>
+            </div>
+            <div class="node-dom-header">06. New Media &amp; Net Art</div>
+            <div class="node-dom-artists">Stan VanDerBeek · Nam June Paik · Gala Porras-Kim</div>
+            <div class="node-dom-body">
+                <p>New media art exploits the specific properties of electronic and network-based systems — early video synthesis, satellite broadcasts, internet infrastructure, database logic. Stan VanDerBeek invented the 'movie-drome' in the 1960s, a dome-shaped cinema for image saturation. Nam June Paik envisioned a global electronic superhighway decades before the internet.</p>
+                <p>Gala Porras-Kim uses archival, bureaucratic, and institutional systems as her medium, interrogating how cultural memory is preserved and lost within protocols. The category is defined by an interest in the cultural politics of media infrastructure itself.</p>
+            </div>
+        </div>
+
+        <!-- 07 SCULPTURE & MIXED MEDIA -->
+        <div class="node-dom primary">
+            <div class="art-area">
+                <svg viewBox="0 0 340 160" xmlns="http://www.w3.org/2000/svg">
+                    <!-- isometric cube -->
+                    <!-- top face -->
+                    <polygon points="170,25 230,55 170,85 110,55" fill="rgba(255,255,255,0.12)" stroke="rgba(255,255,255,0.7)" stroke-width="1.2"/>
+                    <!-- left face -->
+                    <polygon points="110,55 170,85 170,130 110,100" fill="rgba(255,255,255,0.05)" stroke="rgba(255,255,255,0.5)" stroke-width="1.2"/>
+                    <!-- right face -->
+                    <polygon points="230,55 170,85 170,130 230,100" fill="rgba(255,255,255,0.08)" stroke="rgba(255,255,255,0.6)" stroke-width="1.2"/>
+                    <!-- explosion lines from corners -->
+                    <line x1="170" y1="25" x2="170" y2="10" stroke="rgba(255,255,255,0.2)" stroke-width="0.8" stroke-dasharray="2,3"/>
+                    <line x1="230" y1="55" x2="265" y2="38" stroke="rgba(255,255,255,0.2)" stroke-width="0.8" stroke-dasharray="2,3"/>
+                    <line x1="110" y1="55" x2="75" y2="38" stroke="rgba(255,255,255,0.2)" stroke-width="0.8" stroke-dasharray="2,3"/>
+                    <line x1="110" y1="100" x2="75" y2="118" stroke="rgba(255,255,255,0.2)" stroke-width="0.8" stroke-dasharray="2,3"/>
+                    <line x1="230" y1="100" x2="265" y2="118" stroke="rgba(255,255,255,0.2)" stroke-width="0.8" stroke-dasharray="2,3"/>
+                    <line x1="170" y1="130" x2="170" y2="148" stroke="rgba(255,255,255,0.2)" stroke-width="0.8" stroke-dasharray="2,3"/>
+                    <!-- scatter dots -->
+                    <circle cx="275" cy="35" r="2" fill="rgba(255,255,255,0.4)"/>
+                    <circle cx="268" cy="22" r="1.5" fill="rgba(255,255,255,0.3)"/>
+                    <circle cx="283" cy="48" r="1" fill="rgba(255,255,255,0.25)"/>
+                    <circle cx="62" cy="30" r="2" fill="rgba(255,255,255,0.4)"/>
+                    <circle cx="75" cy="18" r="1.5" fill="rgba(255,255,255,0.3)"/>
+                    <text x="20" y="155" font-family="'Fragment Mono', monospace" font-size="6" fill="rgba(255,255,255,0.18)" letter-spacing="0.1em">SCULPTURE / MIXED MEDIA</text>
+                </svg>
+            </div>
+            <div class="node-dom-header">07. Sculpture &amp; Mixed Media</div>
+            <div class="node-dom-artists">Cai Guo-Qiang · Anicka Yi · Cao Fei</div>
+            <div class="node-dom-body">
+                <p>These artists work across physical materials, biological processes, and digital environments without privileging any single one. Cai Guo-Qiang uses gunpowder — ignited in controlled explosions — to produce monumental drawings and pyrotechnic events merging spectacle with ritual. Anicka Yi builds immersive installations using scent, biotechnology, and robotics, exploring embodiment and non-human intelligence through microbiology.</p>
+                <p>Cao Fei operates across documentary film, virtual worlds, and installation, building a sprawling fictional universe that mirrors China's rapid urbanization. The category is united by a commitment to material hybridity as conceptual argument.</p>
+            </div>
+        </div>
+
+        <!-- 08 ARCHITECTURE & SPATIAL MEDIA -->
+        <div class="node-dom tertiary">
+            <div class="art-area">
+                <svg viewBox="0 0 340 160" xmlns="http://www.w3.org/2000/svg">
+                    <!-- building facade -->
+                    <rect x="60" y="40" width="140" height="95" fill="none" stroke="rgba(255,255,255,0.6)" stroke-width="1.5"/>
+                    <!-- windows grid -->
+                    <rect x="72"  y="52" width="20" height="14" fill="rgba(255,255,255,0.08)" stroke="rgba(255,255,255,0.2)" stroke-width="0.5"/>
+                    <rect x="100" y="52" width="20" height="14" fill="rgba(255,255,255,0.2)"  stroke="rgba(255,255,255,0.4)" stroke-width="0.5"/>
+                    <rect x="128" y="52" width="20" height="14" fill="rgba(255,255,255,0.08)" stroke="rgba(255,255,255,0.2)" stroke-width="0.5"/>
+                    <rect x="156" y="52" width="20" height="14" fill="rgba(255,255,255,0.35)" stroke="rgba(255,255,255,0.5)" stroke-width="0.5"/>
+                    <rect x="72"  y="74" width="20" height="14" fill="rgba(255,255,255,0.25)" stroke="rgba(255,255,255,0.4)" stroke-width="0.5"/>
+                    <rect x="100" y="74" width="20" height="14" fill="rgba(255,255,255,0.08)" stroke="rgba(255,255,255,0.2)" stroke-width="0.5"/>
+                    <rect x="128" y="74" width="20" height="14" fill="rgba(255,255,255,0.18)" stroke="rgba(255,255,255,0.3)" stroke-width="0.5"/>
+                    <rect x="156" y="74" width="20" height="14" fill="rgba(255,255,255,0.08)" stroke="rgba(255,255,255,0.2)" stroke-width="0.5"/>
+                    <rect x="72"  y="96" width="20" height="14" fill="rgba(255,255,255,0.08)" stroke="rgba(255,255,255,0.2)" stroke-width="0.5"/>
+                    <rect x="100" y="96" width="20" height="14" fill="rgba(255,255,255,0.4)"  stroke="rgba(255,255,255,0.6)" stroke-width="0.5"/>
+                    <rect x="128" y="96" width="20" height="14" fill="rgba(255,255,255,0.08)" stroke="rgba(255,255,255,0.2)" stroke-width="0.5"/>
+                    <rect x="156" y="96" width="20" height="14" fill="rgba(255,255,255,0.15)" stroke="rgba(255,255,255,0.3)" stroke-width="0.5"/>
+                    <!-- projection beam from left -->
+                    <polygon points="10,75 60,55 60,125" fill="rgba(255,255,255,0.04)" stroke="rgba(255,255,255,0.15)" stroke-width="0.8"/>
+                    <circle cx="10" cy="80" r="4" fill="none" stroke="rgba(255,255,255,0.3)" stroke-width="1"/>
+                    <!-- ground -->
+                    <line x1="20" y1="135" x2="320" y2="135" stroke="rgba(255,255,255,0.15)" stroke-width="1"/>
+                    <!-- data lines overlay -->
+                    <line x1="220" y1="40" x2="310" y2="20" stroke="rgba(255,255,255,0.12)" stroke-width="0.8" stroke-dasharray="3,4"/>
+                    <line x1="220" y1="80" x2="310" y2="80" stroke="rgba(255,255,255,0.12)" stroke-width="0.8" stroke-dasharray="3,4"/>
+                    <line x1="220" y1="135" x2="310" y2="150" stroke="rgba(255,255,255,0.12)" stroke-width="0.8" stroke-dasharray="3,4"/>
+                    <text x="20" y="155" font-family="'Fragment Mono', monospace" font-size="6" fill="rgba(255,255,255,0.18)" letter-spacing="0.1em">ARCHITECTURE / SPATIAL MEDIA</text>
+                </svg>
+            </div>
+            <div class="node-dom-header">08. Architecture &amp; Spatial Media</div>
+            <div class="node-dom-artists">Doug Aitken · Olafur Eliasson · Refik Anadol</div>
+            <div class="node-dom-body">
+                <p>This category addresses the built environment as a site of media projection, transformation, and experience. Doug Aitken wraps buildings in large-scale video projections and constructs mirrored pavilions that fragment landscape into infinite reflection, treating architecture as a screen.</p>
+                <p>Olafur Eliasson collaborates with architects to embed light, climate, and ecological phenomena into buildings and public spaces. Refik Anadol projects machine-generated imagery across building facades at urban scale, recasting architecture as a dynamic data surface — dissolving the boundary between structure and image.</p>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script>
+    const CONFIG = {
+        cameraSettings: {
+            initialZoom: 0.65,
+            minZoom: 0.3,
+            maxZoom: 3.0,
+            zoomSensitivity: 0.001
+        }
+    };
+
+    const container = document.getElementById('diagram-container');
+    const content   = document.getElementById('diagram-content');
+
+    let isDragging = false;
+    let startX, startY;
+    let translateX = 80, translateY = 100;
+    let scale = CONFIG.cameraSettings.initialZoom;
+
+    function updateTransform() {
+        content.style.transform = `translate(${translateX}px, ${translateY}px) scale(${scale})`;
+    }
+
+    container.addEventListener('mousedown', (e) => {
+        isDragging = true;
+        startX = e.clientX - translateX;
+        startY = e.clientY - translateY;
+    });
+
+    window.addEventListener('mousemove', (e) => {
+        if (!isDragging) return;
+        translateX = e.clientX - startX;
+        translateY = e.clientY - startY;
+        updateTransform();
+    });
+
+    window.addEventListener('mouseup', () => { isDragging = false; });
+    container.addEventListener('mouseleave', () => { isDragging = false; });
+
+    container.addEventListener('wheel', (e) => {
+        e.preventDefault();
+        const delta = -e.deltaY * CONFIG.cameraSettings.zoomSensitivity;
+        const newScale = Math.min(Math.max(scale + delta, CONFIG.cameraSettings.minZoom), CONFIG.cameraSettings.maxZoom);
+        const rect = container.getBoundingClientRect();
+        const mx = e.clientX - rect.left, my = e.clientY - rect.top;
+        translateX -= (mx - translateX) * (newScale / scale - 1);
+        translateY -= (my - translateY) * (newScale / scale - 1);
+        scale = newScale;
+        updateTransform();
+    }, { passive: false });
+
+    updateTransform();
+</script>
+</body>
+</html>
